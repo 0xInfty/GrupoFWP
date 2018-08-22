@@ -2,15 +2,16 @@
 
 import pyaudio
 import wave
-import sys
+#import sys
 
 CHUNK = 1024
+fname = "Bishop Briggs - The Way I Do.wav"
 
-if len(sys.argv) < 2:
-    print("Plays a wave file.\n\nUsage: %s filename.wav" % sys.argv[0])
-    sys.exit(-1)
+#if len(sys.argv) < 2:
+#    print("Plays a wave file.\n\nUsage: %s filename.wav" % sys.argv[0])
+#    sys.exit(-1)
 
-wf = wave.open(sys.argv[1], 'rb')
+wf = wave.open(fname, 'rb')
 
 p = pyaudio.PyAudio()
 
