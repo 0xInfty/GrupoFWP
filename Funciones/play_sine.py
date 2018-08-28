@@ -18,10 +18,10 @@ Variables:
     
     """
     
-    import pyaudio
+    from pyaudio import PyAudio, paFloat32
     from numpy import sin, pi, arange, float32
     
-    p = pyaudio.PyAudio()
+    p = PyAudio()
     
     #volume = 1     # range [0.0, 1.0]
     #fs = 44100       # sampling rate, Hz, must be integer
@@ -32,7 +32,7 @@ Variables:
     samples = ( sin( 2*pi*arange(sr*T)*f/sr ) ).astype( float32 )
     
     # for paFloat32 sample values must be in range [-1.0, 1.0]
-    stream = p.open(format=pyaudio.paFloat32,
+    stream = p.open(format=paFloat32,
                     channels=ch,
                     rate=sr,
                     output=True)
