@@ -62,7 +62,7 @@ frames = []
 print("* recording")
 for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     data = streamrecord.read(CHUNK)
-    frames.append(data)
+    frames.append(np.fromstring(data, 'Float32'))
 print("* done recording")
 
 #while streamplay.is_active():
