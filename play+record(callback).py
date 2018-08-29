@@ -17,7 +17,9 @@ p = pyaudio.PyAudio()
 
 A = 1 # range [0,1]
 T = 1
+#n = 200
 dt = 0.005
+m = 3 # cantidad de veces a repetir el buffer
 sr = 44000
 ch = 2
 ft = pyaudio.paInt16
@@ -25,16 +27,21 @@ fname='output'
 
 frames = []
 
-# generate samples, note conversion to float32 array
-#samples = (np.sin(2*np.pi*np.arange(RATE*duration)*f/RATE)).astype(np.float32)
+print("Longitud del buffer: %i" % int(T/dt))
+if int(T/dt) != T/dt:
+    print("¡Ojo! El intervalo dt no entra un número entero de veces en T")
+    dt = T/int(T/dt)
+    print("Intervalo redefinido a %f s" % dt)
 
-n = int(T/dt) + 1
-samples = np.zeros(n-1)
+n = int(T/dt)
+samples = np.zeros(n)
 
 samples[0:n//2+1] = np.linspace(0,1,n//2+1)
-samples[n//2:n-1] = np.linspace(1,0,n//2+1)[0:n//2]
+samples[n//2:n] = np.linspace(1,0,n//2+1)[0:n//2]
 
-def recordsignal(in_data, frame_count, time_info, status):
+samples = samples.astype(np.float32)
+
+def callback(in_data, frame_count, time_info, status):
     streamrecord = p.open(format=ft,
         channels=ch,
         rate=sr,
@@ -43,7 +50,7 @@ def recordsignal(in_data, frame_count, time_info, status):
     
     print("* recording")
     
-    for i in range(0, int(sr / n * T)):
+    for i in range(0, int(sr / n * m * T)):
         data = streamrecord.read(n)
         frames.append(data)
     print("* done recording")
@@ -59,7 +66,7 @@ streamplay = p.open(format=ft,
                 channels=ch,
                 rate=sr,
                 output=True,
-                stream_callback = recordsignal)
+                stream_callback = callback)
 
 
 # play. May repeat with different volume values (if done interactively) 
