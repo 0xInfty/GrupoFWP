@@ -7,6 +7,10 @@ Función Play+Record
 
 
 def check_devices():
+    """Imprime los puertos de entrada y salida con nombre e índice.
+    
+    Basado en: https://stackoverflow.com/questions/36894315/how-to-select-a-specific-input-device-with-pyaudio
+    """
     
     from pyaudio import PyAudio
     
