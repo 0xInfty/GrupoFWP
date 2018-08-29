@@ -19,6 +19,7 @@ def play_record(fname='output',
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
     ft = paInt16, # formato de input
+    frec = 440,
     mode = 'saw', # modo de input "saw" o "sine"
     savewav = True,
     savetext = False,
@@ -45,6 +46,11 @@ def play_record(fname='output',
         
         s_in = sin(2*pi*linspace(0,T,dt)/T)
         
+    if mode=='frec':
+        from numpy import sin, pi, arange
+        
+        s_in = sin(2*pi*arange(sr*T)*frec/sr)
+        
     elif mode=='saw':
         from numpy import zeros
         
@@ -57,7 +63,7 @@ def play_record(fname='output',
     else:
         return "¡Error! Modo de onda de output no especificada"
     
-    s_in = s_out.astype(float32)
+    s_in = s_in.astype(float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_in, pyaudio.paContinue)
@@ -76,11 +82,11 @@ def play_record(fname='output',
                 rate=sr,
                 input=True,
                 frames_per_buffer=n)
-    frames = []
+    
     print("* recording")
-    for i in range(0, int(sr / n * m * T)):
+    for i in range(0, int(sr / n * 10 * T)):#m * T)):
         data = streamrecord.read(n)
-        frames.append(data)
+        s_out.append(data)
     print("* done recording")    
     
 
@@ -96,5 +102,5 @@ def play_record(fname='output',
     wf.setnchannels(ch)
     wf.setsampwidth(p.get_sample_size(ft))
     wf.setframerate(sr)
-    wf.writeframes(b''.join(s_in))
+    wf.writeframes(b''.join(s_out))
     wf.close()
