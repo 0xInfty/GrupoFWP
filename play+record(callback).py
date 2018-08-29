@@ -3,7 +3,6 @@
 Play + Record
 @date: 29/08/2018
 @author: Vall
-
 Basado en....
 Created on Tue Aug 28 18:34:02 2018
 @author: mfar
@@ -16,33 +15,36 @@ import wave
 
 p = pyaudio.PyAudio()
 
-volume = 1     # range [0.0, 1.0]
-duration = 1   # in seconds, may be float
-f = 440        # sine frequency, Hz, may be float
-
-CHUNK = 1024
-FORMAT = pyaudio.paFloat32
-CHANNELS = 2
-RATE = 44100
-RECORD_SECONDS = 1
-WAVE_OUTPUT_FILENAME = "output.wav"
+A = 1 # range [0,1]
+T = 1
+dt = 0.005
+sr = 44000
+ch = 2
+ft = pyaudio.paInt16
+fname='output'
 
 frames = []
 
 # generate samples, note conversion to float32 array
-samples = (np.sin(2*np.pi*np.arange(RATE*duration)*f/RATE)).astype(np.float32)
+#samples = (np.sin(2*np.pi*np.arange(RATE*duration)*f/RATE)).astype(np.float32)
+
+n = int(T/dt) + 1
+samples = np.zeros(n-1)
+
+samples[0:n//2+1] = np.linspace(0,1,n//2+1)
+samples[n//2:n-1] = np.linspace(1,0,n//2+1)[0:n//2]
 
 def recordsignal(in_data, frame_count, time_info, status):
-    streamrecord = p.open(format=FORMAT,
-        channels=CHANNELS,
-        rate=RATE,
+    streamrecord = p.open(format=ft,
+        channels=ch,
+        rate=sr,
         input=True,
-        frames_per_buffer=CHUNK)
+        frames_per_buffer=n)
     
     print("* recording")
     
-    for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-        data = streamrecord.read(CHUNK)
+    for i in range(0, int(sr / n * T)):
+        data = streamrecord.read(n)
         frames.append(data)
     print("* done recording")
        
@@ -53,9 +55,9 @@ def recordsignal(in_data, frame_count, time_info, status):
 
 
 # for paFloat32 sample values must be in range [-1.0, 1.0]
-streamplay = p.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
+streamplay = p.open(format=ft,
+                channels=ch,
+                rate=sr,
                 output=True,
                 stream_callback = recordsignal)
 
@@ -76,11 +78,9 @@ streamplay.close()
    
 p.terminate()
 
-wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-wf.setnchannels(CHANNELS)
-wf.setsampwidth(p.get_sample_size(FORMAT))
-wf.setframerate(RATE)
+wf = wave.open((fname+'.wav'), 'wb')
+wf.setnchannels(ch)
+wf.setsampwidth(p.get_sample_size(ft))
+wf.setframerate(sr)
 wf.writeframes(b''.join(frames))
 wf.close()
-
-
