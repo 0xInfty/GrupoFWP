@@ -19,7 +19,7 @@ def play_record(fname='output',
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
     ft = paInt16, # formato de input
-    frec = 440,
+    freq = 440,
     mode = 'saw', # modo de input "saw" o "sine"
     savewav = True,
     savetext = False,
@@ -31,7 +31,7 @@ def play_record(fname='output',
     
     p = pyaudio.PyAudio()
     
-    s_out = []
+    s_f = []
     
     print("Longitud del buffer: %i" % int(T/dt))
     if int(T/dt) != T/dt:
@@ -44,29 +44,29 @@ def play_record(fname='output',
     if mode=='sine':
         from numpy import sin, pi
         
-        s_in = sin(2*pi*linspace(0,T,dt)/T)
+        s_0 = sin(2*pi*linspace(0,T,dt)/T)
         
-    if mode=='frec':
+    if mode=='freq':
         from numpy import sin, pi, arange
         
-        s_in = sin(2*pi*arange(sr*T)*frec/sr)
+        s_0 = sin(2*pi*arange(sr*T)*freq/sr)
         
     elif mode=='saw':
         from numpy import zeros
         
-        s_in = zeros(n)
+        s_0 = zeros(n)
         
-        s_in[0:n//2+1] = linspace(0,1,n//2+1)
-        s_in[n//2:n] = linspace(1,0,n//2+1)[0:n//2]
+        s_0[0:n//2+1] = linspace(0,1,n//2+1)
+        s_0[n//2:n] = linspace(1,0,n//2+1)[0:n//2]
     
     
     else:
         return "¡Error! Modo de onda de output no especificada"
     
-    s_in = s_in.astype(float32)
+    s_0 = s_0.astype(float32)
     
     def callback(in_data, frame_count, time_info, status):
-        return (s_in, pyaudio.paContinue)
+        return (s_0, pyaudio.paContinue)
     
     streamplay = p.open(format=ft,
                 channels=ch,
@@ -74,19 +74,18 @@ def play_record(fname='output',
                 output=True,
                 stream_callback = callback)
 
-
-    streamplay.start_stream()
-
     streamrecord = p.open(format=ft,
                 channels=ch,
                 rate=sr,
                 input=True,
                 frames_per_buffer=n)
-    
+
+    streamplay.start_stream()
     print("* recording")
-    for i in range(0, int(sr / n * 10 * T)):#m * T)):
+    streamrecord.start_stream()
+    for i in range(0, int(sr / n * m * T)):#m * T)):
         data = streamrecord.read(n)
-        s_out.append(data)
+        s_f.append(data)
     print("* done recording")    
     
 
@@ -102,5 +101,5 @@ def play_record(fname='output',
     wf.setnchannels(ch)
     wf.setsampwidth(p.get_sample_size(ft))
     wf.setframerate(sr)
-    wf.writeframes(b''.join(s_out))
+    wf.writeframes(b''.join(s_f))
     wf.close()
