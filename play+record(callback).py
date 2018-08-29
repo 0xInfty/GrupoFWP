@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Aug 28 18:34:02 2018
+Play + Record
+@date: 29/08/2018
+@author: Vall
 
+Basado en....
+Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
+
 import pyaudio
 import numpy as np
 import time
 import wave
-
-
-
 
 p = pyaudio.PyAudio()
 
 volume = 1     # range [0.0, 1.0]
 duration = 1   # in seconds, may be float
 f = 440        # sine frequency, Hz, may be float
-
-
-
 
 CHUNK = 1024
 FORMAT = pyaudio.paFloat32
@@ -30,19 +29,15 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 
 frames = []
 
-
-
-
 # generate samples, note conversion to float32 array
 samples = (np.sin(2*np.pi*np.arange(RATE*duration)*f/RATE)).astype(np.float32)
 
-
 def recordsignal(in_data, frame_count, time_info, status):
     streamrecord = p.open(format=FORMAT,
-    channels=CHANNELS,
-    rate=RATE,
-    input=True,
-    frames_per_buffer=CHUNK)
+        channels=CHANNELS,
+        rate=RATE,
+        input=True,
+        frames_per_buffer=CHUNK)
     
     print("* recording")
     
@@ -78,9 +73,7 @@ for i in range(10):
 
 streamplay.stop_stream()
 streamplay.close()
-
-
-    
+   
 p.terminate()
 
 wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
