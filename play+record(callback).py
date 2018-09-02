@@ -8,7 +8,7 @@ import pyaudio
 import numpy as np
 import time
 import wave
-
+import matplotlib.pyplot as plt
 
 
 
@@ -77,15 +77,40 @@ streamrecord.close()
 streamplay.stop_stream()
 streamplay.close()
 
-
     
 p.terminate()
 
-wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-wf.setnchannels(CHANNELS)
-wf.setsampwidth(p.get_sample_size(FORMAT))
-wf.setframerate(RATE)
-wf.writeframes(b''.join(frames))
-wf.close()
+#wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+#wf.setnchannels(CHANNELS)
+#wf.setsampwidth(p.get_sample_size(FORMAT))
+#wf.setframerate(RATE)
+#wf.writeframes(b''.join(frames))
+#wf.close()
 
 
+
+#graficar pa ver que sale
+#plt.figure()
+#plt.plot(frames)
+#plt.ylabel('señal grabada')
+#plt.grid()
+#plt.show()
+
+
+
+#esto supuestamente le saca el ruido choto
+#print("* recording")
+#full_recording = []
+#for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+#    data = stream.read(CHUNK)
+#    full_recording.extend(data)
+#
+#stream.write(full_recording, len(full_recording))
+#print("* done")
+
+
+
+#usando la funcion de vale
+#for i in range[len(frecuencias)]:
+#    play_record(freq=frecuencias [i])
+#    np.savetxt('archivo%01d.txt' % i,frames)
