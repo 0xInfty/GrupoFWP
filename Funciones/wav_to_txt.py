@@ -5,10 +5,11 @@ Created on Wed Aug 29 19:42:57 2018
 @author: 0xInfty
 """
 
-def wav_to_txt(fname, 
-               fdir='C:\\Users\\Usuario\\Documents\\Git\\Público\\Pais',
-               gdir='C:\\Users\\Usuario\\Documents\\Git\\Público\\Pais'
-               ):
+def wav_to_txt(
+    fname, 
+    fdir='C:\\Users\\Usuario\\Documents\\Git\\Público\\GrupoFWP',
+    gdir='C:\\Users\\Usuario\\Documents\\Git\\Público\\Pais'
+    ):
 
     """File conversion from '.wav' to '.txt'
     
@@ -26,6 +27,10 @@ Beware:
 - It takes the file name as fname; i.e. "Hi" and not "Hi.wav".
 - It saves the txt file with fname name; i.e. fname="Hi" converts \
 fdir\\Hi.wav into gdir\\Hi.wav
+
+Raises:
+- RuntimeWarning if wav file would make a txt file with more than \
+500 000 rows.
     
     """
     
@@ -43,8 +48,8 @@ fdir\\Hi.wav into gdir\\Hi.wav
     
     n = len(datos[:,0])
     if n > 500000:
-        return "¡Error! Guardar un archivo .txt tan largo lleva mucho tiempo"
-
+        raise RuntimeWarning("Wav file is too long")
+        
     t = arange(0, n/sr, 1/sr)
 
     if isdir(gdir) == False:
