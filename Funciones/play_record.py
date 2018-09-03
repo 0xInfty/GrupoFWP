@@ -8,7 +8,7 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
-from pyaudio import paInt16
+from pyaudio import paInt16, paFloat32
 
 def play_record(fname='output', 
     #A = 1, # amplitud, range [0,1]
@@ -18,7 +18,7 @@ def play_record(fname='output',
     m = 3, # cantidad de veces a repetir el buffer
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
-    ft = paInt16, # formato de input
+    ft = paFloat32, # formato de input
     freq = 440,
     mode = 'saw', # modo de input "saw" o "sine"
     savewav = True,
@@ -26,13 +26,14 @@ def play_record(fname='output',
     returntxt = False): 
 
     import pyaudio
-    from numpy import linspace, float32
+    from numpy import linspace, float32, fromstring,savetxt
     import wave
-    
+    import matplotlib.pyplot as plt
+
     p = pyaudio.PyAudio()
     
     s_f = []
-    
+    recording_float=[]
     print("Longitud del buffer: %i" % int(T/dt))
     if int(T/dt) != T/dt:
         print("¡Ojo! El intervalo dt no entra un número entero de veces en T")
@@ -83,9 +84,9 @@ def play_record(fname='output',
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
-    for i in range(0, int(sr / n * m * T)):#m * T)):
-        data = streamrecord.read(n)
-        s_f.append(data)
+    data = streamrecord.read(n*(sr / n * m * T))
+    recording_float.extend(fromstring(data, 'Float32'))
+    s_f.append(data)
     print("* done recording")    
     
 
@@ -97,9 +98,22 @@ def play_record(fname='output',
        
     p.terminate()
     
+    savetxt(str(freq)+'.txt',recording_float)
+    
+    
+    #graficar pa ver que sale
+    plt.figure()
+    #plt.plot(samples[2000:3000],'bo')
+    plt.plot(recording_float[2000:3000],'ro')
+    plt.ylabel('señal grabada')
+    plt.grid()
+    plt.show()    
+        
+    
     wf = wave.open((fname+'.wav'), 'wb')
     wf.setnchannels(ch)
     wf.setsampwidth(p.get_sample_size(ft))
     wf.setframerate(sr)
     wf.writeframes(b''.join(s_f))
     wf.close()
+    return s_0, recording_float
