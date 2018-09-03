@@ -20,16 +20,12 @@ f = 440        # sine frequency, Hz, may be float
 
 
 
-
 CHUNK = 1024
 FORMAT = pyaudio.paFloat32
-CHANNELS = 2
+CHANNELS = 1
 RATE = 44100
 RECORD_SECONDS = 4
 WAVE_OUTPUT_FILENAME = "output.wav"
-
-
-
 
 
 # generate samples, note conversion to float32 array
@@ -41,7 +37,6 @@ def recordsignal(in_data, frame_count, time_info, status):
     return (outputdata, pyaudio.paContinue)
 
 
-# for paFloat32 sample values must be in range [-1.0, 1.0]
 streamplay = p.open(format=FORMAT,
                 channels=CHANNELS,
                 rate=RATE,
@@ -49,7 +44,6 @@ streamplay = p.open(format=FORMAT,
                 stream_callback = recordsignal)
 
 
-# play. May repeat with different volume values (if done interactively) 
 # start the stream (4)
 streamplay.start_stream()
 
@@ -58,12 +52,28 @@ streamrecord = p.open(format=FORMAT,
                 rate=RATE,
                 input=True,
                 frames_per_buffer=CHUNK)
+#frames = []
+#recording_float=[]
+#print("* recording")
+#for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+#    data = streamrecord.read(CHUNK)
+#    recording_float.extend(np.fromstring(data, 'Float32'))
+#    frames.append(data)
+#print("* done recording")
+
+
+
 frames = []
+recording_float=[]
 print("* recording")
-for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-    data = streamrecord.read(CHUNK)
-    frames.append(np.fromstring(data, 'Float32'))
+data = streamrecord.read(CHUNK*(RATE / CHUNK * RECORD_SECONDS))
+recording_float.extend(np.fromstring(data, 'Float32'))
+frames.append(data)
 print("* done recording")
+
+
+
+
 
 #while streamplay.is_active():
 #   time.sleep(0.1)
@@ -80,34 +90,26 @@ streamplay.close()
     
 p.terminate()
 
-#wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-#wf.setnchannels(CHANNELS)
-#wf.setsampwidth(p.get_sample_size(FORMAT))
-#wf.setframerate(RATE)
-#wf.writeframes(b''.join(frames))
-#wf.close()
+wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+wf.setnchannels(CHANNELS)
+wf.setsampwidth(p.get_sample_size(FORMAT))
+wf.setframerate(RATE)
+wf.writeframes(b''.join(frames))
+wf.close()
 
 
 
 #graficar pa ver que sale
-#plt.figure()
-#plt.plot(frames)
-#plt.ylabel('señal grabada')
-#plt.grid()
-#plt.show()
+plt.figure()
+#plt.plot(samples[2000:3000],'bo')
+plt.plot(recording_float[2000:3000],'ro')
+plt.ylabel('señal grabada')
+plt.grid()
+plt.show()
 
 
-
-#esto supuestamente le saca el ruido choto
-#print("* recording")
-#full_recording = []
-#for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-#    data = stream.read(CHUNK)
-#    full_recording.extend(data)
-#
-#stream.write(full_recording, len(full_recording))
-#print("* done")
-
+i=1
+np.savetxt('archivo%01d.txt' % i,recording_float)
 
 
 #usando la funcion de vale
