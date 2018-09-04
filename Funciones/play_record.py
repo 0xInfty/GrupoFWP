@@ -11,12 +11,12 @@ Created on Tue Aug 28 18:34:02 2018
 from pyaudio import paFloat32 # paInt16
 
 def play_record(
+    T = 3, # tiempo en seg de grabación deseado
     fname = 'output',
     #A = 1, # amplitud, range [0,1]
-    T = 1, # duración del buffer
+    dT = 1, # duración del buffer
     #n = 200 # cantidad de frames en un buffer = chunk
     dt = 0.005, # duración de cada frame del buffer
-    m = 3, # cantidad de veces a repetir el buffer
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
     ft = paFloat32, # formato de input
@@ -39,25 +39,36 @@ def play_record(
         print("Guardar txt: %s" % savetxt)
         print("Mostrar gráfico: %s" % showplot)
     
-    print("Longitud del buffer: %i" % int(T/dt))
-    if int(T/dt) != T/dt:
-        print("¡Ojo! El intervalo dt no entra un número entero de veces en T")
-        dt = T/int(T/dt)
+    print("Longitud del buffer: %i" % int(dT/dt))
+    if int(dT/dt) != dT/dt:
+        print("¡Ojo! El intervalo dt no entra un número entero \
+              de veces en dT")
+        dt = dT/int(dT/dt)
         print("Intervalo redefinido a %f s" % dt)
+        
+    if int(T/dT) != T/dT:
+        print("¡Ojo! El tiempo de grabación \
+              no es un número entero de veces dT")
+        if int(T/dT) != 0:
+            T = int(T/dT)*dT
+        else:
+            print("¡Ojo! El tiempo de grabación era menor a dT")
+            T = dT
+        print("Tiempo de grabación redefinido a %f s" % T)
     
     p = pyaudio.PyAudio()
     s_f = []
-    n = int(T/dt)    
+    n = int(dT/dt)    
     
     if mode=='sine':
         from numpy import sin, pi
         
-        s_0 = sin(2*pi*linspace(0,T,dt)/T)
+        s_0 = sin(2*pi*linspace(0,dT,dt)/dT)
         
     if mode=='freq':
         from numpy import sin, pi, arange
         
-        s_0 = sin(2*pi*arange(sr*T)*freq/sr)
+        s_0 = sin(2*pi*arange(sr*dT)*freq/sr)
         
     elif mode=='saw':
         from numpy import zeros
@@ -90,7 +101,7 @@ def play_record(
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
-    data = streamrecord.read(n * (sr/n * m * T))
+    data = streamrecord.read(n * (sr/n * T))
     print("* done recording")    
 
     streamrecord.stop_stream()
