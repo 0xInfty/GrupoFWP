@@ -8,7 +8,7 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
-from pyaudio import paInt16
+from pyaudio import paInt16, paFloat32
 
 def play_record(fname='output', 
     #A = 1, # amplitud, range [0,1]
