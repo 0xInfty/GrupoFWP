@@ -8,6 +8,27 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
+if 'kwargs' not in globals():
+    kwargs = {}
+
+from os import getcwd
+
+ref = {
+        'freq': 440,
+        'rs': 44000,
+        'ch': 1,
+        'dT': 1,
+        'fname': 'output',
+        'fdir': getcwd()
+        }
+
+for key in ref:
+    if key not in kwargs:
+        kwargs.update({key: ref[key]})
+del key
+        
+del ref
+
 def play_record(
     T, # duración de la grabación
     dt = 0.005, # duración de cada frame del buffer
@@ -15,7 +36,7 @@ def play_record(
     mode = 'txt',
     savetxt = False,
     showplot = True,
-    *kwargs
+    **kwargs
     ):
     
     """Reproduce una señal de sonido y graba por jack al mismo tiempo.
@@ -37,29 +58,15 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
     import wave
     import matplotlib.pyplot as plt
     
-    import new_name
+    from new_name import new_name
+    from waveform import waveform
 
     home = os.getcwd()
     
-    if 'ch' not in globals():
-        ch = 1    
-    if 'sr' not in globals():
-        sr = 44000
-    if 'dT' not in globals():
-        dT = 1
-    if 'dt' not in globals():
-        dt = 0.005
-    if form=='freq':
-        if 'freq' not in globals():
-            freq = 440
-    if 'fname' not in globals():
-        if 'freq' in globals():
-            fname = '%i' % int(freq)
-        else:
-            fname = 'output'
-    if 'fdir' not in globals():
-        fdir = home
-    
+    if 'kwargs' in globals() or 'kwargs' in locals():
+        for key in kwargs:
+            exec('%s = %s' % (key, kwargs[key]))
+
     if mode != 'txt':
         print("Modo: 'wav'")
     else:
@@ -88,24 +95,7 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
     s_f = []
     n = int(dT/dt)    
     
-    if form=='sine':
-        
-        s_0 = np.sin(2*np.pi*np.linspace(0,n)/n)
-        
-    if form=='freq':
-                
-        s_0 = np.sin(2*np.pi*np.arange(sr*dT)*freq/sr)
-        
-    elif form=='saw':
-        
-        s_0 = np.zeros(n)
-        
-        s_0[0:n//2+1] = np.linspace(0,1,n//2+1)
-        s_0[n//2:n] = np.linspace(1,0,n//2+1)[0:n//2]
-    
-    else:
-        return "¡Error! Modo de onda de output no especificada"
-    
+    s_0 = waveform(form, n)
     s_0 = s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
