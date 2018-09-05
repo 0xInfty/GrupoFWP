@@ -19,7 +19,7 @@ def play_record(
     buffer = {'dT': 1, 'dt': 0.005},
     audio = {'ch': 1, 'sr': 44000, 'freq': 440},
     filendir = {'fname': 'output', 'fdir': os.getcwd()},
-    ): 
+    ):
     
     """Reproduce una señal de sonido y graba por jack al mismo tiempo.
 
@@ -80,7 +80,7 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
         print("¡Ojo! El tiempo de grabación \
         no es un número entero de veces dT")
         if int(T/bsp.dT) != 0:
-            T = int(bsp.T/bsp.dT)*bsp.dT
+            T = int(T/bsp.dT)*bsp.dT
         else:
             print("¡Ojo! El tiempo de grabación era menor a dT")
             T = bsp.dT
@@ -91,38 +91,40 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
     s_f = []    
     n = int(bsp.dT/bsp.dt)
     
-    s_0 = waveform(form, n, freq=asp.freq)    
+    s_0 = waveform(form, n, freq=asp.freq)
     s_0 = s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_0, pyaudio.paContinue)
     
     streamplay = p.open(
-                format=pyaudio.paFloat32,
-                channels=asp.ch,
-                rate=asp.sr,
-                output=True,
-                stream_callback = callback)
+                format = pyaudio.paFloat32,
+                channels = 1,
+                rate = asp.sr,
+                output = True,
+                stream_callback = callback,
+                )
 
     streamrecord = p.open(
-                format=pyaudio.paFloat32,
-                channels=asp.ch,
-                rate=asp.sr,
-                input=True,
-                frames_per_buffer=n)
+                format = pyaudio.paFloat32,
+                channels = asp.ch,
+                rate = asp.sr,
+                input = True,
+                frames_per_buffer = n,
+                )
 
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
     data = streamrecord.read(int(asp.sr * T))
-    print("* done recording")
+    print("* done recording")    
 
     streamrecord.stop_stream()
     streamplay.stop_stream()
     
     streamrecord.close()
     streamplay.close()
-       
+
     p.terminate()
 
     if mode == 'txt':
@@ -151,5 +153,3 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
         wf.writeframes(b''.join(s_f))
         wf.close()
         os.chdir(home)
-        
-    return s_0, s_f

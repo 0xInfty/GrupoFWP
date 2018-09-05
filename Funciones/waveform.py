@@ -5,7 +5,7 @@ Created on Wed Aug 29 19:49:50 2018
 @author: 0xInfty
 """
 
-def waveform(key, n, **kwargs):
+def waveform(key, n, freq=440):
     """Makes a period of a wave of form 'key' on an array of lenght 'n'.
     
 This function defines a period of a wave. Its waveform is chosen with \
@@ -86,4 +86,5 @@ whose minimum amplitude is -1).
 
         raise KeyError("Los posibles valores de key son: 'sin', 'tri', \
         'saw', 'freq', 'squ'.")
-        return
+    
+    return out
