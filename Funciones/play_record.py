@@ -10,12 +10,13 @@ Created on Tue Aug 28 18:34:02 2018
 
 from pyaudio import paInt16, paFloat32
 
-def play_record(fname='output', 
+def play_record(
+    T, # duración en seg de la grabación
+    fname='output', 
     #A = 1, # amplitud, range [0,1]
-    T = 1, # duración del buffer
+    dT = 1, # duración del buffer
     #n = 200 # cantidad de frames en un buffer = chunk
     dt = 0.005, # duración de cada frame del buffer
-    m = 3, # cantidad de veces a repetir el buffer
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
     ft = paInt16, # formato de input
@@ -23,33 +24,43 @@ def play_record(fname='output',
     mode = 'saw', # modo de input "saw" o "sine"
     savewav = True,
     savetext = False,
-    returntxt = False): 
+    returntxt = False,
+    ): 
 
     import pyaudio
     from numpy import linspace, float32
     import wave
     
-    p = pyaudio.PyAudio()
-    
-    s_f = []
-    
-    print("Longitud del buffer: %i" % int(T/dt))
-    if int(T/dt) != T/dt:
-        print("¡Ojo! El intervalo dt no entra un número entero de veces en T")
-        dt = T/int(T/dt)
+    print("Longitud del buffer: %i" % int(dT/dt))
+    if int(dT/dt) != dT/dt:
+        print("¡Ojo! El intervalo dt no entra un número entero \
+        de veces en dT")
+        dt = dT/int(dT/dt)
         print("Intervalo redefinido a %f s" % dt)
+        
+    if int(T/dT) != T/dT:
+        print("¡Ojo! El tiempo de grabación \
+        no es un número entero de veces dT")
+        if int(T/dT) != 0:
+            T = int(T/dT)*dT
+        else:
+            print("¡Ojo! El tiempo de grabación era menor a dT")
+            T = dT
+        print("Tiempo de grabación redefinido a %f s" % T)
     
-    n = int(T/dt)
+    p = pyaudio.PyAudio()
+    s_f = []    
+    n = int(dT/dt)
     
     if mode=='sine':
         from numpy import sin, pi
         
-        s_0 = sin(2*pi*linspace(0,T,dt)/T)
+        s_0 = sin(2*pi*linspace(0,dT,dt)/dT)
         
     if mode=='freq':
         from numpy import sin, pi, arange
         
-        s_0 = sin(2*pi*arange(sr*T)*freq/sr)
+        s_0 = sin(2*pi*arange(sr*dT)*freq/sr)
         
     elif mode=='saw':
         from numpy import zeros
@@ -58,7 +69,6 @@ def play_record(fname='output',
         
         s_0[0:n//2+1] = linspace(0,1,n//2+1)
         s_0[n//2:n] = linspace(1,0,n//2+1)[0:n//2]
-    
     
     else:
         return "¡Error! Modo de onda de output no especificada"
@@ -83,11 +93,10 @@ def play_record(fname='output',
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
-    for i in range(0, int(sr / n * m * T)):#m * T)):
+    for i in range(0, int(sr / n * T)):#m * T)):
         data = streamrecord.read(n)
         s_f.append(data)
     print("* done recording")    
-    
 
     streamrecord.stop_stream()
     streamplay.stop_stream()
