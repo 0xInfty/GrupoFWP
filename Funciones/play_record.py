@@ -9,7 +9,6 @@ Created on Tue Aug 28 18:34:02 2018
 """
 
 import os
-from pyaudio import paInt16, paFloat32
 
 def play_record(
     T, # duración en seg de la grabación
@@ -21,6 +20,19 @@ def play_record(
     audio = {'ch': 1, 'sr': 44000, 'freq': 440},
     filendir = {'fname': 'output', 'fdir': os.getcwd()},
     ): 
+    
+    """Reproduce una señal de sonido y graba por jack al mismo tiempo.
+
+Crea una señal cuya forma de onda está dada por 'form'. Ésta crea un \
+buffer cuyos frames duran 'dt'. Reproduce y graba durante un tiempo \
+'T'. Devuelve el array reproducido y la lista grabada. 
+
+Tiene dos modos de funcionamiento dados por 'mode'. Si 'mode=="wav", \
+guarda un archivo de audio. Y si 'mode=="txt"', 
+Además, si 'savetxt==True', guarda un archivo de texto. Y si \
+'showplot=="True", muestra un gráfico.
+    
+    """
 
     import pyaudio
     import numpy as np
@@ -29,6 +41,7 @@ def play_record(
     import wave
     
     from new_name import new_name
+    from waveform import waveform
     from argparse import Namespace
 
     home = os.getcwd()
@@ -78,36 +91,21 @@ def play_record(
     s_f = []    
     n = int(bsp.dT/bsp.dt)
     
-    if form=='sine':
-        
-        s_0 = np.sin(2*np.pi*np.linspace(0,bsp.dT,bsp.dt)/bsp.dT)
-        
-    if form=='freq':
-        
-        s_0 = np.sin(2*np.pi*np.arange(asp.sr*bsp.dT)*asp.freq/asp.sr)
-        
-    elif form=='saw':
-        
-        s_0 = np.zeros(n)
-        
-        s_0[0:n//2+1] = np.linspace(0,1,n//2+1)
-        s_0[n//2:n] = np.linspace(1,0,n//2+1)[0:n//2]
-    
-    else:
-        return "¡Error! Modo de onda de output no especificada"
-    
+    s_0 = waveform(form, n, freq=asp.freq)    
     s_0 = s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_0, pyaudio.paContinue)
     
-    streamplay = p.open(format=asp.ft,
+    streamplay = p.open(
+                format=pyaudio.paFloat32,
                 channels=asp.ch,
                 rate=asp.sr,
                 output=True,
                 stream_callback = callback)
 
-    streamrecord = p.open(format=asp.ft,
+    streamrecord = p.open(
+                format=pyaudio.paFloat32,
                 channels=asp.ch,
                 rate=asp.sr,
                 input=True,
@@ -135,6 +133,7 @@ def play_record(
             os.chdir(home)
         if showplot:
             plt.figure()
+            #plt.plot(samples[2000:3000],'bo')
             plt.plot(s_f[2000:3000], 'ro-')
             plt.ylabel('señal grabada')
             plt.grid()
@@ -147,8 +146,10 @@ def play_record(
         os.chdir(fsp.fdir)
         wf = wave.open((fsp.fname + '.wav'), 'wb')
         wf.setnchannels(asp.ch)
-        wf.setsampwidth(p.get_sample_size(asp.ft))
+        wf.setsampwidth(p.get_sample_size(pyaudio.paFloat32))
         wf.setframerate(asp.sr)
         wf.writeframes(b''.join(s_f))
         wf.close()
         os.chdir(home)
+        
+    return s_0, s_f
