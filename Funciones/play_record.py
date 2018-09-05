@@ -8,19 +8,21 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
+import pyaudio
 import os
 
 def play_record(
     T, # duración en seg de la grabación
-    form = 'freq', # modo de input "saw" o "sine"
-    mode = 'txt',
+    form = 'freq', # forma de onda {'freq', 'sin', 'squ', 'tri', 'saw'}
+    mode = 'txt', # modo de funcionamiento del programa {'txt', 'wav'}
     savetxt = False,
     showplot = True,
-    buffer = {'dT': 1, 'dt': 0.005},
-    audio = {'ch': 1, 'sr': 44000, 'freq': 440},
+    buffer = {'dT': 1, 'dt': 0.005, 'freq': 440, 'vol': 1},
+    audio = {'sr': 44000, 'ch_play': 1, 'ch_rec': 1,
+            'ft_play': pyaudio.paInt16, 'ft_rec': pyaudio.paInt16},
     filendir = {'fname': 'output', 'fdir': os.getcwd()},
     ):
-    
+
     """Reproduce una señal de sonido y graba por jack al mismo tiempo.
 
 Crea una señal cuya forma de onda está dada por 'form'. Ésta crea un \
@@ -33,35 +35,41 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
 'showplot=="True", muestra un gráfico.
     
     """
-
+    
     import pyaudio
     import numpy as np
-    import matplotlib.pyplot as plt
     import os
     import wave
+    import matplotlib.pyplot as plt
     
     from new_name import new_name
     from waveform import waveform
     from argparse import Namespace
-
+    
     home = os.getcwd()
     
-    for key in ['dT', 'dt']:
+    ref = {'dT': 1, 'dt': 0.005, 'freq': 440, 'vol': 1,
+           'sr': 44000, 'ch_play': 1, 'ch_rec': 1,
+           'ft_play': pyaudio.paInt16, 'ft_rec': pyaudio.paInt16,
+           'fname': 'output', 'fdir': os.getcwd()}
+    bkey = ['dT', 'dt', 'freq', 'vol']
+    akey = ['sr', 'ch_play', 'ch_rec', 'ft_play', 'ft_rec']
+    fkey = ['fname', 'fdir']
+    
+    for key in bkey:    
         if key not in buffer:
-            buffer.update({key: {'dT': 1, 'dt': 0.005}[key]})
-    for key in ['ch', 'sr', 'freq']:
+            buffer.update({key: ref[key]})
+    for key in akey:
         if key not in audio:
-            audio.update({key: 
-                {'ch': 1, 'sr': 44000, 'freq': 440}[key]})
-    for key in ['fdir', 'fname']:
+            audio.update({key: ref[key]})
+    for key in fkey:
         if key not in filendir:
-            filendir.update({key:
-                {'fname': 'output', 'fdir': os.getcwd()}[key]})
+            filendir.update({key: ref[key]})
     
     bsp = Namespace(**buffer) # buffer space
     asp = Namespace(**audio) # audio space
     fsp = Namespace(**filendir) # filendir space
-    
+
     if mode != 'txt':
         print("Modo: 'wav'")
     else:
@@ -85,46 +93,44 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
             print("¡Ojo! El tiempo de grabación era menor a dT")
             T = bsp.dT
         print("Tiempo de grabación redefinido a %f s" % T)
-        print("Longitud del buffer: %i" % int(bsp.dT/bsp.dt))
     
     p = pyaudio.PyAudio()
-    s_f = []    
+    s_f = []
     n = int(bsp.dT/bsp.dt)
     
-    s_0 = waveform(form, n, freq=asp.freq)
-    s_0 = s_0.astype(np.float32)
+    if form=='freq':
+        s_0 = np.sin(2*np.pi*np.arange(asp.sr*bsp.dT)*bsp.freq/asp.sr)
+    else:
+        s_0 = waveform(form, n)
+    s_0 = bsp.vol * s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_0, pyaudio.paContinue)
     
-    streamplay = p.open(
-                format = pyaudio.paFloat32,
-                channels = 1,
-                rate = asp.sr,
-                output = True,
-                stream_callback = callback,
-                )
+    streamplay = p.open(format=asp.ft_play,
+                channels=asp.ch_play,
+                rate=asp.sr,
+                output=True,
+                stream_callback = callback)
 
-    streamrecord = p.open(
-                format = pyaudio.paFloat32,
-                channels = asp.ch,
-                rate = asp.sr,
-                input = True,
-                frames_per_buffer = n,
-                )
+    streamrecord = p.open(format=asp.ft_rec,
+                channels=asp.ch_rec,
+                rate=asp.sr,
+                input=True,
+                frames_per_buffer=n)
 
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
     data = streamrecord.read(int(asp.sr * T))
-    print("* done recording")    
+    print("* done recording")
 
     streamrecord.stop_stream()
     streamplay.stop_stream()
     
     streamrecord.close()
     streamplay.close()
-
+       
     p.terminate()
 
     if mode == 'txt':
@@ -135,7 +141,6 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
             os.chdir(home)
         if showplot:
             plt.figure()
-            #plt.plot(samples[2000:3000],'bo')
             plt.plot(s_f[2000:3000], 'ro-')
             plt.ylabel('señal grabada')
             plt.grid()
@@ -147,8 +152,8 @@ Además, si 'savetxt==True', guarda un archivo de texto. Y si \
         fsp.fname = new_name(fsp.fname, 'wav', fsp.fdir)
         os.chdir(fsp.fdir)
         wf = wave.open((fsp.fname + '.wav'), 'wb')
-        wf.setnchannels(asp.ch)
-        wf.setsampwidth(p.get_sample_size(pyaudio.paFloat32))
+        wf.setnchannels(asp.ch_rec)
+        wf.setsampwidth(p.get_sample_size(asp.ft_rec))
         wf.setframerate(asp.sr)
         wf.writeframes(b''.join(s_f))
         wf.close()
