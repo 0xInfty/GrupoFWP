@@ -5,30 +5,23 @@ Created on Wed Aug 29 19:49:50 2018
 @author: 0xInfty
 """
 
-def waveform(key, n, freq=440):
+def waveform(key, n, freq=440, dT=1):
     """Makes a period of a wave of form 'key' on an array of lenght 'n'.
     
 This function defines a period of a wave. Its waveform is chosen with \
 the input 'key' which can take a limited number of values: 'sin' for \
-a sine, 'tri' for a triangle wave, 'saw' for increasing linear, 'squ' \
-for square wave and 'freq' for a sine with freq periods inside. Its \
-digital resolution is given by the input 'n' which is the number of \
-values it takes in a period and which is therefore the number of \
-intervals the period is divided into.
+a sine, 'tri' for a triangle wave, 'saw' for increasing linear and \
+'squ' for square wave. Its digital resolution is given by the input \
+'n' which is the number of values it takes in a period and which is \
+therefore the number of intervals the period is divided into.
 
 
 Parameters
 ----------
-key: str {'sin', 'tri', 'saw', 'freq', 'squ'}
+key: str {'sin', 'tri', 'saw', 'squ'}
     Waveform
 n: int
     Resolution
-
-    
-Other parameters
-----------------
-freq: int, float
-    Frequency for 'freq' key.
 
 
 Returns
@@ -63,13 +56,6 @@ whose minimum amplitude is -1).
         
         out[0:n//2+1] = np.linspace(0,1,n//2+1)
         out[n//2:n] = np.linspace(1,0,n//2+1)[0:n//2]
-    
-    elif key == 'freq':
-        
-        if 'freq' not in globals() and 'freq' not in locals():
-            freq = 440
-        
-        out = np.sin(2*np.pi*np.arange(n)*freq/n)
     
     elif key == 'squ':
     
