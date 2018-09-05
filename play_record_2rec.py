@@ -4,12 +4,20 @@ import os
 import wave
 import matplotlib.pyplot as plt
 
+home = os.getcwd()
+
 from stereo import encode, decode
+
+os.chdir(home+'//Funciones')
 from new_name import new_name
 from waveform import waveform
+
+os.chdir(home)
 from argparse import Namespace
 
-T # duración en seg de la grabación
+#%%
+
+T = 1 # duración en seg de la grabación
 form = 'freq' # forma de onda {'freq', 'sin', 'squ', 'tri', 'saw'}
 mode = 'txt' # modo de funcionamiento del programa {'txt', 'wav'}
 savetxt = False
@@ -19,7 +27,7 @@ audio = {'sr': 44000, 'ch_play': 1, 'ch_rec': 2,
         'ft_play': pyaudio.paInt16, 'ft_rec': pyaudio.paInt16}
 filendir = {'fname': 'output', 'fdir': os.getcwd()}
 
-home = os.getcwd()
+#%%
 
 ref = {'dT': 1, 'dt': 0.005, 'freq': 440, 'vol': 1,
        'sr': 44000, 'ch_play': 1, 'ch_rec': 1,
@@ -43,6 +51,8 @@ bsp = Namespace(**buffer) # buffer space
 asp = Namespace(**audio) # audio space
 fsp = Namespace(**filendir) # filendir space
 
+#%%
+               
 if mode != 'txt':
     print("Modo: 'wav'")
 else:
@@ -70,9 +80,10 @@ if int(T/bsp.dT) != T/bsp.dT:
 if asp.ch_play != 1:
     raise ValueError("El código no está preparado para reproducir \
     en 2 canales")
-    return
 
 print("Canales para grabar: ch_rec=%i" % asp.ch_rec)
+
+#%%
 
 p = pyaudio.PyAudio()
 s_f = []
@@ -98,6 +109,8 @@ streamrecord = p.open(format=asp.ft_rec,
             rate=asp.sr,
             input=True,
             frames_per_buffer=n)
+
+#%%
 
 streamplay.start_stream()
 print("* recording")
@@ -126,7 +139,6 @@ if mode == 'txt':
         plt.ylabel('señal grabada')
         plt.grid()
         plt.show()
-    return s_0, s_f
         
 else:
     s_f.append(data)
