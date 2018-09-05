@@ -8,87 +8,122 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
-from pyaudio import paInt16, paFloat32
+import pyaudio
+import os
 
-def play_record(fname='output', 
-    #A = 1, # amplitud, range [0,1]
-    T = 1, # duración del buffer
-    #n = 200 # cantidad de frames en un buffer = chunk
-    dt = 0.005, # duración de cada frame del buffer
-    m = 3, # cantidad de veces a repetir el buffer
-    sr = 44000, # sample rate
-    ch = 2, # cantidad de canales tanto de input como de output
-    ft = paFloat32, # formato de input
-    freq = 440,
-    mode = 'saw', # modo de input "saw" o "sine"
-    savewav = True,
-    savetext = False,
-    returntxt = False): 
+def play_record(
+    T, # duración en seg de la grabación
+    form = 'freq', # forma de onda {'freq', 'sin', 'squ', 'tri', 'saw'}
+    mode = 'txt', # modo de funcionamiento del programa {'txt', 'wav'}
+    savetxt = False,
+    showplot = True,
+    buffer = {'dT': 1, 'dt': 0.005, 'freq': 440, 'vol': 1},
+    audio = {'sr': 44000, 'ch_play': 1, 'ch_rec': 1,
+            'ft_play': pyaudio.paInt16, 'ft_rec': pyaudio.paInt16},
+    filendir = {'fname': 'output', 'fdir': os.getcwd()},
+    ):
 
+    """Reproduce una señal de sonido y graba por jack al mismo tiempo.
+
+Crea una señal cuya forma de onda está dada por 'form'. Ésta crea un \
+buffer cuyos frames duran 'dt'. Reproduce y graba durante un tiempo \
+'T'. Devuelve el array reproducido y la lista grabada. 
+
+Tiene dos modos de funcionamiento dados por 'mode'. Si 'mode=="wav", \
+guarda un archivo de audio. Y si 'mode=="txt"', 
+Además, si 'savetxt==True', guarda un archivo de texto. Y si \
+'showplot=="True", muestra un gráfico.
+    
+    """
+    
     import pyaudio
-    from numpy import linspace, float32, fromstring,savetxt
+    import numpy as np
+    import os
     import wave
     import matplotlib.pyplot as plt
+    
+    from new_name import new_name
+    from waveform import waveform
+    from argparse import Namespace
+    
+    home = os.getcwd()
+    
+    ref = {'dT': 1, 'dt': 0.005, 'freq': 440, 'vol': 1,
+           'sr': 44000, 'ch_play': 1, 'ch_rec': 1,
+           'ft_play': pyaudio.paInt16, 'ft_rec': pyaudio.paInt16,
+           'fname': 'output', 'fdir': os.getcwd()}
+    bkey = ['dT', 'dt', 'freq', 'vol']
+    akey = ['sr', 'ch_play', 'ch_rec', 'ft_play', 'ft_rec']
+    fkey = ['fname', 'fdir']
+    
+    for key in bkey:    
+        if key not in buffer:
+            buffer.update({key: ref[key]})
+    for key in akey:
+        if key not in audio:
+            audio.update({key: ref[key]})
+    for key in fkey:
+        if key not in filendir:
+            filendir.update({key: ref[key]})
+    
+    bsp = Namespace(**buffer) # buffer space
+    asp = Namespace(**audio) # audio space
+    fsp = Namespace(**filendir) # filendir space
 
-    p = pyaudio.PyAudio()
-    
-    s_f = []
-    recording_float=[]
-    print("Longitud del buffer: %i" % int(T/dt))
-    if int(T/dt) != T/dt:
-        print("¡Ojo! El intervalo dt no entra un número entero de veces en T")
-        dt = T/int(T/dt)
-        print("Intervalo redefinido a %f s" % dt)
-    
-    n = int(T/dt)
-    
-    if mode=='sine':
-        from numpy import sin, pi
-        
-        s_0 = sin(2*pi*linspace(0,T,dt)/T)
-        
-    if mode=='freq':
-        from numpy import sin, pi, arange
-        
-        s_0 = sin(2*pi*arange(sr*T)*freq/sr)
-        
-    elif mode=='saw':
-        from numpy import zeros
-        
-        s_0 = zeros(n)
-        
-        s_0[0:n//2+1] = linspace(0,1,n//2+1)
-        s_0[n//2:n] = linspace(1,0,n//2+1)[0:n//2]
-    
-    
+    if mode != 'txt':
+        print("Modo: 'wav'")
     else:
-        return "¡Error! Modo de onda de output no especificada"
+        print("Modo: 'txt'")
+        print("Guardar txt: %s" % savetxt)
+        print("Mostrar gráfico: %s" % showplot)
     
-    s_0 = s_0.astype(float32)
+    print("Longitud del buffer: %i" % int(bsp.dT/bsp.dt))
+    if int(bsp.dT/bsp.dt) != bsp.dT/bsp.dt:
+        print("¡Ojo! El intervalo dt no entra un número entero \
+        de veces en dT")
+        bsp.dt = bsp.dT/int(bsp.dT/bsp.dt)
+        print("Intervalo redefinido a %f s" % bsp.dt)
+        
+    if int(T/bsp.dT) != T/bsp.dT:
+        print("¡Ojo! El tiempo de grabación \
+        no es un número entero de veces dT")
+        if int(T/bsp.dT) != 0:
+            T = int(T/bsp.dT)*bsp.dT
+        else:
+            print("¡Ojo! El tiempo de grabación era menor a dT")
+            T = bsp.dT
+        print("Tiempo de grabación redefinido a %f s" % T)
+    
+    p = pyaudio.PyAudio()
+    s_f = []
+    n = int(bsp.dT/bsp.dt)
+    
+    if form=='freq':
+        s_0 = np.sin(2*np.pi*np.arange(asp.sr*bsp.dT)*bsp.freq/asp.sr)
+    else:
+        s_0 = waveform(form, n)
+    s_0 = bsp.vol * s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_0, pyaudio.paContinue)
     
-    streamplay = p.open(format=ft,
-                channels=ch,
-                rate=sr,
+    streamplay = p.open(format=asp.ft_play,
+                channels=asp.ch_play,
+                rate=asp.sr,
                 output=True,
                 stream_callback = callback)
 
-    streamrecord = p.open(format=ft,
-                channels=ch,
-                rate=sr,
+    streamrecord = p.open(format=asp.ft_rec,
+                channels=asp.ch_rec,
+                rate=asp.sr,
                 input=True,
                 frames_per_buffer=n)
 
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
-    data = streamrecord.read(n*(sr / n * m * T))
-    recording_float.extend(fromstring(data, 'Float32'))
-    s_f.append(data)
-    print("* done recording")    
-    
+    data = streamrecord.read(int(asp.sr * T))
+    print("* done recording")
 
     streamrecord.stop_stream()
     streamplay.stop_stream()
@@ -97,23 +132,29 @@ def play_record(fname='output',
     streamplay.close()
        
     p.terminate()
-    
-    savetxt(str(freq)+'.txt',recording_float)
-    
-    
-    #graficar pa ver que sale
-    plt.figure()
-    #plt.plot(samples[2000:3000],'bo')
-    plt.plot(recording_float[2000:3000],'ro')
-    plt.ylabel('señal grabada')
-    plt.grid()
-    plt.show()    
-        
-    
-    wf = wave.open((fname+'.wav'), 'wb')
-    wf.setnchannels(ch)
-    wf.setsampwidth(p.get_sample_size(ft))
-    wf.setframerate(sr)
-    wf.writeframes(b''.join(s_f))
-    wf.close()
-    return s_0, recording_float
+
+    if mode == 'txt':
+        s_f.extend(np.fromstring(data, 'Float32'))
+        if savetxt:
+            os.chdir(fsp.fdir)
+            savetxt((new_name(fsp.fname, 'txt', fsp.fdir)+'.txt'), s_f)
+            os.chdir(home)
+        if showplot:
+            plt.figure()
+            plt.plot(s_f[2000:3000], 'ro-')
+            plt.ylabel('señal grabada')
+            plt.grid()
+            plt.show()
+        return s_0, s_f
+            
+    else:
+        s_f.append(data)
+        fsp.fname = new_name(fsp.fname, 'wav', fsp.fdir)
+        os.chdir(fsp.fdir)
+        wf = wave.open((fsp.fname + '.wav'), 'wb')
+        wf.setnchannels(asp.ch_rec)
+        wf.setsampwidth(p.get_sample_size(asp.ft_rec))
+        wf.setframerate(asp.sr)
+        wf.writeframes(b''.join(s_f))
+        wf.close()
+        os.chdir(home)
