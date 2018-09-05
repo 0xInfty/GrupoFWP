@@ -8,28 +8,40 @@ Created on Tue Aug 28 18:34:02 2018
 @author: mfar
 """
 
+import os
 from pyaudio import paInt16, paFloat32
 
 def play_record(
     T, # duración en seg de la grabación
-    fname='output', 
-    #A = 1, # amplitud, range [0,1]
-    dT = 1, # duración del buffer
+    form = 'freq',
+    mode = 'txt',
+    savetxt = True,
+    showplot = True,
+    dT = 1, # duración en seg del buffer
+    dt = 0.005, # duración en seg de un frame del buffer
     #n = 200 # cantidad de frames en un buffer = chunk
-    dt = 0.005, # duración de cada frame del buffer
+    freq = 440, # frecuencia del modo 'freq'
     sr = 44000, # sample rate
     ch = 2, # cantidad de canales tanto de input como de output
     ft = paInt16, # formato de input
-    freq = 440,
-    mode = 'saw', # modo de input "saw" o "sine"
-    savewav = True,
-    savetext = False,
-    returntxt = False,
+    fname = 'output',
+    fdir = os.getcwd()
     ): 
 
     import pyaudio
-    from numpy import linspace, float32
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import os
     import wave
+    
+    home = os.getcwd()
+    
+    if mode != 'txt':
+        print("Modo: 'wav'")
+    else:
+        print("Modo: 'txt'")
+        print("Guardar txt: %s" % savetxt)
+        print("Mostrar gráfico: %s" % showplot)
     
     print("Longitud del buffer: %i" % int(dT/dt))
     if int(dT/dt) != dT/dt:
@@ -52,28 +64,25 @@ def play_record(
     s_f = []    
     n = int(dT/dt)
     
-    if mode=='sine':
-        from numpy import sin, pi
+    if form=='sine':
         
-        s_0 = sin(2*pi*linspace(0,dT,dt)/dT)
+        s_0 = np.sin(2*np.pi*np.linspace(0,dT,dt)/dT)
         
-    if mode=='freq':
-        from numpy import sin, pi, arange
+    if form=='freq':
         
-        s_0 = sin(2*pi*arange(sr*dT)*freq/sr)
+        s_0 = np.sin(2*np.pi*np.arange(sr*dT)*freq/sr)
         
-    elif mode=='saw':
-        from numpy import zeros
+    elif form=='saw':
         
-        s_0 = zeros(n)
+        s_0 = np.zeros(n)
         
-        s_0[0:n//2+1] = linspace(0,1,n//2+1)
-        s_0[n//2:n] = linspace(1,0,n//2+1)[0:n//2]
+        s_0[0:n//2+1] = np.linspace(0,1,n//2+1)
+        s_0[n//2:n] = np.linspace(1,0,n//2+1)[0:n//2]
     
     else:
         return "¡Error! Modo de onda de output no especificada"
     
-    s_0 = s_0.astype(float32)
+    s_0 = s_0.astype(np.float32)
     
     def callback(in_data, frame_count, time_info, status):
         return (s_0, pyaudio.paContinue)
@@ -93,10 +102,8 @@ def play_record(
     streamplay.start_stream()
     print("* recording")
     streamrecord.start_stream()
-    for i in range(0, int(sr / n * T)):#m * T)):
-        data = streamrecord.read(n)
-        s_f.append(data)
-    print("* done recording")    
+    data = streamrecord.read(int(sr * T))
+    print("* done recording")
 
     streamrecord.stop_stream()
     streamplay.stop_stream()
@@ -105,10 +112,28 @@ def play_record(
     streamplay.close()
        
     p.terminate()
-    
-    wf = wave.open((fname+'.wav'), 'wb')
-    wf.setnchannels(ch)
-    wf.setsampwidth(p.get_sample_size(ft))
-    wf.setframerate(sr)
-    wf.writeframes(b''.join(s_f))
-    wf.close()
+
+    if mode == 'txt':
+        s_f.extend(np.fromstring(data, 'Float32'))
+        if savetxt:
+            os.chdir(fdir)
+            np.savetxt((fname+'.txt'), s_f)
+            os.chdir(home)
+        if showplot:
+            plt.figure()
+            plt.plot(s_f[2000:3000], 'ro-')
+            plt.ylabel('señal grabada')
+            plt.grid()
+            plt.show()
+        return s_0, s_f
+            
+    else:
+        s_f.append(data)
+        os.chdir(fdir)
+        wf = wave.open((fname + '.wav'), 'wb')
+        wf.setnchannels(ch)
+        wf.setsampwidth(p.get_sample_size(ft))
+        wf.setframerate(sr)
+        wf.writeframes(b''.join(s_f))
+        wf.close()
+        os.chdir(home)
