@@ -10,7 +10,7 @@ def create_sine(time, freq):
     wave =np.sin(2 * np.pi * time * freq)
     return wave        
     
-def create_ramps(time, freq, type_of_ramp):
+def create_ramps(time, freq, type_of_ramp=1):
     """ Creates ascending and descending sawtooth wave,
     or a tringle wave, depending on the value of type_of_ramp.
     Used by create_sawtooth_up, create_sawtooth_down and 
@@ -21,7 +21,7 @@ def create_ramps(time, freq, type_of_ramp):
     
 def create_sawtooth_up(time, freq):
     """ Creates a sawtooth wave with ascending ramps"""
-    wave = create_ramps(time ,freq)
+    wave = create_ramps(time ,freq, 1)
     return wave        
 
 def create_sawtooth_down(time, freq):
@@ -90,8 +90,7 @@ def function_generator(waveform, freq=400, duration=None, amp=1,
     sampling_freq: int
         Sampling frequency in Hz.
     """
-    
-    from numpy import arange
+
     period = 1/freq
     time = np.arange(period, step=1/samplig_freq) #time vector 1 period long
     func = given_waveform(waveform)
@@ -104,49 +103,55 @@ def function_generator(waveform, freq=400, duration=None, amp=1,
         while True: 
             yield wave
 
-#
-#def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amp=1, 
-#                   waveform='sine', duration_per_freq=1, 
-#                   silence_between_freq=0, sampling_frequency=17000):
-#    """
-#    freqs_to_sweep: tuple or array-like
-#        If tuple: expects (start, stop, step) tuple and generates an array 
-#        using np.arrange. If array, size should be (n_freqs, ) and contain
-#        the frequency values to sweep in Hz. Default: sweeps from 100Hz to
-#        1000Hz every 10Hz.
-#    amp: float or array-like
-#        Amplitud of generated wave.  If array-like, length should be equal
-#        to ammount of frequency values to sweep. Default: 1.
-#    waveform: str
-#        Type of waveform to use. Can be 'sine', 'sawtoothup', 'sawtoothdown',
-#        'ramp', 'triangular', 'square' or 'custom'. Default: sine.
-#    duration_per_freq: float or array-like
-#        Duration of each frequency stretch in seconds. If array-like, length 
-#        should be equal to ammount of frequency values to sweep. 
-#        Default: 1 second.
-#    silence_between_freq: float or array-like
-#        Time to wait between each frequency in seconds. If array-like, length 
-#        should be equal to ammount of frequency values to sweep. 
-#        Default: 0 seconds.
-#    """
-##    Crete frequency array, if necessary
-#    if isinstance(freqs_to_sweep,tuple):
-#        freqs_to_sweep = arrange(freqs_to_sweep(0), freqs_to_sweep(1),
-#                                 freqs_to_sweep(2))
-#    N_freqs = len(freqs_to_sweep)
-#    
-#    if isinstance(amp,float):
-#        amp = [amp]*N_freqs
-#        
-#    if isinstance(duration_per_freq,float):
-#        duration_per_freq = [duration_per_freq]*N_freqs
-#        
-#    if isinstance(silence_between_freq,float):
-#        silence_between_freq = [silence_between_freq]*N_freqs
-#
-#    
-#    for freq, duration, amp, silence in zip(freqs_to_sweep, amp, )
-#    wave = function_creator(waveform, freq, duration, amp, samplig_freq)            
+
+def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1, 
+                   waveform='sine', duration_per_freq=1, 
+                   silence_between_freq=0, sampling_freq=17000):
+    """
+    freqs_to_sweep: tuple or array-like
+        If tuple: expects (start, stop, step) tuple and generates an array 
+        using np.arrange. If array, size should be (n_freqs, ) and contain
+        the frequency values to sweep in Hz. Default: sweeps from 100Hz to
+        1000Hz every 10Hz.
+    amp: float or array-like
+        Amplitud of generated wave.  If array-like, length should be equal
+        to ammount of frequency values to sweep. Default: 1.
+    waveform: str
+        Type of waveform to use. Can be 'sine', 'sawtoothup', 'sawtoothdown',
+        'ramp', 'triangular', 'square' or 'custom'. Default: sine.
+    duration_per_freq: float or array-like
+        Duration of each frequency stretch in seconds. If array-like, length 
+        should be equal to ammount of frequency values to sweep. 
+        Default: 1 second.
+    silence_between_freq: float or array-like
+        Time to wait between each frequency in seconds. If array-like, length 
+        should be equal to ammount of frequency values to sweep. 
+        Default: 0 seconds.
+    """
+#    Crete frequency array, if necessary
+    if isinstance(freqs_to_sweep,tuple):
+        freqs_to_sweep = np.arrange(freqs_to_sweep(0), freqs_to_sweep(1),
+                                 freqs_to_sweep(2))
+                                 
+    N_freqs = len(freqs_to_sweep)#ammount of frequencies to sweep
+    
+    
+#    Transform all variables that are not iterables to lists of correct length
+    if isinstance(amplitude,float):
+        amplitude = [amplitude] * N_freqs
+        
+    if isinstance(duration_per_freq,float):
+        duration_per_freq = [duration_per_freq] * N_freqs
+        
+    if isinstance(silence_between_freq,float):
+        silence_between_freq = [silence_between_freq] * N_freqs
+    
+    for freq, duration, amp, silence in zip(freqs_to_sweep,
+                                            amplitude,
+                                            duration_per_freq,
+                                            silence_between_freq):
+        wave = function_creator(waveform, freq, duration, amp, sampling_freq)
+        yield wave
 #%%
 
 #class SoundDeviceGenerator:
