@@ -192,6 +192,7 @@ def two_channel_play_callback_rec(signalplayleft, signalplayright,
                       samplerate=44000,
                       nchannelsplay=2,
                       nchannelsrec=2):
+    
     samplestuple = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
     samplesarray=np.transpose(np.array(samplestuple)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
     signalplay=encode(samplesarray)
