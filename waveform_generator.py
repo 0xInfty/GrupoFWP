@@ -130,6 +130,8 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
     """
 #    Crete frequency array, if necessary
     if isinstance(freqs_to_sweep,tuple):
+        if not len(freqs_to_sweep)==3:
+            raise ValueError('Tuple length must be 3 containing (start, stop, step).')
         freqs_to_sweep = np.arrange(freqs_to_sweep(0), freqs_to_sweep(1),
                                  freqs_to_sweep(2))
                                  
@@ -154,9 +156,19 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
         yield wave
 #%%
 
-#class SoundDeviceGenerator:
-#    
-#    def __init__(self, sampling_frequency):
-#        self.sampling_frequency = sampling_frequency
-#        
-#    def generate()
+class Wave:
+    
+    def __init__(self, waveform='sine', frequency=400, amplitude=1):
+        self.freq = frequency
+        self.amp = amplitude
+        self.waveform = given_waveform(waveform)
+        
+    def evaluete(self, time):
+        wave = self.waveform(time, self.freq) * self.amp
+        return wave
+    
+class SoundDeviceGenerator:
+    
+    def __init__(self, sampling_frequency,buffer_size):
+        self.sampling_frequency = sampling_frequency
+        self.buffer_size = buffer_size
