@@ -69,7 +69,7 @@ whose minimum amplitude is -1).
         
     else:        
 
-        raise KeyError("Los posibles valores de key son: 'sin', 'tri', \
-        'saw', 'freq', 'squ'.")
+        raise KeyError("Los posibles valores de key son: 'sine', 'tri', \
+        'saw+', 'saw-', 'freq', 'squ'.")
     
     return out
