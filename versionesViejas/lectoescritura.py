@@ -89,15 +89,6 @@ streamrecord = p.open(format=FORMAT,
                 rate=RATE,
                 input=True,
                 frames_per_buffer=CHUNK)
-#frames = []
-#recording_float=[]
-#print("* recording")
-#for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-#    data = streamrecord.read(CHUNK)
-#    recording_float.extend(np.fromstring(data, 'Float32'))
-#    frames.append(data)
-#print("* done recording")
-
 
 
 frames = [] #este va a tener la data tal cual se graba, para despues hacer un wav

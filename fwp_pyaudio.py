@@ -184,3 +184,38 @@ def play_callback_rec(signalplay,
     streamplay.close()
     
     return signalrec
+    
+    #%%
+
+def two_channel_play_callback_rec(signalplayleft, signalplayright,
+                      signalrecduration,
+                      samplerate=44000,
+                      nchannelsplay=2,
+                      nchannelsrec=2):
+    samplestuple = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
+    samplesarray=np.transpose(np.array(samplestuple)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
+    signalplay=encode(samplesarray)
+    streamplay = play_callback(signalplay,
+                               samplerate=samplerate,
+                               nchannelsplay=nchannelsplay,
+                               formatplay=pyaudio.paFloat32)
+    
+    streamrec = rec(samplerate=samplerate,
+                    nchannelsrec=nchannelsrec,
+                    formatrec=pyaudio.paFloat32)
+    
+    streamplay.start_stream()
+    print("* Recording")
+    streamrec.start_stream()
+    signalrec = streamrec.read(int(samplerate * signalrecduration))
+    print("* Done recording")
+
+    streamrec.stop_stream()
+    streamplay.stop_stream()
+    
+    streamrec.close()
+    streamplay.close()
+    
+    result= decode(signalrec, 2)
+    return result
+    
