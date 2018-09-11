@@ -11,7 +11,6 @@ import numpy as np
 import wave
 import wavemaker as wmaker
 
-
 #%%
 
 def decode(in_data, channels):
@@ -157,7 +156,7 @@ def make_signal(waveform, frequency, signalplayduration,
     
     """
     
-    signal = wmaker.fuction_creator(waveform, freq=frequency, 
+    signal = wmaker.function_creator(waveform, freq=frequency, 
                                    duration=signalplayduration,
                                    amp=amplitude, 
                                    samplig_freq=samplerate)
@@ -307,9 +306,10 @@ def two_channel_play_callback_rec(signalplayleft, signalplayright,
                       nchannelsplay=2,
                       nchannelsrec=2):
     
-    samplestuple = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
-    samplesarray=np.transpose(np.array(samplestuple)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
-    signalplay=encode(samplesarray)
+    samples = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
+    samples = np.transpose(np.array(samples)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
+    signalplay = encode(samples)
+    
     streamplay = play_callback(signalplay,
                                samplerate=samplerate,
                                nchannelsplay=nchannelsplay,
