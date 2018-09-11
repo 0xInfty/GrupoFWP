@@ -179,10 +179,10 @@ class wave:
 import numpy as np
     
 def encode(signal):
-"""
-Convert a 2D numpy array into a byte stream for PyAudio.
-Signal should be a numpy array with shape (chunk_size, channels)
-"""
+    """
+    Convert a 2D numpy array into a byte stream for PyAudio.
+    Signal should be a numpy array with shape (chunk_size, channels)
+    """
     interleaved = signal.flatten()
     
     # TODO: handle data type as parameter, convert between pyaudio/numpy types
