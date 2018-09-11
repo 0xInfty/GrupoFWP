@@ -1,79 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Función Play + Record
-@date: 29/08/2018
+Módulo PyAudio
+@date: 05/09/2018
 @author: Vall
-Basado en....
-Created on Tue Aug 28 18:34:02 2018
-@author: mfar
 """
 
 import pyaudio
 import os
 import numpy as np
 import wave
+import wavemaker as wmaker
 
-home = os.getcwd()
-import waveform_generator as wform
-os.chdir(home+'\\Funciones')
-from waveform import waveform as wformvall
-os.chdir(home)
-del home
-
-#%%
-
-def savetext(datanumpylike,
-             filename,
-             savedir=os.getcwd(),
-             overwrite=False):
-    """Takes some array-like data and saves it on a .txt file.
-    
-    This function takes some data and saves it on a .txt file on 
-    savedir directory. If overwrite=False, it checks whether 
-    'filename.txt' exists or not; if it already exists, it saves the 
-    data as 'filename (2).txt'. If overwrite=True, it saves the data 
-    on 'filename.txt' even if it already exists.
-    
-    Variables
-    ---------
-    datanumpylike: array, list
-        The data to be saved.
-    filename: string
-        The name you wish the .txt file to have.
-    savedir=os.getcwd: string
-        The directory you wish to save the .txt file at.
-    overwrite=False: bool
-        A parameter which allows or not to overwrite a file.
-    
-    Return
-    ------
-    nothing
-    
-    Yield
-    -----
-    .txt file
-    
-    """
-    
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
-    
-    if not overwrite:
-        while os.path.isfile(filename+'.txt'):
-            filename = filename + ' (2)'
-
-    np.savetxt((filename+'.txt'), np.array(datanumpylike), 
-               delimiter='\t', newline='\n')
-
-    os.chdir(home)
-    
-    print('Archivo {}.txt guardado'.format(filename))
-    
-    return
 
 #%%
 
@@ -134,6 +71,98 @@ def encode(signal):
     # TODO: handle data type as parameter, convert between pyaudio/numpy types
     out_data = interleaved.astype(np.float32).tostring()
     return out_data
+
+#%%
+
+def make_buffer(waveform, frequency, amplitude=1,
+                framesperbuffer=1024, samplerate=44100):
+    """Makes a sort of audio buffer with a given waveform and frequency.
+    
+    This function returns one or several periods of a wave which 
+    waveform is given by the 'waveform' string. The returned signal
+    has a frequency given by 'frequency' and is intended to fill a 
+    buffer whith 'framesperbuffer' frames, which should be read at a 
+    'samplerate' sampling rate.
+    
+    Variables
+    ---------
+    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
+    'triangular', 'square'}
+        Signal's waveform.
+    frequency: int, float
+        Signal's frequency.
+    amplitude: int, float {from 0 to 1}
+        Signal's amplitude.
+    framesperbuffer: int
+        Audio buffer's number of frames.
+    samplerate: int, float
+        Audio sampling rate.
+    
+    Returns
+    -------
+    buffer: array
+        Audio signal designed to fill an audio buffer.
+    
+    """
+    
+    duration = 1/frequency
+    
+    buffer = wmaker.function_creator(waveform, freq=frequency,
+                                    duration=duration,
+                                    amp=amplitude,
+                                    samplig_freq=samplerate)
+
+    m = 1
+    while len(buffer) < framesperbuffer:
+        m = m + 1
+        buffer = wmaker.function_creator(waveform, freq=frequency,
+                                        duration=m*duration,
+                                        amp=amplitude,
+                                        samplig_freq=samplerate)
+        
+    if len(buffer) / framesperbuffer == \
+          int(len(buffer) / framesperbuffer):
+              print("Entra bien en un buffer")
+    
+    return buffer
+
+#%%
+
+def make_signal(waveform, frequency, signalplayduration, 
+               amplitude=1, samplerate=44100):
+    """Makes a signal with given waveform, duration and frequency.
+    
+    This function makes an audio signal whith given waveform, duration, 
+    frequency and amplitude, designed to be played at a given sampling 
+    rate.
+    
+    Variables
+    ---------
+    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
+    'triangular', 'square'}
+        Signal's waveform.
+    frequency: int, float
+        Signal's frequency.
+    signalplayduration: int, float.
+        Signal's duration in seconds.
+    amplitude=1: int, float {from 0 to 1}
+        Signal's amplitude.
+    samplerate=44100: int, float
+        Signal's sampling rate.
+    
+    Returns
+    -------
+    signal: array
+        Output signal.    
+    
+    """
+    
+    signal = wmaker.fuction_creator(waveform, freq=frequency, 
+                                   duration=signalplayduration,
+                                   amp=amplitude, 
+                                   samplig_freq=samplerate)
+    
+    return signal
 
 #%%
 
@@ -210,255 +239,7 @@ def rec(nchannelsrec=1,
                        rate=samplerate,
                        input=True)
     
-    return streamrec
-    
-#%%
-
-def savewav(datapyaudio,
-            filename,
-            datanchannels=1,
-            dataformat=pyaudio.paFloat32,
-            samplerate=44100,
-            savedir=os.getcwd(),
-            overwrite=False):
-    """Takes a PyAudio byte stream and saves it on a .wav file.
-    
-    Takes a PyAudio byte stream and saves it on a .wav file at savedir 
-    directory. It specifies some parameters: number of audio channels, 
-    format of the audio data, sampling rate of the data. If 
-    overwrite=False, it checks whether 'filename.wav' exists or not; if 
-    it already exists, then it saves it as 'filename (2).wav'. If 
-    overwrite=True, it saves it as 'filename.wav' even if it already 
-    exists.
-    
-    """
-    
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
-    
-    if not overwrite:
-        while os.path.isfile(filename+'.wav'):
-            filename = filename + ' (2)'
-    
-    datalist = []
-    datalist.append(datapyaudio)
-    
-    os.chdir(savedir)
-    
-    p = pyaudio.pyAudio()
-    wf = wave.open((filename + '.wav'), 'wb')
-    
-    wf.setnchannels(datanchannels)
-    wf.setsampwidth(p.get_sample_size(dataformat))
-    wf.setframerate(samplerate)
-    wf.writeframes(b''.join(datalist))
-    
-    wf.close()
-
-    os.chdir(home)
-    
-    print('Archivo {}.wav guardado'.format(filename))
-    
-    return
-
-#%%
-
-def make_buffer_vale(waveform, frequency, amplitude=1,
-                     framesperbuffer=1024, samplerate=44100,
-                     adjust='frequency'):
-    """Makes an audio buffer with a given waveform.
-    
-    This function makes an audio buffer which includes one or several 
-    complete periods of a wave whose form is specified by the 'waveform' 
-    string. Its amplitude is given by 'amplitude' parameter.
-    
-    This function has several modes:
-        
-        1) If adjust='frequency', the given sampling rate and number of 
-    frames per buffer are respected. In order to make one or several 
-    complete periods to fit, it modifies the frequency.
-    
-        2) If adjust='framesperbuffer', the given sampling rate is 
-    respected. In order to make one or several complete periods to fit,
-    it modifies the number of frames per buffer. If this is not enough, 
-    it also modifies the frequency.
-    
-        3) If adjust='samplerate', the number of frames per buffer is 
-    respected. In order to make one or several complete periods to fit, 
-    it modifies the samping rate. If this is not enough, it also 
-    modifies the frequency.
-    
-    Since this function could modify some of its input parameters 
-    (frequency, sampling rate and number of frames per buffer), it also 
-    returns a dictionary which contains the output buffers's parameters.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'saw+', 'saw-', 'tri', 'squ'}
-        The signal's waveform.
-    frequency: int, float
-        The signal's desired frequency.
-    amplitude=1: int, float {from 0 to 1}
-        The signal's amplitude.
-    framesperbuffer=1024: int
-        The buffer's desired number of frames.
-    samplerate=44100: int, float
-        The buffer's desired sampling rate.
-    adjust='frequency': string {'frequency', 'samplerate', 
-    'framesperbuffer'}
-        The parameter that the function adjusts in order to one or more 
-        complete periods to fit inside the buffer.
-    
-    Returns
-    -------
-    buffer: array
-        One or several complete periods of the signal.
-    other: dictionary {'frequency', 'samplerate', 'framesperbuffer'}
-        The output buffer's parameters.
-    
-    See also
-    --------
-    waveform: function used to make one or several periods.
-    
-    """
-
-    m = 0
-    i = 0
-    while m < 1:
-        i = i + 1
-        m = int(i * samplerate/(framesperbuffer * frequency))
-    
-    other = {'frequency': frequency, 'samplerate': samplerate, 
-             'framesperbuffer': framesperbuffer}
-    
-    if adjust == 'frequency':
-        other['frequency'] = i * samplerate / (framesperbuffer * m)
-        print("Instead of {} Hz, its frequency is {:.2f} Hz".format(
-                frequency, other['frequency']))
-        
-    elif adjust == 'samplerate':
-        other['samplerate'] = (m/i) * framesperbuffer * frequency
-        print("Instead of {} Hz, its sample rate is \
-        {:.0f} Hz".format(samplerate, other['samplerate']))
-        other['frequency'] = i * int(samplerate) / (framesperbuffer * m)
-        print("Instead of {} Hz, its frequency is {:.2f} Hz".format(
-                frequency, other['frequency']))
-
-    elif adjust == 'framesperbuffer':
-        other['framesperbuffer'] = i * samplerate / (m * frequency)
-        print("Instead of {}, it has {:.0f} frames per buffer".format(
-                framesperbuffer, other['framesperbuffer']))
-        other['frequency'] = i * samplerate / (int(framesperbuffer) * m)
-        print("Instead of {} Hz, its frequency is {:.2f} Hz".format(
-                frequency, other['frequency']))
-        
-    else:
-        raise KeyError("El parámetro 'adjust' debe ser 'frequency', \
-        'samplerate' ó 'framesperbuffer'")
-        return
-    
-    buffer = wformvall(waveform, other['framesperbuffer'], m=m)
-    buffer = buffer * amplitude
-    
-    return buffer, other
-    
-    
-#%%
-
-def make_buffer(waveform, frequency, amplitude=1,
-                framesperbuffer=1024, samplerate=44100):
-    """Makes a sort of audio buffer with a given waveform and frequency.
-    
-    This function returns one or several periods of a wave which 
-    waveform is given by the 'waveform' string. The returned signal
-    has a frequency given by 'frequency' and is intended to fill a 
-    buffer whith 'framesperbuffer' frames, which should be read at a 
-    'samplerate' sampling rate.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
-    'triangular', 'square'}
-        Signal's waveform.
-    frequency: int, float
-        Signal's frequency.
-    amplitude: int, float {from 0 to 1}
-        Signal's amplitude.
-    framesperbuffer: int
-        Audio buffer's number of frames.
-    samplerate: int, float
-        Audio sampling rate.
-    
-    Returns
-    -------
-    buffer: array
-        Audio signal designed to fill an audio buffer.
-    
-    """
-    
-    duration = 1/frequency
-    
-    buffer = wform.function_creator(waveform, freq=frequency,
-                                    duration=duration,
-                                    amp=amplitude,
-                                    samplig_freq=samplerate)
-
-    m = 1
-    while len(buffer) < framesperbuffer:
-        m = m + 1
-        buffer = wform.function_creator(waveform, freq=frequency,
-                                        duration=m*duration,
-                                        amp=amplitude,
-                                        samplig_freq=samplerate)
-        
-    if len(buffer) / framesperbuffer == \
-          int(len(buffer) / framesperbuffer):
-              print("Entra bien en un buffer")
-    
-    return buffer
-
-#%%
-
-def make_signal(waveform, frequency, signalplayduration, 
-               amplitude=1, samplerate=44100):
-    """Makes a signal with given waveform, duration and frequency.
-    
-    This function makes an audio signal whith given waveform, duration, 
-    frequency and amplitude, designed to be played at a given sampling 
-    rate.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
-    'triangular', 'square'}
-        Signal's waveform.
-    frequency: int, float
-        Signal's frequency.
-    signalplayduration: int, float.
-        Signal's duration in seconds.
-    amplitude=1: int, float {from 0 to 1}
-        Signal's amplitude.
-    samplerate=44100: int, float
-        Signal's sampling rate.
-    
-    Returns
-    -------
-    signal: array
-        Output signal.    
-    
-    """
-    
-    signal = wform.fuction_creator(waveform, freq=frequency, 
-                                   duration=signalplayduration,
-                                   amp=amplitude, 
-                                   samplig_freq=samplerate)
-    
-    return signal
-    
+    return streamrec   
 
 #%%
 
@@ -517,3 +298,146 @@ def play_callback_rec(signalplay,
     streamplay.close()
     
     return signalrec
+
+#%%
+
+def two_channel_play_callback_rec(signalplayleft, signalplayright,
+                      signalrecduration,
+                      samplerate=44000,
+                      nchannelsplay=2,
+                      nchannelsrec=2):
+    
+    samplestuple = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
+    samplesarray=np.transpose(np.array(samplestuple)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
+    signalplay=encode(samplesarray)
+    streamplay = play_callback(signalplay,
+                               samplerate=samplerate,
+                               nchannelsplay=nchannelsplay,
+                               formatplay=pyaudio.paFloat32)
+    
+    streamrec = rec(samplerate=samplerate,
+                    nchannelsrec=nchannelsrec,
+                    formatrec=pyaudio.paFloat32)
+    
+    streamplay.start_stream()
+    print("* Recording")
+    streamrec.start_stream()
+    signalrec = streamrec.read(int(samplerate * signalrecduration))
+    print("* Done recording")
+
+    streamrec.stop_stream()
+    streamplay.stop_stream()
+    
+    streamrec.close()
+    streamplay.close()
+    
+    result= decode(signalrec, 2)
+    return result
+
+#%%
+
+def savetext(datanumpylike,
+             filename,
+             savedir=os.getcwd(),
+             overwrite=False):
+    """Takes some array-like data and saves it on a .txt file.
+    
+    This function takes some data and saves it on a .txt file on 
+    savedir directory. If overwrite=False, it checks whether 
+    'filename.txt' exists or not; if it already exists, it saves the 
+    data as 'filename (2).txt'. If overwrite=True, it saves the data 
+    on 'filename.txt' even if it already exists.
+    
+    Variables
+    ---------
+    datanumpylike: array, list
+        The data to be saved.
+    filename: string
+        The name you wish the .txt file to have.
+    savedir=os.getcwd: string
+        The directory you wish to save the .txt file at.
+    overwrite=False: bool
+        A parameter which allows or not to overwrite a file.
+    
+    Return
+    ------
+    nothing
+    
+    Yield
+    -----
+    .txt file
+    
+    """
+    
+    home = os.getcwd()
+    
+    if not os.path.isdir(savedir):
+        os.makedirs(savedir)
+    
+    os.chdir(savedir)
+    
+    if not overwrite:
+        while os.path.isfile(filename+'.txt'):
+            filename = filename + ' (2)'
+
+    np.savetxt((filename+'.txt'), np.array(datanumpylike), 
+               delimiter='\t', newline='\n')
+
+    os.chdir(home)
+    
+    print('Archivo {}.txt guardado'.format(filename))
+    
+    return
+
+#%%
+
+def savewav(datapyaudio,
+            filename,
+            datanchannels=1,
+            dataformat=pyaudio.paFloat32,
+            samplerate=44100,
+            savedir=os.getcwd(),
+            overwrite=False):
+    """Takes a PyAudio byte stream and saves it on a .wav file.
+    
+    Takes a PyAudio byte stream and saves it on a .wav file at savedir 
+    directory. It specifies some parameters: number of audio channels, 
+    format of the audio data, sampling rate of the data. If 
+    overwrite=False, it checks whether 'filename.wav' exists or not; if 
+    it already exists, then it saves it as 'filename (2).wav'. If 
+    overwrite=True, it saves it as 'filename.wav' even if it already 
+    exists.
+    
+    """
+    
+    home = os.getcwd()
+    
+    if not os.path.isdir(savedir):
+        os.makedirs(savedir)
+    
+    os.chdir(savedir)
+    
+    if not overwrite:
+        while os.path.isfile(filename+'.wav'):
+            filename = filename + ' (2)'
+    
+    datalist = []
+    datalist.append(datapyaudio)
+    
+    os.chdir(savedir)
+    
+    p = pyaudio.pyAudio()
+    wf = wave.open((filename + '.wav'), 'wb')
+    
+    wf.setnchannels(datanchannels)
+    wf.setsampwidth(p.get_sample_size(dataformat))
+    wf.setframerate(samplerate)
+    wf.writeframes(b''.join(datalist))
+    
+    wf.close()
+
+    os.chdir(home)
+    
+    print('Archivo {}.wav guardado'.format(filename))
+    
+    return
