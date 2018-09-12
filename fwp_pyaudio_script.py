@@ -82,10 +82,13 @@ for i in range(len(duration)):
     if duration[i] < 0.2:
         duration[i] = 0.2
 
-key = bool(input('Beware! This will take at least {:.1f} seconds \
-                 ({:.1f} hours). Continue anyways?\n'.format(
+key = input('Beware! This will take at least {:.1f} seconds \
+                 ({:.1f} hours). Continue? Y/N\n'.format(
                          sum(duration), 
-                         sum(duration)/3600)))
+                         sum(duration)/3600))
+                         
+key_decode = {'Y':True, 'N':False}
+key = key_decode.get(key, True)
 
 signalrms = []
 

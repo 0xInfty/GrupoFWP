@@ -113,11 +113,15 @@ class PyAudioWave:
         return time
     
         
-    def write_signal(self, wave, periods_per_chunk=1):
+    def write_signal(self, wave, periods_per_chunk=1, display_warnings=True):
         ''' Creates a signal the pyaudio stream can write (play). If signal is 
         two-channel, output is formated accordingly.'''
-        
+    
         if self.nchannels == 1:
+            if isinstance(wave,tuple):
+                if display_warnings: print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
+                wave = wave[0]
+                
             time = self.create_time(wave, periods_per_chunk)
             
             return wave.evaluate(time)
@@ -131,13 +135,11 @@ class PyAudioWave:
             en cada iteración. Por ahora, devuelve los cachos cortados.'''
             
             if not isinstance(wave,tuple): #should rewrite as warning
-                print('''Requested two channel signal, but only provided one wave
-                      object. Will write same signal in both channels.''')
+                if display_warnings: print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
                 wave = (wave,wave)
           
             else: #should rewrite as warning
-                print('''Requested two channel signal. If frequencies are not
-                      compatible, second channel wave will be cut off.''')
+                if display_warnings: print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
             
             time = self.create_time(wave[0])
 
@@ -149,8 +151,8 @@ class PyAudioWave:
             samplesarray=np.transpose(np.array(sampleslist))
             
             return encode(samplesarray)
-        
-        
+            
+               
     def plot_signal(self, wave, periods_per_chunk=1):
         ''' Returns time and signal arrays ready to plot. If only one wave is
         given, output will be the same as write_signal, but will also return
@@ -361,11 +363,44 @@ def rec(nchannelsrec=1,
 
 #%%
 
+class AfterRecording:
+    '''Very simple class containing paramaters to decide what actions to take after recording.'''
+    def __init__(self, savewav=False, showplot=True, saveplot=False, savetext=False, filename=None):
+        self.savewav=savewav
+        self.showplot=showplot
+        self.saveplot=saveplot
+        self.savetext=savetext
+
+    def act(self, signalrec, nchannesrec, filename=None):
+        
+        if filename is None:
+            filename = self.filename
+        
+        if filename is None and any(self.saveplot, self.savetext, self.savewav):
+            print('filename required.')
+            return
+        
+        if self.savewav:
+            savewav(signalrec, filename, datanchannels=nchannelsrec)
+        
+        signalrec = decode(signalrec, nchannelsrec)
+        
+        if self.showplot:
+            signal_plot(signalrec)
+            
+            if self.saveplot:
+                saveplot(filename)
+        
+        if self.savetext:
+            savetext(signalrec, filename)
+#%%
+
 def play_callback_rec(signalplay, #1st column left
                       signalsduration,
                       nchannelsplay=1,
                       nchannelsrec=1,
-                      samplerate=44100):
+                      samplerate=44100,
+                      after_recording=None):
     
     """Plays a signal and records another one at the same time.
     
@@ -415,6 +450,11 @@ def play_callback_rec(signalplay, #1st column left
     
     streamrec.close()
     streamplay.close()
+    
+    if after_recording is None:
+        after_recording = AfterRecording()
+    
+    after_recording.act(signalrec, nchannelsrec)
     
     return signalrec
 
