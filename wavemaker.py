@@ -132,8 +132,7 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
     if isinstance(freqs_to_sweep,tuple):
         if not len(freqs_to_sweep)==3:
             raise ValueError('Tuple length must be 3 containing (start, stop, step).')
-        freqs_to_sweep = np.arrange(freqs_to_sweep(0), freqs_to_sweep(1),
-                                 freqs_to_sweep(2))
+        freqs_to_sweep = np.arrange(*freqs_to_sweep) #Unpack freqs array
                                  
     N_freqs = len(freqs_to_sweep)#ammount of frequencies to sweep
     
@@ -156,7 +155,7 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
         yield wave
 #%% Clase que genera ondas
 
-class wave:
+class Wave:
     '''Generates an object with a two methods: evaluate(time) and generate (not implemented).
     Has three atributes: waveform, frequency and amplitude. Waveform can be
     'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 'triangular', 'square' or 
@@ -169,7 +168,7 @@ class wave:
         
     def evaluate(self, time):
         '''Takes in an array-like object to evaluate the funcion in.'''
-        wave = self.waveform(time, self.freq) * self.amp
+        wave = self.waveform(time, self.frequency) * self.amplitude
         return wave
     
 #    def generate(self, time, chunk_size):
@@ -190,7 +189,7 @@ def encode(signal):
     return out_data
     
     
-class SoundDeviceGenerator:
+class PyAudioWave:
     ''' A class which takes in a wave object and formats it accordingly to the
     requirements of the pyaudio module for playing. It includes two simple 
     methods that return a signal formated to play or a signal formated to plot,
@@ -201,7 +200,7 @@ class SoundDeviceGenerator:
         buffersize: (int). Writing buffer size
         nchannels: (1 or 2). Number of channels.'''
         
-    def __init__(self, samplingrate=44000, buffersize=1024, nchannels=1):
+    def __init__(self, samplingrate=44100, buffersize=1024, nchannels=1):
         
         self.sampling_rate = samplingrate
         self.buffer_size = buffersize
@@ -237,17 +236,17 @@ class SoundDeviceGenerator:
             if not isinstance(wave,tuple): #should rewrite as warning
                 print('''Requested two channel signal, but only provided one wave
                       object. Will write same signal in both channels.''')
-                waves = (wave,wave)
+                wave = (wave,wave)
           
             else: #should rewrite as warning
                 print('''Requested two channel signal. If frequencies are not
                       compatible, second channel wave will be cut off.''')
             
-            time = self.create_time(waves[0])
+            time = self.create_time(wave[0])
 
             #me armo una lista que tenga en cada columna lo que quiero reproducir por cada canal
-            sampleslist = [np.transpose(waves[0].evaluate(time)),
-                           np.transpose(waves[1].evaluate(time))] 
+            sampleslist = [np.transpose(wave[0].evaluate(time)),
+                           np.transpose(wave[1].evaluate(time))] 
             
             #la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
             samplesarray=np.transpose(np.array(sampleslist))
@@ -268,8 +267,7 @@ class SoundDeviceGenerator:
             return time, wave.evaluate(time)
       
         else: 
-        
-            time = self.create_time(waves[0])
+            time = self.create_time(wave[0],periods_per_chunk)
             signal_list = [w.evaluate(time) for w in wave]
             
             return time, signal_list
