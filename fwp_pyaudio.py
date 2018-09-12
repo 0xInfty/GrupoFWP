@@ -371,7 +371,7 @@ class AfterRecording:
         self.saveplot=saveplot
         self.savetext=savetext
 
-    def act(self, signalrec, nchannesrec, filename=None):
+    def act(self, signalrec, nchannelsrec, filename=None):
         
         if filename is None:
             filename = self.filename
