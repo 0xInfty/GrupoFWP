@@ -370,13 +370,14 @@ class AfterRecording:
         self.showplot=showplot
         self.saveplot=saveplot
         self.savetext=savetext
+        self.filename=filename
 
     def act(self, signalrec, nchannelsrec, filename=None):
         
         if filename is None:
             filename = self.filename
         
-        if filename is None and any(self.saveplot, self.savetext, self.savewav):
+        if filename is None and any((self.saveplot, self.savetext, self.savewav)):
             print('filename required.')
             return
         

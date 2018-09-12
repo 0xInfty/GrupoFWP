@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-home = os.gethome()
+home = os.getcwd()
 os.chdir(home + '\Funciones')
 from rms import rms
 os.chdir(home)

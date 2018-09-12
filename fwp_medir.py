@@ -5,6 +5,7 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
+
 import fwp_pyaudio as fwp
 import wavemaker as wmaker
 
@@ -30,3 +31,5 @@ signalrec = fwp.play_callback_rec(signal_to_play,
                                   nchannelsplay=nchannelsplay,
                                   nchannelsrec=nchannelsrec,
                                   after_recording=after_record_do)
+
+print('something')
