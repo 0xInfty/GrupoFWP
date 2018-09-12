@@ -516,7 +516,7 @@ def savewav(datapyaudio,
     
     os.chdir(savedir)
     
-    p = pyaudio.pyAudio()
+    p = pyaudio.PyAudio()
     wf = wave.open((filename + '.wav'), 'wb')
     
     wf.setnchannels(datanchannels)
