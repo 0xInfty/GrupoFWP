@@ -226,44 +226,6 @@ def make_buffer(waveform, frequency, amplitude=1,
     return buffer
 
 #%%
-
-def make_signal(waveform, frequency, signalplayduration, 
-               amplitude=1, samplerate=44100):
-    
-    """Makes a signal with given waveform, duration and frequency.
-    
-    This function makes an audio signal whith given waveform, duration, 
-    frequency and amplitude, designed to be played at a given sampling 
-    rate.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
-    'triangular', 'square'}
-        Signal's waveform.
-    frequency: int, float
-        Signal's frequency.
-    signalplayduration: int, float.
-        Signal's duration in seconds.
-    amplitude=1: int, float {from 0 to 1}
-        Signal's amplitude.
-    samplerate=44100: int, float
-        Signal's sampling rate.
-    
-    Returns
-    -------
-    signal: array
-        Output signal.    
-    
-    """
-    
-    signal = wmaker.function_creator(waveform, freq=frequency, 
-                                   duration=signalplayduration,
-                                   amp=amplitude, 
-                                   samplig_freq=samplerate)
-    
-    return signal
-#%%
     
 
 def play_callback(signalplay,
