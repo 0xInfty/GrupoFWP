@@ -20,10 +20,10 @@ del home
 
 duration = 3
 nchannelsrec = 1
-nchannelsplay = 2
+nchannelsplay = 1
 
 waveform = 'sine'
-frequency = [440, 220]#440
+frequency = 440#[440, 220]
 
 savewav = False
 showplot = True
@@ -59,13 +59,11 @@ if savetext:
 
 #%% Barrido en frecuencias y gráfico de fase
 
-# HOUSTON, TENEMOS UN PROBLEMA: Ese barrido en particular me lleva 114 horas, jajajajaj. Puse 0.2 duración mínima porque ése es el silencio que vi al principio.
-
 frequency_start = 400
 frequency_final = 40000
 frequency_interval = 50
 waveform = 'sine'
-savetext = False
+savetext = True
 saveplot = True
 
 nchannelsrec = 1
@@ -74,48 +72,90 @@ samplerate = 44100
 
 frequency = np.arange(frequency_start, frequency_final, 
                       frequency_interval)
-duration = np.array([100*samplerate/freq for freq in frequency])
+duration = np.array([100/freq for freq in frequency])
 savedir = os.getcwd() + '\Freq_Sweep'
 filenames = ['Freq_Sweep_{}_Hz'.format(freq) for freq in frequency]
 
 for i in range(len(duration)):
     if duration[i] < 0.2:
         duration[i] = 0.2
-
-key = bool(input('Beware! This will take at least {:.0f} seconds \
-                 ({:.1f} hours). Continue anyways?\n'.format(
-                         sum(duration), 
-                         sum(duration)/3600)))
+    
+home = os.getcwd()
+signalplay = [fwp.make_signal(waveform, freq, dur) 
+             for freq, dur in zip(frequency,duration)]
 
 signalrms = []
+for si, dur, fnam, i in zip(signalplay, duration,filenames,range(len(frequency))):
+    print('Frequency {} of {}'.format(i ,len(frequency)))
+    thesignal = fwp.play_callback_rec(fwp.encode(si), 
+                                      dur,
+                                      nchannelsplay=nchannelsplay,
+                                      nchannelsrec=nchannelsrec)
+    thesignal = fwp.decode(thesignal, nchannelsrec)
+    signalrms.append(rms(thesignal))
+    if savetext:
+        fwp.savetext(np.transpose([si, thesignal]), 
+                     fnam, savedir=savedir)
+signalrms = np.array(signalrms)
 
-if key:
-    
-    home = os.getcwd()
-    os.chdir(savedir)
-    signalplay = [fwp.make_signal(waveform, freq, duration) 
-                 for freq in frequency]
-    
-    signalrms = []
-    for i in range(len(frequency)):
-        thesignal = fwp.play_callback_rec(fwp.encode(signalplay), 
-                                          duration,
-                                          nchannelsplay=nchannelsplay,
-                                          nchannelsrec=nchannelsrec)
-        thesignal = fwp.decode(thesignal, nchannelsrec)
-        signalrms.append(rms.rms(thesignal))
-        if savetext:
-            fwp.savetext(thesignal, filenames[i])
-    signalrms = np.array(signalrms)
+plt.figure()
+plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), 'b-o')
+plt.ylabel('Decibels')
+plt.xlabel('Frequency (Hz)')
+plt.grid()
+plt.show()
 
-    plt.figure()
-    plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), 'b-')
-    plt.ylabel('Decibels')
-    plt.xlabel('Frequency (Hz)')
-    plt.grid()
-    plt.show()     
+if saveplot:
+    fwp.saveplot('Plot')
+    
+#%% Otra opción
+
+"""
+frequency_final = 20000
+frequency_interval = 100
+periods_per_frequency = 50
+waveform = 'sine'
+savetext = False
+saveplot = True
+samplerate = 44100
+deadpoints = 100
+
+frequency = np.arange(frequency_start, frequency_final, 
+                      frequency_interval)
+duration = np.array([periods_per_frequency/freq + deadpoints 
+                     for freq in frequency]) #in seconds
+
+signals = tuple(np.concatenate(
+        (fwp.make_buffer(
+                'sine',
+                freq,
+                m=periods_per_frequency,
+                fullbuffer=False),np.zeros(deadpoints)))
+        for freq in frequency)
+signals = np.concatenate((signals))
+
+nchannelsrec = 1
+nchannelsplay = 1
+samplerate = 44100
+duration = len(signals)/samplerate
+
+signalrec = fwp.play_callback_rec(fwp.encode(signals), duration,
+                                  nchannelsplay=nchannelsplay,
+                                  nchannelsrec=nchannelsrec)
+
+if savewav:
+    fwp.savewav(signalrec, filename, datanchannels=nchannelsrec)
+
+signalrec = fwp.decode(signalrec, nchannelsrec)
+
+if showplot:
+    fwp.signal_plot(signalrec)
     
     if saveplot:
-        fwp.saveplot('Plot')
+        fwp.saveplot(filename)
+
+if savetext:
+    fwp.savetext(signalrec, filename)
     
     os.chdir(home)
+"""
