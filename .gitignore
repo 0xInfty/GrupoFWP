@@ -2,6 +2,9 @@
 *.wav
 Borrador_Vale.py
 Borrador_Vale_2.py
+*.pdf
+*.jpg
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
