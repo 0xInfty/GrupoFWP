@@ -104,7 +104,7 @@ def make_buffer(waveform, frequency, amplitude=1,
         Signal's waveform.
     frequency: int, float
         Signal's frequency.
-    amplitude: int, float {from 0 to 1}
+    amplitude: int, float {between 0 and 1}
         Signal's amplitude.
     framesperbuffer: int
         Audio buffer's number of frames.
@@ -381,7 +381,7 @@ def saveplot(filename,
     'savedir' directory. If overwrite=False, it checks whether 
     'filename.plotformat' exists or not; if it already exists, it saves 
     the plot as 'filename (2).plotformat'. If overwrite=True, it saves 
-    the plot on 'filename.txt' even if it already exists.
+    the plot on 'filename.plotformat' even if it already exists.
     
     Variables
     ---------
