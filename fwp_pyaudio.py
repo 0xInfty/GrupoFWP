@@ -8,6 +8,7 @@ Módulo PyAudio
 import pyaudio
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 import wave
 import wavemaker as wmaker
 
@@ -278,11 +279,11 @@ def play_callback_rec(signalplay,
     streamplay = play_callback(signalplay,
                                nchannelsplay=nchannelsplay,
                                formatplay=pyaudio.paFloat32,
-                               rate=samplerate)
+                               samplerate=samplerate)
     
     streamrec = rec(nchannelsrec=nchannelsrec,
                     formatrec=pyaudio.paFloat32,
-                    rate=samplerate)
+                    samplerate=samplerate)
     
     streamplay.start_stream()
     print("* Recording")
@@ -333,6 +334,110 @@ def two_channel_play_callback_rec(signalplayleft, signalplayright,
     
     result= decode(signalrec, 2)
     return result
+
+#%%
+
+def signal_plot(signal, samplerate=44100, 
+                plotunits=None, plotlegend=None):
+    """Takes an audio signal and plots it as a function of time.
+    
+    It takes an audio signal recorded at a certain samplerate and plots 
+    it as a function of time. The signal's units can be specified. The 
+    signals' channels' names can also be specified if there's more than 
+    one.
+    
+    Variables
+    ---------
+    signal: array, list
+        Signal to be plotted (could have more than 1 column).
+    samplerate=44100: int, float
+        Signal's sampling rate.
+    plotunits=None: None or string
+        Signal's units as they would appear in Y-axis.
+    plotlegend=None: None or list of strings.
+        Signals' channels' names if there's more than one channel.
+    
+    Returns
+    -------
+    nothing        
+    
+    """
+    
+    try:
+        n = len(signal[:,0])
+        m = len(signal[0,:])
+    except IndexError:
+        n = len(signal)
+        m = 1
+    
+    time = np.linspace(0, (n-1)/samplerate, 1/samplerate)
+    
+    plt.figure()
+    plt.plot(time, signal)
+    plt.xlabel('Tiempo (s)')
+    if plotunits is not None:
+        plt.ylabel('Señal ({})'.format(plotunits))
+    else:
+        plt.ylabel('Señal')
+    if m != 1:
+        if plotlegend is not None:
+            plt.legend(plotlegend)
+        else:
+            plt.legend(['Right','Left'])
+
+#%%
+
+def saveplot(filename,
+             plotformat='pdf',
+             savedir=os.getcwd(),
+             overwrite=False):
+    """Saves a plot on an image file.
+    
+    This function saves the current matplotlib.pyplot plot on an image 
+    file. Its format is given by 'plotformat'. And it is saved on 
+    'savedir' directory. If overwrite=False, it checks whether 
+    'filename.plotformat' exists or not; if it already exists, it saves 
+    the plot as 'filename (2).plotformat'. If overwrite=True, it saves 
+    the plot on 'filename.txt' even if it already exists.
+    
+    Variables
+    ---------
+    filename: string
+        The name you wish the file to have.
+    plotformat='pdf': string
+        The file's format.
+    savedir=os.getcwd(): string
+        The directory where the file is saved.
+    overwrite=False: bool
+        Parameter that allows to overwrite files.
+    
+    Returns
+    -------
+    nothing
+    
+    Yields
+    ------
+    an image file
+    
+    """
+    
+    home = os.getcwd()
+    
+    if not os.path.isdir(savedir):
+        os.makedirs(savedir)
+    
+    os.chdir(savedir)
+    
+    if not overwrite:
+        while os.path.isfile(filename+'.txt'):
+            filename = filename + ' (2)'
+
+    plt.savefig((filename + '.' + plotformat), bbox_inches='tight')
+    
+    os.chdir(home)
+    
+    print('Archivo {}.{} guardado'.format(filename, plotformat))
+    
 
 #%%
 
