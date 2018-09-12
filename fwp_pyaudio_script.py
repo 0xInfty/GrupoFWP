@@ -7,6 +7,14 @@ Script auxiliar módulo PyAudio
 
 import fwp_pyaudio as fwp
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+home = os.gethome()
+os.chdir(home + '\Funciones')
+from rms import rms
+os.chdir(home)
+del home
 
 #%% Grabar en nchannelsrec y reproducir en nchannelsplay
 
@@ -48,3 +56,66 @@ if showplot:
 
 if savetext:
     fwp.savetext(signalrec, filename)
+
+#%% Barrido en frecuencias y gráfico de fase
+
+# HOUSTON, TENEMOS UN PROBLEMA: Ese barrido en particular me lleva 178 horas, jajajajaj. Puse 0.2 duración mínima porque ése es el silencio que vi al principio.
+
+frequency_final = 40000
+frequency_interval = 50
+waveform = 'sine'
+savetext = False
+saveplot = True
+
+duration = 3
+nchannelsrec = 1
+nchannelsplay = 1
+samplerate = 44100
+
+frequency = np.arange(frequency_interval, frequency_final, 
+                      frequency_interval)
+duration = np.array([100*samplerate/freq for freq in frequency])
+savedir = os.getcwd() + '\Freq_Sweep'
+filenames = ['Freq_Sweep_{}_Hz'.format(freq) for freq in frequency]
+
+for i in range(len(duration)):
+    if duration[i] < 0.2:
+        duration[i] = 0.2
+
+key = bool(input('Beware! This will take at least {:.1f} seconds \
+                 ({:.1f} hours). Continue anyways?\n'.format(
+                         sum(duration), 
+                         sum(duration)/3600)))
+
+signalrms = []
+
+if key:
+    
+    home = os.getcwd()
+    os.chdir(savedir)
+    signalplay = [fwp.make_signal(waveform, freq, duration) 
+                 for freq in frequency]
+    
+    signalrms = []
+    for i in range(len(frequency)):
+        thesignal = fwp.play_callback_rec(fwp.encode(signalplay), 
+                                          duration,
+                                          nchannelsplay=nchannelsplay,
+                                          nchannelsrec=nchannelsrec)
+        thesignal = fwp.decode(thesignal, nchannelsrec)
+        signalrms.append(rms.rms(thesignal))
+        if savetext:
+            fwp.savetext(thesignal, filenames[i])
+    signalrms = np.array(signalrms)
+
+    plt.figure()
+    plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), 'b-')
+    plt.ylabel('Decibels')
+    plt.xlabel('Frequency (Hz)')
+    plt.grid()
+    plt.show()     
+    
+    if saveplot:
+        fwp.saveplot('Plot')
+    
+    os.chdir(home)
