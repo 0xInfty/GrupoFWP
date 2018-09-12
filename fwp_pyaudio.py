@@ -86,6 +86,92 @@ def encode(signal):
 
 #%%
 
+class PyAudioWave:
+    ''' A class which takes in a wave object and formats it accordingly to the
+    requirements of the pyaudio module for playing. It includes two simple 
+    methods that return a signal formated to play or a signal formated to plot,
+    respectively.
+    
+    Pyaudio parameters required:
+        samplingrate: (int). Sampling (or playback) rate
+        buffersize: (int). Writing buffer size
+        nchannels: (1 or 2). Number of channels.'''
+        
+    def __init__(self, samplingrate=44100, buffersize=1024, nchannels=1):
+        
+        self.sampling_rate = samplingrate
+        self.buffer_size = buffersize
+        self.nchannels = nchannels
+    
+    def create_time(self, wave, periods_per_chunk=1):
+        ''' Creates a time arry for other functions tu use.'''
+        
+        period = 1/wave.frequency
+        time = np.linspace(start = 0, stop = period * periods_per_chunk, 
+                           num = period * periods_per_chunk * self.sampling_rate,
+                           endpoint = False)
+        return time
+    
+        
+    def write_signal(self, wave, periods_per_chunk=1):
+        ''' Creates a signal the pyaudio stream can write (play). If signal is 
+        two-channel, output is formated accordingly.'''
+        
+        if self.nchannels == 1:
+            time = self.create_time(wave, periods_per_chunk)
+            
+            return wave.evaluate(time)
+    
+        else:
+            ''' Ahora mismo hay un probema de diseño con escrir en dos canales
+            y loopear sobre un únic array, porque lo que se quiere escribir en
+            los dos canales pede no tener frecuencias compatibles y una de
+            ellas queda cortada en cada iteración. Para solucionarlo, habría 
+            que rehacer play_callback para que llame a algo que le de una señal
+            en cada iteración. Por ahora, devuelve los cachos cortados.'''
+            
+            if not isinstance(wave,tuple): #should rewrite as warning
+                print('''Requested two channel signal, but only provided one wave
+                      object. Will write same signal in both channels.''')
+                wave = (wave,wave)
+          
+            else: #should rewrite as warning
+                print('''Requested two channel signal. If frequencies are not
+                      compatible, second channel wave will be cut off.''')
+            
+            time = self.create_time(wave[0])
+
+            #me armo una lista que tenga en cada columna lo que quiero reproducir por cada canal
+            sampleslist = [np.transpose(wave[0].evaluate(time)),
+                           np.transpose(wave[1].evaluate(time))] 
+            
+            #la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
+            samplesarray=np.transpose(np.array(sampleslist))
+            
+            return encode(samplesarray)
+        
+        
+    def plot_signal(self, wave, periods_per_chunk=1):
+        ''' Returns time and signal arrays ready to plot. If only one wave is
+        given, output will be the same as write_signal, but will also return
+        time. If a tuple of waves is given, output will be time and a list of
+        the signal arrays.'''
+        
+
+        if not isinstance(wave,tuple):
+            time = self.create_time(wave, periods_per_chunk)
+            
+            return time, wave.evaluate(time)
+      
+        else: 
+            time = self.create_time(wave[0],periods_per_chunk)
+            signal_list = [w.evaluate(time) for w in wave]
+            
+            return time, signal_list
+        
+        
+#%%
+
 def make_buffer(waveform, frequency, amplitude=1,
                 framesperbuffer=1024, samplerate=44100):
     
@@ -180,12 +266,13 @@ def make_signal(waveform, frequency, signalplayduration,
 
 #%%
 
-def play_callback(signalplay,
+def play_callback_gen(signalplaygen,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
-                  samplerate=44100):
+                  samplerate=44100, 
+                  repeat=True):
     
-    """Takes a signal and returns a stream that plays it on callback.
+    """Takes a signal generator and returns a stream that plays it on callback.
     
     This function takes a signal and returns a PyAudio stream that plays 
     it in non-blocking mode.
@@ -210,9 +297,16 @@ def play_callback(signalplay,
    
     p = pyaudio.PyAudio()
     
-    def callback(in_data, frame_count, time_info, status):
-        return (signalplay, pyaudio.paContinue)
-    
+    if repeat:
+        signalplay = signalplaygen.next()
+        def callback(in_data, frame_count, time_info, status):
+             return (signalplay, pyaudio.paContinue)
+            
+    else: #Still needs checks to see if generator run out
+        def callback(in_data, frame_count, time_info, status):
+            signalplay = signalplaygen.next() 
+            return (signalplay, pyaudio.paContinue)
+            
     streamplay = p.open(format=formatplay,
                         channels=nchannelsplay,
                         rate=samplerate,
