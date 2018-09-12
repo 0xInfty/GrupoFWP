@@ -59,8 +59,9 @@ if savetext:
 
 #%% Barrido en frecuencias y gráfico de fase
 
-# HOUSTON, TENEMOS UN PROBLEMA: Ese barrido en particular me lleva 178 horas, jajajajaj. Puse 0.2 duración mínima porque ése es el silencio que vi al principio.
+# HOUSTON, TENEMOS UN PROBLEMA: Ese barrido en particular me lleva 114 horas, jajajajaj. Puse 0.2 duración mínima porque ése es el silencio que vi al principio.
 
+frequency_start = 400
 frequency_final = 40000
 frequency_interval = 50
 waveform = 'sine'
@@ -72,7 +73,7 @@ nchannelsrec = 1
 nchannelsplay = 1
 samplerate = 44100
 
-frequency = np.arange(frequency_interval, frequency_final, 
+frequency = np.arange(frequency_start, frequency_final, 
                       frequency_interval)
 duration = np.array([100*samplerate/freq for freq in frequency])
 savedir = os.getcwd() + '\Freq_Sweep'
