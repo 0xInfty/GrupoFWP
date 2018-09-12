@@ -75,8 +75,8 @@ def encode(signal):
     
     try:
         len(signal[:,0])
-    except IndexError:
-        signal = np.reshape(signal, (-1,2))
+    except:
+        signal = np.transpose(signal)
     
     interleaved = signal.flatten()
 
