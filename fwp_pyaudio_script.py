@@ -6,34 +6,45 @@ Script auxiliar módulo PyAudio
 """
 
 import fwp_pyaudio as fwp
+import numpy as np
 
-#%% Grabar y reproducir en un sólo canal
+#%% Grabar en nchannelsrec y reproducir en nchannelsplay
 
 duration = 3
 nchannelsrec = 1
+nchannelsplay = 2
 
 waveform = 'sine'
-frequency = 440
+frequency = [440, 220]#440
 
+savewav = False
+showplot = True
 saveplot = False
 savetext = False
-savewav = False
 filename = 'output'
 
-signalplay = fwp.make_signal(waveform, frequency, duration)
+if nchannelsplay > 1:
+    signalplay = [fwp.make_signal(waveform, frequency[i], duration) 
+                 for i in range(nchannelsplay)]
+    signalplay = np.transpose(np.array(signalplay))
+else:
+    signalplay = fwp.make_signal(waveform, frequency, duration)
 
-signalrec = fwp.play_callback_rec(signalplay, duration, 
+signalrec = fwp.play_callback_rec(fwp.encode(signalplay), 
+                                  duration,
+                                  nchannelsplay=nchannelsplay,
                                   nchannelsrec=nchannelsrec)
+
+if savewav:
+    fwp.savewav(signalrec, filename, datanchannels=nchannelsrec)
 
 signalrec = fwp.decode(signalrec, nchannelsrec)
 
-fwp.signal_plot(signalrec)
-
-if saveplot:
-    fwp.saveplot(filename)
+if showplot:
+    fwp.signal_plot(signalrec)
+    
+    if saveplot:
+        fwp.saveplot(filename)
 
 if savetext:
-    fwp.savetext(filename)
-
-if savewav:
-    fwp.savewav(filename)
+    fwp.savetext(signalrec, filename)
