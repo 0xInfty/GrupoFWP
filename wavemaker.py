@@ -216,11 +216,15 @@ class PyAudioWave:
         return time
     
         
-    def write_signal(self, wave, periods_per_chunk=1):
+    def write_signal(self, wave, periods_per_chunk=1, display_warnings=True):
         ''' Creates a signal the pyaudio stream can write (play). If signal is 
         two-channel, output is formated accordingly.'''
         
         if self.nchannels == 1:
+            if isinstance(wave,tuple):
+                print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
+                wave = wave[0]
+                
             time = self.create_time(wave, periods_per_chunk)
             
             return wave.evaluate(time)
@@ -234,13 +238,11 @@ class PyAudioWave:
             en cada iteración. Por ahora, devuelve los cachos cortados.'''
             
             if not isinstance(wave,tuple): #should rewrite as warning
-                print('''Requested two channel signal, but only provided one wave
-                      object. Will write same signal in both channels.''')
+                print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
                 wave = (wave,wave)
           
             else: #should rewrite as warning
-                print('''Requested two channel signal. If frequencies are not
-                      compatible, second channel wave will be cut off.''')
+                print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
             
             time = self.create_time(wave[0])
 
