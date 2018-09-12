@@ -87,7 +87,8 @@ def encode(signal):
 #%%
 
 def make_buffer(waveform, frequency, amplitude=1,
-                framesperbuffer=1024, samplerate=44100):
+                framesperbuffer=1024, samplerate=44100, m=1,
+                fullbuffer=True):
     
     """Makes a sort of audio buffer with a given waveform and frequency.
     
@@ -118,20 +119,20 @@ def make_buffer(waveform, frequency, amplitude=1,
     
     """
     
-    duration = 1/frequency
+    duration = m/frequency
     
     buffer = wmaker.function_creator(waveform, freq=frequency,
                                     duration=duration,
                                     amp=amplitude,
                                     samplig_freq=samplerate)
 
-    m = 1
-    while len(buffer) < framesperbuffer:
-        m = m + 1
-        buffer = wmaker.function_creator(waveform, freq=frequency,
-                                        duration=m*duration,
-                                        amp=amplitude,
-                                        samplig_freq=samplerate)
+    if fullbuffer:
+        while len(buffer) < framesperbuffer:
+            m = m + 1
+            buffer = wmaker.function_creator(waveform, freq=frequency,
+                                            duration=m*duration,
+                                            amp=amplitude,
+                                            samplig_freq=samplerate)
         
     if len(buffer) / framesperbuffer == \
           int(len(buffer) / framesperbuffer):
