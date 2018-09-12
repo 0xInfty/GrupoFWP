@@ -222,7 +222,7 @@ class PyAudioWave:
         
         if self.nchannels == 1:
             if isinstance(wave,tuple):
-                print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
+                if display_warnings: print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
                 wave = wave[0]
                 
             time = self.create_time(wave, periods_per_chunk)
@@ -238,11 +238,11 @@ class PyAudioWave:
             en cada iteración. Por ahora, devuelve los cachos cortados.'''
             
             if not isinstance(wave,tuple): #should rewrite as warning
-                print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
+                if display_warnings: print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
                 wave = (wave,wave)
           
             else: #should rewrite as warning
-                print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
+                if display_warnings: print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
             
             time = self.create_time(wave[0])
 
