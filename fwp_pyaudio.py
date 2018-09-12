@@ -263,6 +263,52 @@ def make_signal(waveform, frequency, signalplayduration,
                                    samplig_freq=samplerate)
     
     return signal
+#%%
+    
+
+def play_callback(signalplay,
+                  nchannelsplay=1, 
+                  formatplay=pyaudio.paFloat32,
+                  samplerate=44100, 
+                  repeat=True):
+    
+    """Takes a signal generator and returns a stream that plays it on callback.
+    
+    This function takes a signal and returns a PyAudio stream that plays 
+    it in non-blocking mode.
+    
+    Variables
+    ---------
+    signalplay: array
+        Signal to be played.
+    nchannelsplay: int
+        Number of channels it should be played at.
+    formatplay: PyAudio format.
+        Signal's format.
+    samplerate=44100: int, float
+        Sampling rate at which the signal should be played.
+    
+    Returns
+    -------
+    streamplay: PyAudio stream object
+        Object to be called to play the signal.
+    
+    """
+   
+    p = pyaudio.PyAudio()
+    
+    def callback(in_data, frame_count, time_info, status):
+         return (signalplay, pyaudio.paContinue)
+            
+
+            
+    streamplay = p.open(format=formatplay,
+                        channels=nchannelsplay,
+                        rate=samplerate,
+                        output=True,
+                        stream_callback=callback)
+                        
+    return streamplay
 
 #%%
 
