@@ -15,14 +15,16 @@ import wavemaker as wmaker
 #%%
 
 def decode(in_data, channels):
-
+    
     """Coverts a PyAudio byte stream into a Numpy array.
     
-    This function converts a byte stream into a 2D numpy array with 
-    shape (chunk_size, channels). Samples are interleaved, so for a 
-    stereo stream with left channel of [L0, L1, L2, ...] and right 
-    channel of [R0, R1, R2, ...], the output is ordered as 
-    [L0, R0, L1, R1, ...]
+    This function converts a byte stream into a Numpy array. If 
+    channels=1, it makes a 1D Numpy array. Otherwise, it returns a 2D 
+    Numpy array with shape (chunk_size, channels). 
+    
+    Samples are interleaved, so for a stereo stream with left channel 
+    of [L0, L1, L2, ...] and right channel of [R0, R1, R2, ...], the 
+    output is ordered as [L0, R0, L1, R1, ...].
     
     Variables
     ---------
@@ -53,9 +55,11 @@ def decode(in_data, channels):
 def encode(signal):
     import numpy as np
 
-    """Converts a 2D numpy array into a byte stream for PyAudio.
+    """Converts a Numpy array into a byte stream for PyAudio.
 
-    Signal should be a Numpy array with shape (chunk_size, channels).
+    Signal can be a 1D Numpy array if it has 1 channel. And it should be
+    a 2D Numpy array with shape (chunk_size, channels) if it has more 
+    than 1 channel.
     
     Variables
     ---------
@@ -68,6 +72,12 @@ def encode(signal):
         The converted data.
     
     """
+    
+    try:
+        len(signal[:,0])
+    except IndexError:
+        signal = np.reshape(signal, (-1,2))
+    
     interleaved = signal.flatten()
 
     # TODO: handle data type as parameter, convert between pyaudio/numpy types
@@ -78,6 +88,7 @@ def encode(signal):
 
 def make_buffer(waveform, frequency, amplitude=1,
                 framesperbuffer=1024, samplerate=44100):
+    
     """Makes a sort of audio buffer with a given waveform and frequency.
     
     This function returns one or several periods of a wave which 
@@ -132,6 +143,7 @@ def make_buffer(waveform, frequency, amplitude=1,
 
 def make_signal(waveform, frequency, signalplayduration, 
                amplitude=1, samplerate=44100):
+    
     """Makes a signal with given waveform, duration and frequency.
     
     This function makes an audio signal whith given waveform, duration, 
@@ -172,6 +184,7 @@ def play_callback(signalplay,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
                   samplerate=44100):
+    
     """Takes a signal and returns a stream that plays it on callback.
     
     This function takes a signal and returns a PyAudio stream that plays 
@@ -213,6 +226,7 @@ def play_callback(signalplay,
 def rec(nchannelsrec=1,
         formatrec=pyaudio.paFloat32,
         samplerate=44100):
+    
     """Returns a PyAudio stream that records a signal.
     
     Creates a PyAudio stream that will allow to record a signal on a 
@@ -250,6 +264,7 @@ def play_callback_rec(signalplay,
                       nchannelsplay=1,
                       nchannelsrec=1,
                       samplerate=44100):
+    
     """Plays a signal and records another one at the same time.
     
     This function plays an audio signal with a certain number of 
@@ -303,29 +318,28 @@ def play_callback_rec(signalplay,
 
 #%%
 
-def two_channel_play_callback_rec(signalplayleft, signalplayright,
-                      signalrecduration,
-                      samplerate=44000,
-                      nchannelsplay=2,
-                      nchannelsrec=2):
+def two_channel_play_callback_rec(signalplay, #1st column left
+                                  signalsduration,
+                                  nchannelsrec=2,
+                                  samplerate=44100,
+                                  signalsformat=pyaudio.paFloat32):
     
-    samples = [np.transpose(signalplayleft), np.transpose(signalplayright)] # me armo una tupla que tenga en cada columna lo que quiero reproducir por cada canal
-    samples = np.transpose(np.array(samples)) # la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
-    signalplay = encode(samples)
+#    signalplay = encode(signalplay)
     
     streamplay = play_callback(signalplay,
                                samplerate=samplerate,
-                               nchannelsplay=nchannelsplay,
-                               formatplay=pyaudio.paFloat32)
+                               nchannelsplay=len(signal[0,:]),
+                               formatplay=signalsformat,
+                               samplerate=samplerate)
     
     streamrec = rec(samplerate=samplerate,
                     nchannelsrec=nchannelsrec,
-                    formatrec=pyaudio.paFloat32)
+                    formatrec=signalsformat)
     
     streamplay.start_stream()
     print("* Recording")
     streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * signalrecduration))
+    signalrec = streamrec.read(int(samplerate * signalsduration))
     print("* Done recording")
 
     streamrec.stop_stream()
@@ -334,13 +348,17 @@ def two_channel_play_callback_rec(signalplayleft, signalplayright,
     streamrec.close()
     streamplay.close()
     
-    result= decode(signalrec, 2)
-    return result
+#    result = decode(signalrec, 2)
+#
+#    return result
+    
+    return signalrec
 
 #%%
 
 def signal_plot(signal, samplerate=44100, 
                 plotunits=None, plotlegend=None):
+    
     """Takes an audio signal and plots it as a function of time.
     
     It takes an audio signal recorded at a certain samplerate and plots 
@@ -393,6 +411,7 @@ def saveplot(filename,
              plotformat='pdf',
              savedir=os.getcwd(),
              overwrite=False):
+    
     """Saves a plot on an image file.
     
     This function saves the current matplotlib.pyplot plot on an image 
@@ -447,6 +466,7 @@ def savetext(datanumpylike,
              filename,
              savedir=os.getcwd(),
              overwrite=False):
+    
     """Takes some array-like data and saves it on a .txt file.
     
     This function takes some data and saves it on a .txt file on 
@@ -505,6 +525,7 @@ def savewav(datapyaudio,
             samplerate=44100,
             savedir=os.getcwd(),
             overwrite=False):
+    
     """Takes a PyAudio byte stream and saves it on a .wav file.
     
     Takes a PyAudio byte stream and saves it on a .wav file at savedir 
