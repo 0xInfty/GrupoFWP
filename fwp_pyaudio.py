@@ -181,6 +181,43 @@ def make_signal(waveform, frequency, signalplayduration,
 
 #%%
 
+def play(nchannelsplay=1, 
+         formatplay=pyaudio.paFloat32,
+         samplerate=44100):
+    
+    """Returns a stream that plays it without callback.
+    
+    This function returns a PyAudio stream that plays it in blocking mode.
+    
+    Variables
+    ---------
+    signalplay: array
+        Signal to be played.
+    nchannelsplay: int
+        Number of channels it should be played at.
+    formatplay: PyAudio format.
+        Signal's format.
+    samplerate=44100: int, float
+        Sampling rate at which the signal should be played.
+    
+    Returns
+    -------
+    streamplay: PyAudio stream object
+        Object to be called to play the signal.
+    
+    """
+   
+    p = pyaudio.PyAudio()
+    
+    streamplay = p.open(format=formatplay,
+                        channels=nchannelsplay,
+                        rate=samplerate,
+                        output=True)
+    
+    return streamplay
+
+#%%
+
 def play_callback(signalplay,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
@@ -314,6 +351,84 @@ def play_callback_rec(signalplay, #1st column left
     
     streamrec.close()
     streamplay.close()
+    
+    return signalrec
+
+#%%
+
+def just_play(signalplay, #1st column left
+              nchannelsplay=1,
+              samplerate=44100):
+    
+    """Plays a signal.
+    
+    This function plays an audio signal with a certain number of 
+    channels and a certain sampling rate, with pyaudio.paFloat32 format.
+    
+    Variables
+    ---------
+    signalplay: PyAudio stream
+        The signal to be played.
+    nchannelsplay: int
+        Played signal's number of channels.
+    samplerate: int, float
+        Signals' sampling rate.
+    
+    Returns
+    -------
+    nothing
+    
+    """
+        
+    streamplay = play(nchannelsplay=nchannelsplay,
+                      formatplay=pyaudio.paFloat32,
+                      samplerate=samplerate)
+    
+    print("* Playing")
+    streamplay.write(signalplay)
+    
+    streamplay.stop_stream()
+    print("* Done playing")
+    streamplay.close()
+
+#%%
+
+def just_rec(duration, #1st column left
+             nchannelsrec=1,
+             samplerate=44100):
+    
+    """Records a signal.
+    
+    This function records an audio signal with a certain number of 
+    channels and a certain sampling rate, with pyaudio.paFloat32 format.
+    
+    Variables
+    ---------
+    duration: int, float
+        Duration of the recording, in seconds.
+    nchannelsrec: int
+        Recorded signal's number of channels.
+    samplerate: int, float
+        Signals' sampling rate.
+    
+    Returns
+    -------
+    signalrec: PyAudio byte stream
+        Recorded signal.
+    
+    """
+    
+    streamrec = rec(nchannelsrec=nchannelsrec,
+                    formatrec=pyaudio.paFloat32,
+                    samplerate=samplerate)
+    
+    print("* Recording")
+    streamrec.start_stream()
+    signalrec = streamrec.read(int(samplerate * duration))
+    print("* Done recording")
+
+    streamrec.stop_stream()
+    streamrec.close()
     
     return signalrec
 
