@@ -43,7 +43,9 @@ def decode(in_data, channels):
     chunk_length = len(result) / channels
     assert chunk_length == int(chunk_length)
 
-    result = np.reshape(result, (chunk_length, channels))
+    if channels>1:
+        result = np.reshape(result, (chunk_length, channels))
+        
     return result
 
 #%%
@@ -366,11 +368,11 @@ def signal_plot(signal, samplerate=44100,
     try:
         n = len(signal[:,0])
         m = len(signal[0,:])
-    except IndexError:
+    except:
         n = len(signal)
         m = 1
     
-    time = np.linspace(0, (n-1)/samplerate, 1/samplerate)
+    time = np.linspace(0, (n-1)/samplerate, n)
     
     plt.figure()
     plt.plot(time, signal)
@@ -429,7 +431,7 @@ def saveplot(filename,
     os.chdir(savedir)
     
     if not overwrite:
-        while os.path.isfile(filename+'.txt'):
+        while os.path.isfile(filename+'.'+plotformat):
             filename = filename + ' (2)'
 
     plt.savefig((filename + '.' + plotformat), bbox_inches='tight')
