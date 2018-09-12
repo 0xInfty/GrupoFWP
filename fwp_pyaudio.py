@@ -259,8 +259,8 @@ def rec(nchannelsrec=1,
 
 #%%
 
-def play_callback_rec(signalplay,
-                      signalrecduration,
+def play_callback_rec(signalplay, #1st column left
+                      signalsduration,
                       nchannelsplay=1,
                       nchannelsrec=1,
                       samplerate=44100):
@@ -292,7 +292,7 @@ def play_callback_rec(signalplay,
         Recorded signal.
     
     """
-    
+        
     streamplay = play_callback(signalplay,
                                nchannelsplay=nchannelsplay,
                                formatplay=pyaudio.paFloat32,
@@ -305,40 +305,6 @@ def play_callback_rec(signalplay,
     streamplay.start_stream()
     print("* Recording")
     streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * signalrecduration))
-    print("* Done recording")
-
-    streamrec.stop_stream()
-    streamplay.stop_stream()
-    
-    streamrec.close()
-    streamplay.close()
-    
-    return signalrec
-
-#%%
-
-def two_channel_play_callback_rec(signalplay, #1st column left
-                                  signalsduration,
-                                  nchannelsrec=2,
-                                  samplerate=44100,
-                                  signalsformat=pyaudio.paFloat32):
-    
-#    signalplay = encode(signalplay)
-    
-    streamplay = play_callback(signalplay,
-                               samplerate=samplerate,
-                               nchannelsplay=len(signal[0,:]),
-                               formatplay=signalsformat,
-                               samplerate=samplerate)
-    
-    streamrec = rec(samplerate=samplerate,
-                    nchannelsrec=nchannelsrec,
-                    formatrec=signalsformat)
-    
-    streamplay.start_stream()
-    print("* Recording")
-    streamrec.start_stream()
     signalrec = streamrec.read(int(samplerate * signalsduration))
     print("* Done recording")
 
@@ -347,10 +313,6 @@ def two_channel_play_callback_rec(signalplay, #1st column left
     
     streamrec.close()
     streamplay.close()
-    
-#    result = decode(signalrec, 2)
-#
-#    return result
     
     return signalrec
 
@@ -403,7 +365,7 @@ def signal_plot(signal, samplerate=44100,
         if plotlegend is not None:
             plt.legend(plotlegend)
         else:
-            plt.legend(['Right','Left'])
+            plt.legend(['Izquierda','Derecha'])
 
 #%%
 
