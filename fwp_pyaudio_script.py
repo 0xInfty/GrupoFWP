@@ -32,8 +32,8 @@ savetext = False
 filename = 'output'
 
 if nchannelsplay > 1:
-    signalplay = [fwp.make_signal(waveform, frequency[i], duration) 
-                 for i in range(nchannelsplay)]
+    signalplay = [fwp.make_signal(waveform, freq, duration) 
+                 for freq in frequency]
     signalplay = np.transpose(np.array(signalplay))
 else:
     signalplay = fwp.make_signal(waveform, frequency, duration)
@@ -83,7 +83,7 @@ for i in range(len(duration)):
     if duration[i] < 0.2:
         duration[i] = 0.2
 
-key = bool(input('Beware! This will take at least {:.1f} seconds \
+key = bool(input('Beware! This will take at least {:.0f} seconds \
                  ({:.1f} hours). Continue anyways?\n'.format(
                          sum(duration), 
                          sum(duration)/3600)))
