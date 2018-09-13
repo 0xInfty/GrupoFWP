@@ -24,7 +24,7 @@ seno = wmaker.Wave('sine', frequency=signal_freq)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay)
-signal_to_play = signalmaker.write_signal((seno,cuadrada), periods_per_chunk=10)
+signal_to_play = signalmaker.write_signal((seno,cuadrada), periods_per_chunk=100)
 
 signalrec = fwp.play_callback_rec(signal_to_play, 
                                   duration,

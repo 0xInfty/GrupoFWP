@@ -46,7 +46,7 @@ def decode(in_data, channels):
     assert chunk_length == int(chunk_length)
 
     if channels>1:
-        result = np.reshape(result, (chunk_length, channels))
+        result = np.reshape(result, (int(chunk_length), channels))
         
     return result
 
