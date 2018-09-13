@@ -141,7 +141,7 @@ class PyAudioWave:
             else: #should rewrite as warning
                 if display_warnings: print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
             
-            time = self.create_time(wave[0])
+            time = self.create_time(wave[0], periods_per_chunk)
 
             #me armo una lista que tenga en cada columna lo que quiero reproducir por cada canal
             sampleslist = [np.transpose(wave[0].evaluate(time)),
@@ -227,6 +227,44 @@ def make_buffer(waveform, frequency, amplitude=1,
     
     return buffer
 
+#%%
+
+def make_signal(waveform, frequency, signalplayduration, 
+               amplitude=1, samplerate=44100):
+    
+    """Makes a signal with given waveform, duration and frequency.
+    
+    This function makes an audio signal whith given waveform, duration, 
+    frequency and amplitude, designed to be played at a given sampling 
+    rate.
+    
+    Variables
+    ---------
+    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
+    'triangular', 'square'}
+        Signal's waveform.
+    frequency: int, float
+        Signal's frequency.
+    signalplayduration: int, float.
+        Signal's duration in seconds.
+    amplitude=1: int, float {from 0 to 1}
+        Signal's amplitude.
+    samplerate=44100: int, float
+        Signal's sampling rate.
+    
+    Returns
+    -------
+    signal: array
+        Output signal.    
+    
+    """
+    
+    signal = wmaker.function_creator(waveform, freq=frequency, 
+                                   duration=signalplayduration,
+                                   amp=amplitude, 
+                                   samplig_freq=samplerate)
+    
+    return signal
 #%%
     
 

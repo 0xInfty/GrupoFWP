@@ -19,11 +19,11 @@ del home
 #%% Grabar en nchannelsrec y reproducir en nchannelsplay
 
 duration = 3
-nchannelsrec = 1
+nchannelsrec = 2
 nchannelsplay = 2
 
 waveform = 'sine'
-frequency = [440, 220]#440
+frequency = [440, 1000]#440
 
 savewav = False
 showplot = True

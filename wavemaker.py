@@ -46,7 +46,8 @@ def given_waveform(input_waveform):
         'sine': create_sine,
         'sawtoothup': create_sawtooth_up,
         'sawtoothdown': create_sawtooth_down  ,          
-        'ramp': create_sawtooth_up, #redirects to sawtooth
+        'ramp': create_sawtooth_up, #redirects to sawtoothup
+        'sawtooth': create_sawtooth_up, #redirects to sawtoothup
         'triangular': create_triangular,
         'square': create_square,
         'custom': create_custom,

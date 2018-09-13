@@ -9,12 +9,12 @@ Created on Wed Sep 12 12:48:15 2018
 import fwp_pyaudio as fwp
 import wavemaker as wmaker
 
-#%%
+#%% Read an write in two channels
 
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
-duration = 3
+duration = 1
 nchannelsrec = 2
 nchannelsplay = 2
 signal_freq = 500
@@ -33,3 +33,5 @@ signalrec = fwp.play_callback_rec(signal_to_play,
                                   after_recording=after_record_do)
 
 print('something')
+
+#%% 
