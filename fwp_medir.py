@@ -8,8 +8,9 @@ Created on Wed Sep 12 12:48:15 2018
 
 import fwp_pyaudio as fwp
 import wavemaker as wmaker
+import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os, rms
 
 #%% Read an write in two channels
 
@@ -22,13 +23,15 @@ nchannelsplay = 2
 signal_freq = 500
 
 #A square and a sine wave
-seno = wmaker.Wave('sine', frequency=signal_freq)
-cuadrada = wmaker.Wave('square',frequency=signal_freq)
+seno1 = wmaker.Wave('sine', frequency=signal_freq)
+seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
 
+#Create signal to play
 signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay)
-signal_to_play = signalmaker.write_signal((seno, cuadrada), periods_per_chunk=100)
+signal_to_play = signalmaker.write_signal(seno1, periods_per_chunk=100)
+#NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
-signalrec = fwp.play_callback_rec(signal_to_play, 
+thesignal = fwp.play_callback_rec(signal_to_play, 
                                   duration,
                                   nchannelsplay=nchannelsplay,
                                   nchannelsrec=nchannelsrec,
@@ -43,75 +46,49 @@ freq_step = 50
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
                                      saveplot = False, savetext = True) 
+nchannelsrec = 1
+nchannelsplay = 2 #Cause of cable issues
 
-seno = wmaker.Wave('sine') #Sin frecuencia definida, total la cambio
+#Defino la unda cono un seno con la frecuencia defaut porque después la voy a 
+#cambiar de todas formas. Amplitud default.
+seno = wmaker.Wave('sine')
 signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay) #Samplingrate dafault
 
+#Frequencies and durations
 frequencies = np.arange(freq_start, freq_stop, freq_step)
+durations = np.array([100/freq for freq in frequencies]) #100 periodos por frecuencia
 
-
-signal_to_play = signalmaker.write_signal((seno, cuadrada), periods_per_chunk=100)
-
-signalrec = fwp.play_callback_rec(signal_to_play, 
-                                  duration,
-                                  nchannelsplay=nchannelsplay,
-                                  nchannelsrec=nchannelsrec,
-                                  after_recording=after_record_do)
-
-duration = 3
-nchannelsrec = 1
-nchannelsplay = 1
-samplerate = 44100
-
-#%%
-frequency = np.arange(frequency_interval, frequency_final, 
-                      frequency_interval)
-duration = np.array([100*samplerate/freq for freq in frequency])
-savedir = os.getcwd() + '\Freq_Sweep'
-filenames = ['Freq_Sweep_{}_Hz'.format(freq) for freq in frequency]
-
-for i in range(len(duration)):
-    if duration[i] < 0.2:
-        duration[i] = 0.2
-
-key = input('Beware! This will take at least {:.1f} seconds \
-                 ({:.1f} hours). Continue? Y/N\n'.format(
-                         sum(duration), 
-                         sum(duration)/3600))
-                         
-key_decode = {'Y':True, 'N':False}
-key = key_decode.get(key, True)
+#If non existent, create directory to save to
+savedir = 'FreqSweep'
+if not os.path.isdir(savedir):
+    os.mkdir(savedir)
+makefile = lambda freq: os.path.join(savedir,'Freq_Sweep_{}_Hz'.format(freq))
 
 signalrms = []
 
-if key:
+for freq, dur in zip(frequencies, durations):
     
-    home = os.getcwd()
-    os.chdir(savedir)
-    signalplay = [fwp.make_signal(waveform, freq, duration) 
-                 for freq in frequency]
+    #Set up stuff for this frequency
+    seno.frequency = freq
+    signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100)
+    after_record_do.filename = makefile(freq)
     
-    signalrms = []
-    for i in range(len(frequency)):
-        thesignal = fwp.play_callback_rec(fwp.encode(signalplay), 
-                                          duration,
-                                          nchannelsplay=nchannelsplay,
-                                          nchannelsrec=nchannelsrec)
-        thesignal = fwp.decode(thesignal, nchannelsrec)
-        signalrms.append(rms.rms(thesignal))
-        if savetext:
-            fwp.savetext(thesignal, filenames[i])
-    signalrms = np.array(signalrms)
+    #play, record and process
+    thesignal = fwp.play_callback_rec(signal_to_play, 
+                                  recording_duration=dur,
+                                  nchannelsplay=nchannelsplay,
+                                  nchannelsrec=nchannelsrec,
+                                  after_recording=after_record_do)
+    
+    thesignal = fwp.decode(thesignal, nchannelsrec)
+    signalrms.append(rms.rms(thesignal))
 
-    plt.figure()
-    plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), 'b-')
-    plt.ylabel('Decibels')
-    plt.xlabel('Frequency (Hz)')
-    plt.grid()
-    plt.show()     
-    
-    if saveplot:
-        fwp.saveplot('Plot')
-    
-    os.chdir(home)
+signalrms = np.array(signalrms)
+
+plt.figure()
+plt.plot(frequencies, 10*np.log10(signalrms/max(signalrms)), 'b-')
+plt.ylabel('Decibels')
+plt.xlabel('Frequency (Hz)')
+plt.grid()
+plt.show() 
 
