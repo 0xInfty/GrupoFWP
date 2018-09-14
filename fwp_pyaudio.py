@@ -118,6 +118,7 @@ class PyAudioWave:
         two-channel, output is formated accordingly.'''
     
         if self.nchannels == 1:
+            #If user passed two wave objects but requested single-channel signal:
             if isinstance(wave,tuple):
                 if display_warnings: print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
                 wave = wave[0]
@@ -134,6 +135,7 @@ class PyAudioWave:
             que rehacer play_callback para que llame a algo que le de una señal
             en cada iteración. Por ahora, devuelve los cachos cortados.'''
             
+            #If user passed one wave object, but requested two-channel signal
             if not isinstance(wave,tuple): #should rewrite as warning
                 if display_warnings: print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
                 wave = (wave,wave)
