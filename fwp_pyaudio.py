@@ -437,7 +437,7 @@ class AfterRecording:
 #%%
 
 def play_callback_rec(signalplay, #1st column left
-                      signalsduration,
+                      recording_duration=None,
                       nchannelsplay=1,
                       nchannelsrec=1,
                       samplerate=44100,
@@ -470,6 +470,9 @@ def play_callback_rec(signalplay, #1st column left
         Recorded signal.
     
     """
+    
+    if recording_duration is None:
+        recording_duration = len(signalplay)/samplerate
         
     streamplay = play_callback(signalplay,
                                nchannelsplay=nchannelsplay,
@@ -483,7 +486,7 @@ def play_callback_rec(signalplay, #1st column left
     streamplay.start_stream()
     print("* Recording")
     streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * signalsduration))
+    signalrec = streamrec.read(int(samplerate * recording_duration))
     print("* Done recording")
 
     streamrec.stop_stream()
