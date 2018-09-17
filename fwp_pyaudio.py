@@ -154,9 +154,25 @@ class PyAudioWave:
             
             return encode(samplesarray)
     
-#    def write_gen(self, wave, duration=None):
+    def write_gen(self, wave, duration=None):
         
-            
+        #Get whole number of periods bigger than given buffer_size
+        required_periods = self.buffer_size * wave.frequency / self.sampling_rate
+        required_periods = int(required_periods) + 1
+        
+        #Create a time vector just greater than scale_factor*buffer_size
+        scale_factor = 50
+        time = self.create_time(wave, required_periods * scale_factor)
+        signal = wave.evaluate(time)
+        yield_signal = signal
+        
+        #OJO si duración es muy corto no hay que hacer todo esto
+        for _ in range(duration * wave.frequency // (required_periods * scale_factor)):
+            for i in range(scale_factor): #pensar si len(signal)//buffer_size anda
+                yield yield_signal[self.buffer_size * i:self.buffer_size * (i+1)]
+                
+            yield_signal = np.append((yield_signal[self.buffer_size:],signal))
+                
                
     def plot_signal(self, wave, periods_per_chunk=1):
         ''' Returns time and signal arrays ready to plot. If only one wave is

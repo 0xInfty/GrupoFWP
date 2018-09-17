@@ -12,7 +12,7 @@ import os
 
 home = os.getcwd()
 os.chdir(home + '\Funciones')
-from rms import rms
+import rms 
 os.chdir(home)
 del home
 
@@ -59,66 +59,58 @@ if savetext:
 
 #%% Barrido en frecuencias y gráfico de fase
 
-# HOUSTON, TENEMOS UN PROBLEMA: Ese barrido en particular me lleva 178 horas, jajajajaj. Puse 0.2 duración mínima porque ése es el silencio que vi al principio.
-
-frequency_final = 40000
-frequency_interval = 50
+frequency_start = 50
+frequency_final = 22000
+frequency_interval = 100
 waveform = 'sine'
-savetext = False
-saveplot = True
+savetext = True
+saveplot = False
 
-duration = 3
+after_record_do = fwp.AfterRecording(False,False,False,False)
+
 nchannelsrec = 1
 nchannelsplay = 1
 samplerate = 44100
 
-frequency = np.arange(frequency_interval, frequency_final, 
+frequency = np.arange(frequency_start, frequency_final, 
                       frequency_interval)
-duration = np.array([100*samplerate/freq for freq in frequency])
-savedir = os.getcwd() + '\Freq_Sweep'
-filenames = ['Freq_Sweep_{}_Hz'.format(freq) for freq in frequency]
+duration = np.array([100/freq for freq in frequency])
+savedir = os.getcwd() + '\Freq_Sweep_2'
+filenames = ['Freq_Sweep_2_{}_Hz'.format(freq) for freq in frequency]
 
 for i in range(len(duration)):
     if duration[i] < 0.2:
         duration[i] = 0.2
-
-key = input('Beware! This will take at least {:.1f} seconds \
-                 ({:.1f} hours). Continue? Y/N\n'.format(
-                         sum(duration), 
-                         sum(duration)/3600))
-                         
-key_decode = {'Y':True, 'N':False}
-key = key_decode.get(key, True)
+        
+print("Hey! This will take {} seconds".format(sum(duration)))
+    
+home = os.getcwd()
+signalplay = [fwp.make_signal(waveform, freq, dur) 
+             for freq, dur in zip(frequency,duration)]
 
 signalrms = []
+for i, (si, dur, fnam) in enumerate(zip(signalplay, duration, filenames)):
+    print('Frequency {} of {}'.format(i ,len(frequency)))
+    thesignal = fwp.play_callback_rec(fwp.encode(si), 
+                                      dur,
+                                      nchannelsplay=nchannelsplay,
+                                      nchannelsrec=nchannelsrec,
+                                      after_recording=after_record_do)
+    
+    thesignal = fwp.decode(thesignal, nchannelsrec)
+    signalrms.append(rms.rms(thesignal))
+    if savetext:
+        fwp.savetext(np.transpose([si, thesignal]), fnam, savedir=savedir)
+signalrms = np.array(signalrms)
+fwp.savetext(np.transpose([signalrms, 10*np.log10(signalrms/max(signalrms))]),
+             'Barrido_RMS', savedir=savedir)
 
-if key:
-    
-    home = os.getcwd()
-    os.chdir(savedir)
-    signalplay = [fwp.make_signal(waveform, freq, duration) 
-                 for freq in frequency]
-    
-    signalrms = []
-    for i in range(len(frequency)):
-        thesignal = fwp.play_callback_rec(fwp.encode(signalplay), 
-                                          duration,
-                                          nchannelsplay=nchannelsplay,
-                                          nchannelsrec=nchannelsrec)
-        thesignal = fwp.decode(thesignal, nchannelsrec)
-        signalrms.append(rms.rms(thesignal))
-        if savetext:
-            fwp.savetext(thesignal, filenames[i])
-    signalrms = np.array(signalrms)
+plt.figure()
+plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), '.-b')
+plt.ylabel('Decibels')
+plt.xlabel('Frequency (Hz)')
+plt.grid()
+plt.show()
 
-    plt.figure()
-    plt.plot(frequency, 10*np.log10(signalrms/max(signalrms)), 'b-')
-    plt.ylabel('Decibels')
-    plt.xlabel('Frequency (Hz)')
-    plt.grid()
-    plt.show()     
-    
-    if saveplot:
-        fwp.saveplot('Plot')
-    
-    os.chdir(home)
+if saveplot:
+    fwp.saveplot('Plot', savedir=savedir)

@@ -41,7 +41,7 @@ thesignal = fwp.play_callback_rec(signal_to_play,
 #%% Frequency sweep
 
 freq_start = 50
-freq_stop = 20000
+freq_stop = 22000
 freq_step = 50
 
 #Some configurations
@@ -71,7 +71,7 @@ for freq, dur in zip(frequencies, durations):
     
     #Set up stuff for this frequency
     seno.frequency = freq
-    signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100, 
+    signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=10000, 
                                               display_warnings=False)
     after_record_do.filename = makefile(freq)
     
