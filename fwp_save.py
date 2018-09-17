@@ -4,7 +4,14 @@ Save Module
 
 This module contains some functions that save data into files.
 
+new_dir: Makes and returns a new related directory to avoid overwriting.
+new_filename: Returns a related free file name to avoid overwriting.
+saveplot: Saves a matplotlib.pyplot plot on an image file (i.e: 'png').
+savetext: Saves some np.array like data on a '.txt' file.
+savewav: Saves a PyAudio encoded audio on a '.wav' file.
+
 @author: Vall
+@date: 09-17-2018
 """
 
 import matplotlib.pyplot as plt
@@ -12,6 +19,115 @@ import numpy as np
 import os
 import pyaudio
 import wave
+
+#%%
+
+def new_dir(my_dir, into_dir, newformat='{}_{}'):
+    
+    """Makes and returns a new directory to avoid overwriting.
+    
+    Takes a directory name 'dirname' and checks whether it already 
+    exists on 'intodir' directory. If it doesn't, it returns 'dirname'. 
+    If it does, it returns a related unoccupied directory name.
+    
+    Parameters
+    ----------
+    my_dir: str
+        Desired directory.
+    into_dir: str
+        Directory's directory.
+    
+    Returns
+    -------
+    new_dir: str
+        New directory.
+    
+    Yields
+    ------
+    new_dir: directory
+    
+    """
+        
+    home = os.getcwd()
+    
+    os.chdir(into_dir)
+    
+    sepformat = newformat.split('{}')
+    new_dir = my_dir
+    while os.path.isdir(new_dir):
+        new_dir = new_dir.split(sepformat[-2])[-1]
+        try:
+            new_dir = new_dir.split(sepformat[-1])[0]
+        except ValueError:
+            new_dir = new_dir
+        try:
+            new_dir = newformat.format(my_dir, str(int(new_dir)+1))
+        except ValueError:
+            new_dir = newformat.format(my_dir, 2)
+    os.makedirs(new_dir)
+    
+    os.chdir(new_dir)
+    
+    new_dir = os.getcwd()
+    
+    os.chdir(home)
+    
+    return new_dir
+
+#%%
+
+def new_filename(filename, filetype, savedir, newformat='{}_{}'):
+    
+    """Makes a name for a new file to avoid overwriting.
+        
+    Takes a file name 'filename' and its file format 'filetype' as if 
+    you were thinking to make a new file 'filename.filetype' in 
+    'savedir' directory. It returns a related unnocupied file name.
+        
+    Parameters
+    ----------
+    filename: str
+        Tentative file name.
+    filetype: str
+        Desired file format.
+    savedir: str
+        Desired file directory.
+    newformat='{}_{}': str
+        Format string that indicates how to make new names.
+    
+    Returns
+    -------
+    new_fname: str
+        Unoccupied file name.
+        
+    """
+    
+    home = os.getcwd()
+    
+    if not os.path.isdir(savedir):
+        new_filename = filename
+    
+    else:
+        os.chdir(savedir)
+        sepformat = newformat.split('{}')
+        new_filename = filename
+        while os.path.isfile(new_filename+'.'+filetype):
+            new_filename = new_filename.split(sepformat[-2])[-1]
+            try:
+                new_filename = new_filename.split(sepformat[-1])[0]
+            except ValueError:
+                new_filename = new_filename
+            try:
+                new_filename = newformat.format(
+                        filename, 
+                        str(int(new_filename)+1),
+                        )
+            except ValueError:
+                new_filename = newformat.format(filename, 2)
+    
+    os.chdir(home)
+    
+    return new_filename
 
 #%%
 
@@ -58,8 +174,7 @@ def saveplot(filename,
     os.chdir(savedir)
     
     if not overwrite:
-        while os.path.isfile(filename+'.'+plotformat):
-            filename = filename + ' (2)'
+        filename = new_filename(filename, plotformat, savedir)
 
     plt.savefig((filename + '.' + plotformat), bbox_inches='tight')
     
@@ -112,8 +227,7 @@ def savetext(datanumpylike,
     os.chdir(savedir)
     
     if not overwrite:
-        while os.path.isfile(filename+'.txt'):
-            filename = filename + ' (2)'
+        filename = new_filename(filename, 'txt', savedir)
 
     np.savetxt((filename+'.txt'), np.array(datanumpylike), 
                delimiter='\t', newline='\n')
@@ -154,8 +268,7 @@ def savewav(datapyaudio,
     os.chdir(savedir)
     
     if not overwrite:
-        while os.path.isfile(filename+'.wav'):
-            filename = filename + ' (2)'
+        filename = new_filename(filename, 'wav', savedir)
     
     datalist = []
     datalist.append(datapyaudio)
