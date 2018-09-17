@@ -153,6 +153,9 @@ class PyAudioWave:
             samplesarray=np.transpose(np.array(sampleslist))
             
             return encode(samplesarray)
+    
+#    def write_gen(self, wave, duration=None):
+        
             
                
     def plot_signal(self, wave, periods_per_chunk=1):
@@ -348,13 +351,13 @@ def play_callback_gen(signalplaygen,
     p = pyaudio.PyAudio()
     
     if repeat:
-        signalplay = signalplaygen.next()
+        signalplay = next(signalplaygen)
         def callback(in_data, frame_count, time_info, status):
              return (signalplay, pyaudio.paContinue)
             
     else: #Still needs checks to see if generator run out
         def callback(in_data, frame_count, time_info, status):
-            signalplay = signalplaygen.next() 
+            signalplay = next(signalplaygen) 
             return (signalplay, pyaudio.paContinue)
             
     streamplay = p.open(format=formatplay,
@@ -405,7 +408,8 @@ def rec(nchannelsrec=1,
 
 class AfterRecording:
     '''Very simple class containing paramaters to decide what actions to take after recording.'''
-    def __init__(self, savewav=False, showplot=True, saveplot=False, savetext=False, filename=None):
+    def __init__(self, savewav=False, showplot=True, saveplot=False,
+                 savetext=False, filename='Output'):
         self.savewav=savewav
         self.showplot=showplot
         self.saveplot=saveplot
@@ -542,6 +546,7 @@ def signal_plot(signal, samplerate=44100,
     
     plt.figure()
     plt.plot(time, signal)
+    plt.grid()
     plt.xlabel('Tiempo (s)')
     if plotunits is not None:
         plt.ylabel('Señal ({})'.format(plotunits))

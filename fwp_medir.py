@@ -18,17 +18,18 @@ import os, rms
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
 duration = 1
-nchannelsrec = 1
+nchannelsrec = 2
 nchannelsplay = 2
-signal_freq = 500
+signal_freq = 2000
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
+cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
 signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay)
-signal_to_play = signalmaker.write_signal(seno1, periods_per_chunk=100)
+signal_to_play = signalmaker.write_signal((seno1,cuadrada), periods_per_chunk=100)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_callback_rec(signal_to_play, 
@@ -70,7 +71,8 @@ for freq, dur in zip(frequencies, durations):
     
     #Set up stuff for this frequency
     seno.frequency = freq
-    signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100)
+    signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100, 
+                                              display_warnings=False)
     after_record_do.filename = makefile(freq)
     
     #play, record and process
