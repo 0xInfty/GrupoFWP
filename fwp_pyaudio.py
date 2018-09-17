@@ -53,8 +53,6 @@ def decode(in_data, channels):
 #%%
 
 def encode(signal):
-    import numpy as np
-
     """Converts a Numpy array into a byte stream for PyAudio.
 
     Signal can be a 1D Numpy array if it has 1 channel. And it should be
@@ -73,6 +71,7 @@ def encode(signal):
     
     """
     
+    #If array was Nx1, reshape it to N/2x2
     try:
         len(signal[:,0])
     except IndexError:
@@ -86,33 +85,7 @@ def encode(signal):
 
 #%%
 
-def resolve_nchannels(wave, nchannels, display_warnings):
-    '''Resolve wave or wave tuple for given channel ammount. Return a tuple.'''
-    
-    if nchannels == 1:
-        #If user passed one wave objects and requested single-channel signal:
-        if not isinstance(wave,tuple):
-            if display_warnings: print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
-            return (wave,)
-    
-    else:
-        ''' Ahora mismo hay un probema de diseño con escrir en dos canales
-        y loopear sobre un únic array, porque lo que se quiere escribir en
-        los dos canales pede no tener frecuencias compatibles y una de
-        ellas queda cortada en cada iteración. Para solucionarlo, habría 
-        que rehacer play_callback para que llame a algo que le de una señal
-        en cada iteración. Por ahora, devuelve los cachos cortados.'''
-        
-        #If user passed one wave object, but requested two-channel signal
-        if not isinstance(wave,tuple): #should rewrite as warning
-            if display_warnings: print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
-            return (wave,wave)
-      
-        else: #should rewrite as warning
-            if display_warnings: print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
-    
-    #If no correction was needed, return as input
-    return wave
+
 
 class PyAudioWave:
     ''' A class which takes in a wave object and formats it accordingly to the
@@ -140,37 +113,78 @@ class PyAudioWave:
                            endpoint = False)
         return time
     
+    def encode(self,signal):
+        '''Formats signal for pyaudio stream. Deals with one- and two-channel 
+        signals.'''
         
+        if self.nchannels == 2:
+            #Two channel signal requires some extra handling
+            signal = np.transpose(np.array(signal))
+        
+        interleaved = signal.flatten()
+        out_data = interleaved.astype(np.float32).tostring()
+        return out_data
+        
+    def resolve_nchannels(self, wave, display_warnings):
+        '''Resolve wave or wave tuple for given channel ammount. Return a tuple.'''
+        
+        if self.nchannels == 1:
+            #If user passed one wave objects and requested single-channel signal:
+            if not isinstance(wave,tuple):
+                if display_warnings: print('Requested a one channel signal but provided more than one wave. Will precede using the first wave.')
+                return (wave,)
+        
+        else:
+            ''' Ahora mismo hay un probema de diseño con escrir en dos canales
+            y loopear sobre un únic array, porque lo que se quiere escribir en
+            los dos canales pede no tener frecuencias compatibles y una de
+            ellas queda cortada en cada iteración. Para solucionarlo, habría 
+            que rehacer play_callback para que llame a algo que le de una señal
+            en cada iteración. Por ahora, devuelve los cachos cortados.'''
+            
+            #If user passed one wave object, but requested two-channel signal
+            if not isinstance(wave,tuple): #should rewrite as warning
+                if display_warnings: print('''Requested two channel signal, but only provided one wave object. Will write same signal in both channels.''')
+                return (wave,wave)
+          
+            else: #should rewrite as warning
+                if display_warnings: print('''Requested two channel signal. If frequencies are not compatible, second channel wave will be cut off.''')
+    
+        #If no correction was needed, return as input
+        return wave
+        
+    def eval_wave(self, wave, time):
+        '''Simple method evaluating the given wave(s) according to channels.'''
+        #Could also be implemented as [wave[i] for i in range(nchannels)]
+        if self.nchannels == 1:
+            signal = np.array([np.transpose(w.evaluate(time)) for w in wave[0]])
+        else:
+            signal = np.array([np.transpose(w.evaluate(time)) for w in wave])
+            
+        return signal
+    
     def write_signal(self, wave, periods_per_chunk=1, display_warnings=True):
         ''' Creates a signal the pyaudio stream can write (play). If signal is 
         two-channel, output is formated accordingly.'''
     
-        wave = resolve_nchannels(wave, self.nchannels, display_warnings)
+        #Adequate wave tuple to channels, create time, create signal and encode
+        wave = self.resolve_nchannels(wave, display_warnings)
         time = self.create_time(wave[0], periods_per_chunk)  
+        signal = self.eval_wave(wave, time)
         
-        if self.nchannels == 1:             
-            return wave[0].evaluate(time)
-    
-        else:  
-            #me armo una lista que tenga en cada columna lo que quiero reproducir por cada canal
-            sampleslist = [np.transpose(w.evaluate(time)) for w in wave]
-            
-            #la paso a array, y la traspongo para que este en el formato correcto de la funcion de encode
-            samplesarray = np.transpose(np.array(sampleslist))
-            
-            return encode(samplesarray)
+        return self.encode(signal)
         
     def yield_a_bit(self, signal, scale_factor):
         '''Yield chunck of the given signal of lenght buffer_size. Signal 
         should be an array of shape (samples, nchannels).''' 
         for i in range(len(signal)//self.buffer_size):
-            yield signal[self.buffer_size * i:self.buffer_size * (i+1),:]
+            yield signal[:,self.buffer_size * i:self.buffer_size * (i+1)]
     
     def write_generator(self, wave, duration=None, display_warnings=False):
         ''' Creates a generator to yield chunks of length buffer_size of the 
         generated wave.'''
         
-        wave = resolve_nchannels(wave, self.nchannels, display_warnings)
+        wave = self.resolve_nchannels(wave, display_warnings)
         #Get whole number of periods bigger than given buffer_size
         required_periods = self.buffer_size * wave[0].frequency // self.sampling_rate
         required_periods += 1
@@ -179,8 +193,7 @@ class PyAudioWave:
         scale_factor = 50
         time = self.create_time(wave[0],
                                 periods_per_chunk = required_periods * scale_factor)
-        signal = [w.evaluate(time) for w in wave]
-        signal = np.transpose(np.array(signal))
+        signal = self.eval_wave(wave, time)
         yield_signal = signal
         
         #OJO si duración es muy corto no hay que hacer todo esto
