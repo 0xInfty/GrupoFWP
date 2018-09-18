@@ -21,6 +21,12 @@ def yield_chunks_forever(arr, chunk_size):
     while True:
         yield from yield_chunks(arr, chunk_size)
 
+def yield_chunks_forever_mod(arr, chunk_size):
+    while True:
+        yield from yield_chunks(arr, chunk_size)
+        yield 'a'
+        arr = [2*x for x in arr]
+
 
 def yield_chunks_repeat(arr, chunk_size, times):
     for n in range(times):
