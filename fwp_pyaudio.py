@@ -229,7 +229,7 @@ def play_callback_gen(signalplaygen,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
                   samplerate=44100, 
-                  repeat=True):
+                  repeat=False):
     
     """Takes a signal generator and returns a stream that plays it on callback.
     
@@ -412,6 +412,76 @@ def play_callback_rec(signalplay, #1st column left
     
     return signalrec
 
+#%%
+
+def play_callback_rec_gen(signalplay_gen, #1st column left
+                      recording_duration=None,
+                      nchannelsplay=1,
+                      nchannelsrec=1,
+                      samplerate=44100,
+                      after_recording=None):
+    
+    """Plays a signal and records another one at the same time.
+    
+    This function plays an audio signal with a certain number of 
+    channels. At the same time, it records another signal with a given 
+    number of channels. It runs for a given time. And it plays and 
+    records using the same sampling rate and the same pyaudio.paFloat32 
+    format.
+    
+    Variables
+    ---------
+    stramplay: PyAudio stream
+        The signal to be played.
+    signalrecduration: int, float.
+        Signals' duration in seconds.
+    nchannelsplay: int
+        Played signal's number of channels.
+    nchannelsrec: int
+        Recorded signal's number of channels.
+    samplerate: int, float
+        Signals' sampling rate.
+    
+    Returns
+    -------
+    signalrec: PyAudio byte stream
+        Recorded signal.
+    
+    """
+    if recording_duration is None:
+        if not signalplay_gen.duration is None:
+            recording_duration = signalplay_gen.duration
+        else:
+            raise TypeError('Duration not defined. Either generator or recording duration must be specified.')
+                
+        
+    streamplay = play_callback_gen(signalplay_gen,
+                               nchannelsplay=nchannelsplay,
+                               formatplay=pyaudio.paFloat32,
+                               samplerate=samplerate)
+    
+    streamrec = rec(nchannelsrec=nchannelsrec,
+                    formatrec=pyaudio.paFloat32,
+                    samplerate=samplerate)
+    
+    streamplay.start_stream()
+    print("* Recording")
+    streamrec.start_stream()
+    signalrec = streamrec.read(int(samplerate * recording_duration))
+    print("* Done recording")
+
+    streamrec.stop_stream()
+    streamplay.stop_stream()
+    
+    streamrec.close()
+    streamplay.close()
+    
+    if after_recording is None:
+        after_recording = AfterRecording()
+    
+    after_recording.act(signalrec, nchannelsrec)
+    
+    return signalrec
 #%%
 
 def signal_plot(signal, samplerate=44100, 
