@@ -94,3 +94,59 @@ plt.xlabel('Frequency (Hz)')
 plt.grid()
 plt.show() 
 
+#%% Calibrate playing
+
+import fwp_pyaudio as fwp
+import fwp_lab_instruments as ins
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import wavemaker as wmaker
+
+amp_start = 1
+amp_stop = 0
+amp_step = 0.1
+
+
+freq = 2000
+n_per = 50
+duration = n_per/freq
+
+port = 'USB0::0x0699::0x0363::C108013::INSTR'
+
+nchannelsrec = 1
+nchannelsplay = 1
+samplerate = 44100
+after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+                                     saveplot = False, savetext = False)
+
+osci = ins.Osci(port=port)
+seno = wmaker.Wave('sine', frequency=signal_freq)
+signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay,
+                              samplingrate=samplerate)
+
+amplitude = np.arange(amp_start, amp_stop, amp_step)
+
+amp_audio = []
+amp_osci = []
+makefile = lambda amp: 'Cal_Play_{:.2f}'.format(amp)
+
+signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100)
+
+for amp in amplitude:
+    
+    signal_to_play = signalmaker.write_signal(amp*seno, 
+                                              periods_per_chunk=10000, 
+                                              display_warnings=False)
+    after_record_do.filename = makefile(amp)
+    
+    thesignal = fwp.play_callback_rec(signal_to_play, 
+                                  recording_duration=dur,
+                                  nchannelsplay=nchannelsplay,
+                                  nchannelsrec=nchannelsrec,
+                                  after_recording=after_record_do)
+    
+    thesignal = fwp.decode(thesignal, nchannelsrec)
+    amp_audio.append(max(thesignal)-min(thesignal))
+    result, units = osci.measure('pk2', 1)
+    amp_osci.append(result)
