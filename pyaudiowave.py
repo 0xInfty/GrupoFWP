@@ -129,19 +129,21 @@ class PyAudioWave:
             # Yield samples indefinitely
             while True:
                 yield from self.yield_a_bit(yield_signal)
-                yield_signal = np.append((yield_signal[self.buffer_size:],signal))
+                last_place = len(yield_signal)//self.buffer_size
+                yield_signal = np.append((yield_signal[last_place:],signal))
                 
-        
         #En ambos casos a continuación, la duración total es menor a duration:        
         elif duration < len(signal) / self.sampling_frequency:
             total_length = duration * self.sampling_frequeny
             yield from self.yield_a_bit(signal[:total_length])
+            yield signal[total_length:] #yield las bit
             
         else: #tal vez puede simplificarse la cuenta del range y ajustar el final de la duración
             iterations = duration * wave.frequency // (required_periods * buffers_per_array)
             for _ in range(iterations):
                 yield from self.yield_a_bit(yield_signal)
-                yield_signal = np.append((yield_signal[self.buffer_size:],signal))
+                last_place = len(yield_signal)//self.buffer_size
+                yield_signal = np.append((yield_signal[last_place:],signal))
                 
                
     def plot_signal(self, wave, periods_per_chunk=1):
