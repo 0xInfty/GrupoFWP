@@ -5,12 +5,14 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
-
+import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
-import wavemaker as wmaker
+import fwp_save as sav
 import matplotlib.pyplot as plt
 import numpy as np
 import os, rms
+import pyaudiowave as paw
+import wavemaker as wmaker
 
 #%% Read and write in two channels
 
@@ -28,7 +30,7 @@ seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay)
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
 signal_to_play = signalmaker.write_signal((seno1,cuadrada), periods_per_chunk=100)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
@@ -53,7 +55,7 @@ nchannelsplay = 2 #Cause of cable issues
 #Defino la unda cono un seno con la frecuencia defaut porque después la voy a 
 #cambiar de todas formas. Amplitud default.
 seno = wmaker.Wave('sine')
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay) #Samplingrate dafault
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay) #Samplingrate dafault
 
 #Frequencies and durations
 frequencies = np.arange(freq_start, freq_stop, freq_step)
@@ -96,14 +98,6 @@ plt.show()
 
 #%% Calibrate playing
 
-import fwp_pyaudio as fwp
-import fwp_lab_instruments as ins
-import fwp_save as sav
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import wavemaker as wmaker
-
 amp_start = 1
 amp_stop = 0
 amp_step = 0.1
@@ -122,7 +116,7 @@ after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
 
 osci = ins.Osci(port=port)
 seno = wmaker.Wave('sine', frequency=signal_freq)
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay,
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
 savedir = sav.new_dir(folder, os.getcwd())
@@ -181,7 +175,7 @@ after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
 
 # CODE --> ¡OJO! FALTA CALIBRACIÓN
 
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay,
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
 seno = wmaker.Wave('sine', frequency=signal_freq)
