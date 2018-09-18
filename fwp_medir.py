@@ -7,6 +7,7 @@ Created on Wed Sep 12 12:48:15 2018
 
 
 import fwp_pyaudio as fwp
+import pyaudiowave as paw
 import wavemaker as wmaker
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +29,7 @@ seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay)
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
 signal_to_play = signalmaker.write_signal((seno1,cuadrada), periods_per_chunk=100)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
@@ -53,7 +54,7 @@ nchannelsplay = 2 #Cause of cable issues
 #Defino la unda cono un seno con la frecuencia defaut porque después la voy a 
 #cambiar de todas formas. Amplitud default.
 seno = wmaker.Wave('sine')
-signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay) #Samplingrate dafault
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay) #Samplingrate dafault
 
 #Frequencies and durations
 frequencies = np.arange(freq_start, freq_stop, freq_step)
