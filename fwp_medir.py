@@ -7,10 +7,17 @@ Created on Wed Sep 12 12:48:15 2018
 
 
 import fwp_pyaudio as fwp
-import wavemaker as wmaker
+import fwp_lab_instruments as inst
 import matplotlib.pyplot as plt
 import numpy as np
-import os, rms
+import os
+import wavemaker as wmaker
+
+home = os.getcwd()
+os.chdir(home + '\Funciones')
+from rms import rms
+os.chdir(home)
+del home
 
 #%% Read an write in two channels
 
@@ -93,4 +100,3 @@ plt.ylabel('Decibels')
 plt.xlabel('Frequency (Hz)')
 plt.grid()
 plt.show() 
-
