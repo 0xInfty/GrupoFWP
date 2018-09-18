@@ -131,6 +131,8 @@ class PyAudioWave:
                 yield from self.yield_a_bit(yield_signal)
                 yield_signal = np.append((yield_signal[self.buffer_size:],signal))
                 
+        
+        #En ambos casos a continuación, la duración total es menor a duration:        
         elif duration < len(signal) / self.sampling_frequency:
             total_length = duration * self.sampling_frequeny
             yield from self.yield_a_bit(signal[:total_length])
