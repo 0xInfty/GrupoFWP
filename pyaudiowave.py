@@ -131,8 +131,7 @@ class PyAudioWave:
                 yield from self.yield_a_bit(yield_signal)
                 last_place = len(yield_signal)//self.buffer_size
                 yield_signal = np.append((yield_signal[last_place:],signal))
-                
-        #En ambos casos a continuación, la duración total es menor a duration:        
+                        
         elif duration < len(signal) / self.sampling_frequency:
             total_length = duration * self.sampling_frequeny
             yield from self.yield_a_bit(signal[:total_length])
@@ -144,6 +143,7 @@ class PyAudioWave:
                 yield from self.yield_a_bit(yield_signal)
                 last_place = len(yield_signal)//self.buffer_size
                 yield_signal = np.append((yield_signal[last_place:],signal))
+            #Missing line to get exact duration
                 
                
     def plot_signal(self, wave, periods_per_chunk=1):
