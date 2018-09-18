@@ -43,6 +43,7 @@ import fwp_save as sav
 import pyaudio
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 #%%
 
@@ -292,8 +293,9 @@ class AfterRecording:
     
     '''Has paramaters to decide what actions to take after recording.'''
     
-    def __init__(self, savewav=False, showplot=True, saveplot=False,
-                 savetext=False, filename='Output'):
+    def __init__(self, savewav=False, showplot=True, 
+                 saveplot=False, savetext=False, 
+                 filename=os.join(os.getcwd(),'Output')):
         
         self.savewav=savewav
         self.showplot=showplot
@@ -313,7 +315,9 @@ class AfterRecording:
             return
         
         if self.savewav:
-            sav.savewav(signalrec, filename, datanchannels=nchannelsrec)
+            sav.savewav(signalrec, (filename+'.wav'),
+                        data_nchannels=nchannelsrec,
+                        data_samplerate=samplerate)
         
         signalrec = decode(signalrec, nchannelsrec)
         
@@ -321,10 +325,10 @@ class AfterRecording:
             signal_plot(signalrec)
             
             if self.saveplot:
-                sav.saveplot(filename)
+                sav.saveplot((filename+'.pdf'))
         
         if self.savetext:
-            sav.savetext(signalrec, filename)
+            sav.savetext(signalrec, (filename+'.txt'))
 
 #%%
 
