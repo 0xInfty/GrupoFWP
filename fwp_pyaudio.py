@@ -1,6 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-Módulo PyAudio
+The 'fwp_pyaudio' module is to play and record using PyAudio.
+
+This module could be divided into several pieces:
+    (1) encoding and decoding ('decode', 'encode').
+    (2) making streams ('play', 'play_callback', 'play_callback_gen', 
+    'rec').
+    (3) playing and recording ('play_callback_rec', 
+    'play_callback_rec_gen', 'just_play', 'just_rec', 'signal_plot').
+    (4) plotting and saving ('signal_plot', 'AfterRecording').
+
+decode: function
+    Coverts a PyAudio byte stream into a Numpy array.
+encode: function
+    Converts a Numpy array into a byte stream for PyAudio.
+play: function
+    Returns a stream that plays on blocking mode.
+play_callback: function
+    Takes a signal and returns a stream that plays it on callback.
+play_callback_gen: function
+    Takes a generator and returns a stream that plays it on callback.
+rec: function
+	Returns a PyAudio stream that records a signal.
+AfterRecording: class
+	Has paramaters to decide what actions to take after recording.
+play_callback_rec: function
+	Plays a signal and records another one at the same time.
+play_callback_rec_gen: function
+	Plays a signal and records another one at the same time.
+just_play: function
+	Plays a signal.
+just_rec: function
+	Records a signal.
+signal_plot: function
+	Takes an audio signal and plots it as a function of time.
+
 @date: 05/09/2018
 @author: Vall + Marcos
 """
