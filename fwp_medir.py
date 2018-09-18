@@ -98,6 +98,7 @@ plt.show()
 
 import fwp_pyaudio as fwp
 import fwp_lab_instruments as ins
+import fwp_save as sav
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -115,6 +116,7 @@ port = 'USB0::0x0699::0x0363::C108013::INSTR'
 
 nchannelsplay = 1
 samplerate = 44100
+folder = 'Cal_Play'
 after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
                                      saveplot = False, savetext = True)
 
@@ -123,9 +125,11 @@ seno = wmaker.Wave('sine', frequency=signal_freq)
 signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
+savedir = sav.new_dir(folder, os.getcwd())
+makefile = lambda amp: os.path.join(savedir, '{}_{:.2f}'.format(folder, amp))
+
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 amp_osci = []
-makefile = lambda amp: 'Cal_Play_{:.2f}'.format(amp)
 
 signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100)
 
@@ -143,3 +147,16 @@ for amp in amplitude:
     result, units = osci.measure('pk2', 1)
     
     amp_osci.append(result)
+
+amp_osci = np.array(amp_osci)
+
+plt.figure()
+plt.plot(amplitude, amp_osci, 'o')
+plt.xlabel("Factor de amplitud")
+plt.ylabel("Amplitud real ({})".format(units))
+plt.grid()
+plt.show()
+
+sav.saveplot('{}_Plot'.format(folder), savedir=savedir)
+sav.savetext(np.transpose([amplitude, amp_osci]), 
+             '{}_Data'.format(folder), savedir=savedir)
