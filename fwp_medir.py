@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os, rms
 
-#%% Read an write in two channels
+#%% Read and write in two channels
 
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
@@ -140,9 +140,9 @@ for amp in amplitude:
                                               display_warnings=False)
     after_record_do.filename = makefile(amp)
     
-    thesignal = fwp.just_play(signal_to_play, 
-                              nchannelsplay=nchannelsplay,
-                              after_recording=after_record_do)
+    fwp.just_play(signal_to_play, 
+                  nchannelsplay=nchannelsplay,
+                  after_recording=after_record_do)
     
     result, units = osci.measure('pk2', 1)
     
@@ -160,3 +160,59 @@ plt.show()
 sav.saveplot('{}_Plot'.format(folder), savedir=savedir)
 sav.savetext(np.transpose([amplitude, amp_osci]), 
              '{}_Data'.format(folder), savedir=savedir)
+
+#%% Get a diode's IV curve
+
+# PARAMETERS
+
+resistance = 1e3 # ohms
+
+amp = 1 # between 0 and 1
+freq = 440 # hertz
+n_per = 50
+duration = n_per/freq
+
+nchannelsplay = 1
+nchannelsrec = 2
+samplerate = 44100
+folder = 'Diode_IV_Curve'
+after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+                                     saveplot = False, savetext = True)
+
+# CODE --> ¡OJO! FALTA CALIBRACIÓN
+
+signalmaker = fwp.PyAudioWave(nchannels=nchannelsplay,
+                              samplingrate=samplerate)
+
+seno = wmaker.Wave('sine', frequency=signal_freq)
+signal_to_play = signalmaker.write_signal(seno, 
+                                          periods_per_chunk=10000, 
+                                          display_warnings=False)
+
+savedir = sav.new_dir(folder, os.getcwd())
+filename = os.path.join(savedir, 
+                        '{}_{:.0f}_Hz_{:.2f}'.format(folder, freq, amp))
+after_record_do.filename(filename)
+
+signal_rec = fwp.play_callback_rec(signal_to_play, 
+                                   duration,
+                                   nchannelsplay=nchannelsplay,
+                                   nchannelsrec=nchannelsrec,
+                                   after_recording=after_record_do)
+chL = signal_rec[0]
+chR = signal_rec[1]
+
+V = chR - chL
+I = chL/resistance
+
+plt.figure()
+plt.plot(V, I)
+plt.xlabel("Voltaje V")
+plt.ylabel("Corriente I")
+plt.grid()
+
+sav.saveplot('{}_Plot_{:.0f}_Hz_{:.2f}'.format(folder, freq, amp),
+             savedir = savedir)
+sav.savetext(np.transpose(np.array([V, I])),
+             '{}_Data_{:.0f}_Hz_{:.2f}'.format(folder, freq, amp),
+             savedir = savedir)
