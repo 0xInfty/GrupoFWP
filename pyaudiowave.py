@@ -7,6 +7,7 @@ import numpy as np
 
 #%% The class
 
+
 class PyAudioWave:
     ''' A class which takes in a wave object and formats it accordingly to the
     requirements of the pyaudio module for playing. It includes two simple 
@@ -18,13 +19,18 @@ class PyAudioWave:
         buffersize: (int). Writing buffer size
         nchannels: (1 or 2). Number of channels.'''
         
-    def __init__(self, samplingrate=44100, buffersize=1024, nchannels=1):
+    def __init__(self, samplingrate=44100, buffersize=1024, nchannels=1, debugmode=False):
         
         self.sampling_rate = samplingrate
         self.buffer_size = buffersize
         self.nchannels = nchannels
+        self.debugmode = debugmode
 
-#%% Some helper methods
+    def debugprint(self, printable):
+        if self.debugmode:
+            print(printable)
+            
+#% Some helper methods
 
     def create_time(self, wave, periods_per_chunk=1):
         ''' Creates a time arry for other functions tu use.'''
@@ -91,12 +97,15 @@ class PyAudioWave:
         should be an array of shape (samples, nchannels).''' 
         #Since buffers_per_arrray might be smaller than 
         #len(signal)//self.buffer_size, I'll use the latter:
-        for i in range(len(signal)//self.buffer_size):
-            yield signal[:,self.buffer_size * i:self.buffer_size * (i+1)]
-    
-#%% The actual useful methods
+        self.debugprint('Entered yield_a_bit')
+        for i in range(int(signal.shape[1]/self.buffer_size)):
             
-    def write_signal(self, wave, periods_per_chunk=1, display_warnings=True):
+            self.debugprint('Engaged its for loop. Iteration {} of {}'.format(i, int(signal.shape[1]/self.buffer_size)))
+            yield self.encode(signal[:,self.buffer_size * i:self.buffer_size * (i+1)])
+    
+#% The actual useful methods
+            
+    def write_signal(self, wave, periods_per_chunk=1, display_warnings=False):
         ''' Creates a signal the pyaudio stream can write (play). If signal is 
         two-channel, output is formated accordingly.'''
     
@@ -114,39 +123,52 @@ class PyAudioWave:
         None, it will generate samples forever.'''
         
         wave = self.resolve_nchannels(wave, display_warnings)
+        self.debugprint('Wave tuple lentgh: {}'.format(len(wave)))
+        
         #Get whole number of periods bigger than given buffer_size
         required_periods = self.buffer_size * wave[0].frequency // self.sampling_rate + 1
         
         #Create a time vector just greater than buffers_per_array*buffer_size
         time = self.create_time(wave[0],
                                 periods_per_chunk = required_periods * buffers_per_array)
+        self.debugprint('Time length: {}'.format(len(time)))
+
         signal = self.eval_wave(wave, time)
-        yield_signal = signal
+        self.debugprint('Signal = {}'.format(signal))
+        self.debugprint('Signal shape: {}'.format(signal.shape))
+#        yield signal
         
+        yield_signal = signal
         #Handle different duration values:
         
         if duration is None:
-            print('Indefinitely')
+            self.debugprint('Mode engaged: Indefinitely')
             # Yield samples indefinitely
             while True:
                 
                 yield from self.yield_a_bit(yield_signal)
-                last_place = len(yield_signal)//self.buffer_size
-                yield_signal = np.append((yield_signal[last_place:],signal))
+                
+                last_place = yield_signal.shape[1]//self.buffer_size
+                yield_signal = np.concatenate((yield_signal[:,last_place:],signal))
                         
-        elif duration < len(signal) / self.sampling_rate:
-            print('short')
+        elif duration < signal.shape[1] / self.sampling_rate:
+            self.debugprint('Mode engaged: Short')
             total_length = duration * self.sampling_rate
             yield from self.yield_a_bit(signal[:total_length])
-            yield signal[total_length:] #yield las bit
+            yield self.encode(signal[:,total_length:]) #yield las bit
             
-        else: #tal vez puede simplificarse la cuenta del range y ajustar el final de la duración
-            print('long')
+        else: 
+            self.debugprint('Mode engaged: Long')
+            
             iterations = duration * wave[0].frequency // (required_periods * buffers_per_array)
-            for _ in range(iterations):
+            self.debugprint(iterations)
+            
+            for _ in range(int(iterations)):
+                
                 yield from self.yield_a_bit(yield_signal)
-                last_place = len(yield_signal)//self.buffer_size
-                yield_signal = np.append((yield_signal[last_place:],signal))
+                
+                last_place = yield_signal.shape[1]//self.buffer_size
+                yield_signal = np.concatenate((yield_signal[:,last_place:],signal))
             #Missing line to get exact duration
                 
                
@@ -167,4 +189,30 @@ class PyAudioWave:
             signal_list = [w.evaluate(time) for w in wave]
             
             return time, signal_list
-        
+
+#%% example to try everithing out
+#            
+#import wavemaker
+#import matplotlib.pyplot as plt
+##%%
+#seno1 = wavemaker.Wave('sine', frequency=4)
+#seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
+#triang = wavemaker.Wave('triangular',frequency=3)
+#
+##Some parameters:
+#samplerate = 44100
+#buffersize = 1024
+#    
+## An input maker with given parameters and one channel
+#InputMaker = PyAudioWave(samplerate, buffersize, debugmode=True)
+#
+#
+#InputMaker.nchannels = 1
+#sound_gen = InputMaker.write_generator((seno1, triang), duration=1000)
+#
+#k = 0
+#for s in sound_gen:
+#    print(s)
+#    k +=1
+#    if k>20:
+#        break

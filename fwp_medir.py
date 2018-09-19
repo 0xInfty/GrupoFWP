@@ -5,7 +5,7 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
-import fwp_lab_instruments as ins
+#import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
