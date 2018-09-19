@@ -126,19 +126,23 @@ class PyAudioWave:
         #Handle different duration values:
         
         if duration is None:
+            print('Indefinitely')
             # Yield samples indefinitely
             while True:
+                
                 yield from self.yield_a_bit(yield_signal)
                 last_place = len(yield_signal)//self.buffer_size
                 yield_signal = np.append((yield_signal[last_place:],signal))
                         
-        elif duration < len(signal) / self.sampling_frequency:
-            total_length = duration * self.sampling_frequeny
+        elif duration < len(signal) / self.sampling_rate:
+            print('short')
+            total_length = duration * self.sampling_rate
             yield from self.yield_a_bit(signal[:total_length])
             yield signal[total_length:] #yield las bit
             
         else: #tal vez puede simplificarse la cuenta del range y ajustar el final de la duración
-            iterations = duration * wave.frequency // (required_periods * buffers_per_array)
+            print('long')
+            iterations = duration * wave[0].frequency // (required_periods * buffers_per_array)
             for _ in range(iterations):
                 yield from self.yield_a_bit(yield_signal)
                 last_place = len(yield_signal)//self.buffer_size
