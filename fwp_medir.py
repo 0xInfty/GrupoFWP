@@ -59,7 +59,7 @@ cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_to_play = signalmaker.write_signal((seno1,cuadrada), periods_per_chunk=100)
+signal_to_play = signalmaker.write_generator((seno1,cuadrada), duration=duration)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_callback_rec_gen(signal_to_play, 
@@ -114,6 +114,68 @@ for freq, dur in zip(frequencies, durations):
     signalrms.append(rms.rms(thesignal))
     
 del thesignal
+
+signalrms = np.array(signalrms)
+signaldec = 10*np.log10(signalrms/max(signalrms))
+
+plt.figure()
+plt.plot(frequencies, signaldec, 'b-')
+plt.ylabel('Decibels')
+plt.xlabel('Frequency (Hz)')
+plt.grid()
+plt.show() 
+
+sav.saveplot('{}_Plot.pdf'.format(filename))
+sav.savetext(np.transpose(np.array(frequencies, signalrms, signaldec)),
+             '{}_Data.txt'.format(filename))
+
+#%% Frequency sweep using generators
+
+freq_start = 500
+freq_stop = 22000
+freq_step = 250
+
+# Some configurations
+after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+                                     saveplot = False, savetext = True) 
+nchannelsrec = 2
+nchannelsplay = 2 # Cause of cable issues
+name = os.path.join('Measurements','Freq_Sweep')
+
+seno = wmaker.Wave('sine') # Default frequency and amplitude.
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay) # Default srate
+
+# Frequencies and durations
+frequencies = np.arange(freq_start, freq_stop, freq_step)
+#durations = np.array([100/freq for freq in frequencies]) # 100 periods
+duration = 50/frequencies[0] #play 50 periods of slowest wave
+durations = [duration] * len(frequencies)
+
+# If non existent, create directory to save to
+savedir = sav.new_dir(os.path.join(os.getcwd(), name))
+filename = os.path.join(savedir, name)
+makefile = lambda freq : '{}_{:.0f}_Hz'.format(filename, freq)
+
+signalrms = []
+
+for freq, dur in zip(frequencies, durations):
+    
+    # Set up stuff for this frequency
+    seno.frequency = freq
+    signal_to_play = signalmaker.write_generator(seno, 
+                                              display_warnings=False)
+    after_record_do.filename = makefile(freq)
+    
+    # Play, record and process
+    thesignal = fwp.play_callback_rec_gen(signal_to_play, 
+                                      recording_duration=dur,
+                                      nchannelsplay=nchannelsplay,
+                                      nchannelsrec=nchannelsrec,
+                                      after_recording=after_record_do)
+    
+    signalrms.append(rms.rms(thesignal))
+    
+#del thesignal
 
 signalrms = np.array(signalrms)
 signaldec = 10*np.log10(signalrms/max(signalrms))
