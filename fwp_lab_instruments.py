@@ -112,21 +112,19 @@ class Osci:
         -------
         result: int, float
             Measured value.
-        units: str
-            Measured value's units.
         
         """
         
         if reconfig:
             self.config_measure(measure_type, measure_ch)
         
-        result = self.osci.write('MEAS:MEAS1:VAL?')
+        result = float(self.osci.write('MEAS:MEAS1:VAL?'))
         units = self.osci.write('MEAS:MEAS1:UNI?')
         
         if print_result:
             print("{} {}".format(result, units))
         
-        return result, units
+        return result
         
     def config_measure(self, measure_type, measure_ch):
         
@@ -285,8 +283,8 @@ class Gen:
         else:
             print('Channel {} turn off'.format(output_ch))
     
-    def config_output(self, output_waveform, output_frequency, 
-                      output_amplitude, output_offset=0, 
+    def config_output(self, output_waveform='sin', output_frequency=1e3,
+                      output_amplitude=1, output_offset=0, 
                       output_phase=0, output_ch=1):
 
         """Configures an output channel.
