@@ -39,6 +39,33 @@ thesignal = fwp.play_callback_rec(signal_to_play,
                                   nchannelsrec=nchannelsrec,
                                   after_recording=after_record_do)
 
+
+#%% Read an write in two channels using generators to avoid signal cutoff
+
+#Some configurations
+after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
+                                     saveplot = False, savetext = False)                                     
+duration = 1
+nchannelsrec = 2
+nchannelsplay = 2
+signal_freq = 2000
+
+#A square and a sine wave
+seno1 = wmaker.Wave('sine', frequency=signal_freq)
+seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
+cuadrada = wmaker.Wave('square',frequency=signal_freq)
+
+#Create signal to play
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
+signal_to_play = signalmaker.write_signal((seno1,cuadrada), periods_per_chunk=100)
+#NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
+
+thesignal = fwp.play_callback_rec_gen(signal_to_play, 
+                                  duration,
+                                  nchannelsplay=nchannelsplay,
+                                  nchannelsrec=nchannelsrec,
+                                  after_recording=after_record_do)
+
 #%% Frequency sweep
 
 freq_start = 50
