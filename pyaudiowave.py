@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 A module containing a single class that takes in Wave objects from the wavemaker
-module and outputs a variety of signals from the given wave(s).'''
+module and outputs a variety of signals from the given wave(s).
 """
+
 import numpy as np
 
 #%% The class
@@ -100,7 +101,7 @@ class PyAudioWave:
         self.debugprint('Entered yield_a_bit')
         for i in range(int(signal.shape[1]/self.buffer_size)):
             
-            self.debugprint('Engaged its for loop. Iteration {} of {}'.format(i, int(signal.shape[1]/self.buffer_size)))
+#            self.debugprint('Engaged its for loop. Iteration {} of {}'.format(i, int(signal.shape[1]/self.buffer_size)))
             yield self.encode(signal[:,self.buffer_size * i:self.buffer_size * (i+1)])
     
 #% The actual useful methods
@@ -149,26 +150,30 @@ class PyAudioWave:
                 yield from self.yield_a_bit(yield_signal)
                 
                 last_place = yield_signal.shape[1]//self.buffer_size
-                yield_signal = np.concatenate((yield_signal[:,last_place:],signal))
+                yield_signal = np.concatenate((yield_signal[:,last_place:],signal), axis=1)
                         
         elif duration < signal.shape[1] / self.sampling_rate:
             self.debugprint('Mode engaged: Short')
             total_length = duration * self.sampling_rate
             yield from self.yield_a_bit(signal[:,:total_length])
-            yield self.encode(signal[:,total_length:]) #yield las bit
+            yield self.encode(signal[:,total_length:]) #yield last bit
             
         else: 
             self.debugprint('Mode engaged: Long')
             
             iterations = duration * wave[0].frequency // (required_periods * buffers_per_array)
-            self.debugprint(iterations)
+            self.debugprint('Number of full iterations to run: {}'.format(iterations))
             
             for _ in range(int(iterations)):
                 
                 yield from self.yield_a_bit(yield_signal)
                 
-                last_place = yield_signal.shape[1]//self.buffer_size
-                yield_signal = np.concatenate((yield_signal[:,last_place:],signal))
+                last_place = int(yield_signal.shape[1]/self.buffer_size)
+                self.debugprint(''' Array sizes:
+                    yield_signal[:,last_place:]: {}
+                    signal: {}'''.format(
+                    yield_signal[:,last_place:].shape, signal.shape))
+                yield_signal = np.concatenate((yield_signal[:,last_place:],signal), axis=1)
             #Missing line to get exact duration
                 
                
@@ -185,34 +190,34 @@ class PyAudioWave:
             return time, wave.evaluate(time)
       
         else: 
-            time = self.create_time(wave[0],periods_per_chunk)
+            time = self.create_time(wave[0], periods_per_chunk)
             signal_list = [w.evaluate(time) for w in wave]
             
             return time, signal_list
 
 #%% example to try everithing out
-#            
-#import wavemaker
-#import matplotlib.pyplot as plt
-##%%
-#seno1 = wavemaker.Wave('sine', frequency=4)
-#seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
-#triang = wavemaker.Wave('triangular',frequency=3)
-#
-##Some parameters:
-#samplerate = 44100
-#buffersize = 1024
-#    
-## An input maker with given parameters and one channel
-#InputMaker = PyAudioWave(samplerate, buffersize, debugmode=True)
-#
-#
-#InputMaker.nchannels = 1
-#sound_gen = InputMaker.write_generator((seno1, triang), duration=1000)
-#
-#k = 0
-#for s in sound_gen:
-#    print(s)
-#    k +=1
+            
+import wavemaker
+#%%
+seno1 = wavemaker.Wave('sine', frequency=4)
+seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
+triang = wavemaker.Wave('triangular',frequency=3)
+
+#Some parameters:
+samplerate = 44100
+buffersize = 1024
+    
+# An input maker with given parameters and one channel
+InputMaker = PyAudioWave(samplerate, buffersize, debugmode=True)
+
+
+InputMaker.nchannels = 1
+sound_gen = InputMaker.write_generator((seno1, triang), duration=10, buffers_per_array=20)
+
+#%%
+k = 0
+for s in sound_gen:
+    print(k)
+    k +=1
 #    if k>20:
 #        break
