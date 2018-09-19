@@ -295,7 +295,7 @@ class AfterRecording:
     
     def __init__(self, savewav=False, showplot=True, 
                  saveplot=False, savetext=False, 
-                 filename=os.join(os.getcwd(),'Output')):
+                 filename=os.path.join(os.getcwd(),'Output')):
         
         self.savewav=savewav
         self.showplot=showplot
