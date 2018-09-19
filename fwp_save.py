@@ -34,7 +34,7 @@ def new_dir(my_dir, newformat='{}_{}'):
     
     """Makes and returns a new directory to avoid overwriting.
     
-    Takes a directory name 'dirname' and checks whether it already 
+    Takes a directory name 'my_dir' and checks whether it already 
     exists on 'intodir' directory. If it doesn't, it returns 'dirname'. 
     If it does, it returns a related unoccupied directory name.
     

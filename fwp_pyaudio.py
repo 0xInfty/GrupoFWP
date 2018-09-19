@@ -234,6 +234,7 @@ def play_callback_gen(signalplaygen,
     p = pyaudio.PyAudio()
     
     if repeat:
+        #retains behaviour of other play_callback_gen function
         signalplay = next(signalplaygen)
         def callback(in_data, frame_count, time_info, status):
              return (signalplay, pyaudio.paContinue)
