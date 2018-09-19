@@ -114,7 +114,7 @@ duration = n_per/freq
 
 port = 'USB0::0x0699::0x0363::C108013::INSTR'
 
-nchannelsplay = 1
+nchannelsplay = 2
 samplerate = 44100
 name = 'Cal_Play_{:.0f}_Hz'.format(freq)
 after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
@@ -132,7 +132,8 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 amp_osci = []
 
-signal_to_play = signalmaker.write_signal(seno, periods_per_chunk=100)
+osci.config_measure('pk2', 1)
+osci.config_measure('pk2', 2)
 
 for amp in amplitude:
     
@@ -145,17 +146,92 @@ for amp in amplitude:
                   nchannelsplay=nchannelsplay,
                   after_recording=after_record_do)
     
-    result, units = osci.measure('pk2', 1)
+    result_left = osci.measure('pk2', 1, reconfig=False)
+    result_right = osci.measure('pk2', 2, reconfig=False)
     
-    amp_osci.append(result)
+    amp_osci.append([result_left, result_right])
 
 amp_osci = np.array(amp_osci)
 
 plt.figure()
 plt.plot(amplitude, amp_osci, 'o')
 plt.xlabel("Factor de amplitud")
-plt.ylabel("Amplitud real ({})".format(units))
+plt.ylabel("Amplitud real (Vpp)")
+plt.legend(["Izquierda","Derecha"])
 plt.grid()
+plt.show()
+
+sav.saveplot('{}_Plot.pdf'.format(filename))
+sav.savetext(np.transpose([amplitude, amp_osci]), 
+             '{}_Data.txt'.format(filename))
+
+#%% Calibrate recording
+
+amp_stop = 2 # Vpp
+amp_step = 0.1
+amp_start = amp_step
+
+freq = 2000
+n_per = 50
+duration = n_per/freq
+
+port = 'USB0::0x0699::0x0363::C108013::INSTR'
+
+nchannelsplay = 2
+nchannelsrec = 2
+samplerate = 44100
+name = 'Cal_Rec_{:.0f}_Hz'.format(freq)
+after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+                                     saveplot = False, savetext = True)
+
+gen = ins.Gem(port=port)
+seno = wmaker.Wave('sine', frequency=signal_freq)
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
+                              samplingrate=samplerate)
+
+savedir = sav.new_dir(os.path.join(os.getcwd(), name))
+filename = os.path.join(savedir, name)
+makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
+
+amplitude = np.arange(amp_start, amp_stop, amp_step)
+
+gen.config_output(output_waveform='sin', 
+                  output_frequency=freq, 
+                  output_ch=1) # Left
+gen.config_output(output_waveform='sin', 
+                  output_frequency=freq, 
+                  output_ch=2) # Right
+
+amp_rec = []
+                  
+for amp in amplitude:
+    
+    after_record_do.filename = makefile(amp)
+    
+    gen.output(output_frequency=freq, 
+               output_amplitude=amp,
+               output_ch=1,
+               reconfig=True)
+    gen.output(output_frequency=freq, 
+               output_amplitude=amp,
+               output_ch=2,
+               reconfig=True)
+    
+    signal_rec = fwp.just_rec(duration,
+                              nchannelsrec=nchannelsrec,
+                              after_recording=after_record_do)
+
+    amp_rec.append([max(signal_rec[:,0])-min(signal_rec[:,0]), # Left
+                    max(signal_rec[:,1])-min(signal_rec[:,1])]) # Right
+
+amp_rec = np.array(amp_rec)
+
+plt.figure()
+plt.plot(amplitude, amp_rec, 'o')
+plt.xlabel("Amplitud leída (pp)")
+plt.ylabel("Amplitud real (Vpp)")
+plt.grid()
+plt.legend(["Izquierda","Derecha"])
 plt.show()
 
 sav.saveplot('{}_Plot.pdf'.format(filename))
