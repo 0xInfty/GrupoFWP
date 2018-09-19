@@ -17,7 +17,7 @@ Gen.output: method
 """
 
 import re
-import visa
+import pyvisa as visa
 
 #%%
 
