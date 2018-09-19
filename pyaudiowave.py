@@ -342,12 +342,28 @@ class PyAudioWave:
                 
                
     def plot_signal(self, wave, periods_per_chunk=1):
-        ''' Returns time and signal arrays ready to plot. If only one wave is
+        """ Returns time and signal arrays ready to plot. If only one wave is
         given, output will be the same as write_signal, but will also return
         time. If a tuple of waves is given, output will be time and a list of
-        the signal arrays.'''
+        the signal arrays.
         
-
+        
+        Parameters
+        ----------
+        wave : wave object
+            Object created by wavemaker class with desired function
+            
+       periods_per_chunk : int or float optional
+            Amount of periods to be sent to audio output. Default: 1.
+          
+            
+        Returns
+        ----------
+        2D numpy array
+            array constituted by time, and signal (evaluated waveform)
+        
+        """
+        
         if not isinstance(wave,tuple):
             time = self.create_time(wave, periods_per_chunk)
             
@@ -359,7 +375,7 @@ class PyAudioWave:
             
             return time, signal_list
 
-#%% example to try everithing out
+#%% example to try everything out
             
 #import wavemaker
 ##%%
