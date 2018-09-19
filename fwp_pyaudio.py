@@ -303,7 +303,7 @@ class AfterRecording:
         self.savetext=savetext
         self.filename=filename
 
-    def act(self, signalrec, nchannelsrec, filename=None):
+    def act(self, signalrec, nchannelsrec, samplerate, filename=None):
         
         if filename is None:
             filename = self.filename
@@ -394,7 +394,7 @@ def play_callback_rec(signalplay, #1st column left
     if after_recording is None:
         after_recording = AfterRecording()
     
-    after_recording.act(signalrec, nchannelsrec)
+    after_recording.act(signalrec, nchannelsrec, samplerate)
     
     return signalrec
 
@@ -465,7 +465,7 @@ def play_callback_rec_gen(signalplay_gen, #1st column left
     if after_recording is None:
         after_recording = AfterRecording()
     
-    after_recording.act(signalrec, nchannelsrec)
+    after_recording.act(signalrec, nchannelsrec, samplerate)
     
     return signalrec
 
@@ -549,7 +549,7 @@ def just_rec(recording_duration, #1st column left
     if after_recording is None:
         after_recording = AfterRecording()
     
-    after_recording.act(signalrec, nchannelsrec)
+    after_recording.act(signalrec, nchannelsrec, samplerate)
     
     return signalrec
 
