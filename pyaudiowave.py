@@ -361,27 +361,27 @@ class PyAudioWave:
 
 #%% example to try everithing out
             
-import wavemaker
-#%%
-seno1 = wavemaker.Wave('sine', frequency=4)
-seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
-triang = wavemaker.Wave('triangular',frequency=3)
-
-#Some parameters:
-samplerate = 44100
-buffersize = 1024
-    
-# An input maker with given parameters and one channel
-InputMaker = PyAudioWave(samplerate, buffersize, debugmode=True)
-
-
-InputMaker.nchannels = 1
-sound_gen = InputMaker.write_generator((seno1, triang), duration=10, buffers_per_array=20)
-
-#%%
-k = 0
-for s in sound_gen:
-    print(k)
-    k +=1
-#    if k>20:
-#        break
+#import wavemaker
+##%%
+#seno1 = wavemaker.Wave('sine', frequency=4)
+#seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
+#triang = wavemaker.Wave('triangular',frequency=3)
+#
+##Some parameters:
+#samplerate = 44100
+#buffersize = 1024
+#    
+## An input maker with given parameters and one channel
+#InputMaker = PyAudioWave(samplerate, buffersize, debugmode=True)
+#
+#
+#InputMaker.nchannels = 1
+#sound_gen = InputMaker.write_generator((seno1, triang), duration=10, buffers_per_array=20)
+#
+##%%
+#k = 0
+#for s in sound_gen:
+#    print(k)
+#    k +=1
+##    if k>20:
+##        break
