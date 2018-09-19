@@ -10,7 +10,7 @@ It could be divided into 2 sections:
 new_dir: function
     Makes and returns a new related directory to avoid overwriting.
 free_file: function
-    Makes a name for a new file to avoid overwriting.
+    Returns a name for a new file to avoid overwriting.
 saveplot: function
     Saves a matplotlib.pyplot plot on an image file (i.e: 'png').
 savetext: function
@@ -34,9 +34,10 @@ def new_dir(my_dir, newformat='{}_{}'):
     
     """Makes and returns a new directory to avoid overwriting.
     
-    Takes a directory name 'dirname' and checks whether it already 
-    exists on 'intodir' directory. If it doesn't, it returns 'dirname'. 
-    If it does, it returns a related unoccupied directory name.
+    Takes a directory name 'my_dir' and checks whether it already 
+    exists. If it doesn't, it returns 'dirname'. If it does, it 
+    returns a related unoccupied directory name. In both cases, 
+    the returned directory is initialized.
     
     Parameters
     ----------
@@ -78,11 +79,11 @@ def new_dir(my_dir, newformat='{}_{}'):
 
 def free_file(my_file, newformat='{}_{}'):
     
-    """Makes a name for a new file to avoid overwriting.
+    """Returns a name for a new file to avoid overwriting.
         
-    Takes a file name 'filename' and its file format 'filetype' as if 
-    you were thinking to make a new file 'filename.filetype' in 
-    'savedir' directory. It returns a related unnocupied file name.
+    Takes a file name 'my_file'. It returns a related unnocupied 
+    file name 'free_file'. If necessary, it makes a new 
+    directory to agree with 'my_file' path.
         
     Parameters
     ----------
@@ -109,7 +110,7 @@ def free_file(my_file, newformat='{}_{}'):
         sepformat = newformat.split('{}')
         free_file = my_file
         while os.path.isfile(free_file):
-            free_file = os.path.splitext(free_file)[1]
+            free_file = os.path.splitext(free_file)[0]
             free_file = free_file.split(sepformat[-2])[-1]
             try:
                 free_file = free_file.split(sepformat[-1])[0]
