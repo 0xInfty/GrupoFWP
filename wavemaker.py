@@ -79,7 +79,7 @@ def create_sawtooth_up(time, freq):
     return wave        
 
 def create_sawtooth_down(time, freq):
-   """ Creates sawtooth waveform with negative slope
+    """ Creates sawtooth waveform with negative slope
    
     Parameters
     ----------
@@ -147,7 +147,10 @@ def create_custom(time, freq, custom_func):
     raise Exception('Not yet implemented.')
       
 def given_waveform(input_waveform):
-    """ Switcher to easily choose waveform
+    """ Switcher to easily choose waveform.
+    
+    If the given waveform is not in the list, it raises a TypeError and a list
+    containing the accepted inputs.
     
     Parameters
     ----------
@@ -169,9 +172,12 @@ def given_waveform(input_waveform):
         'square': create_square,
         'custom': create_custom,
     }
-    func = switcher.get(input_waveform,lambda: 'Invalid waveform.')
+    func = switcher.get(input_waveform, wrong_input)
     return func
        
+def wrong_input():
+    raise TypeError('''Given waveform is invalid. Choose from following list:
+        sine, triangular, ramp, sawtooth, sawtoothup, sawtoothdown, square, custom''')
 
 def function_creator(waveform, freq=400, duration=1, amp=1, samplig_freq=17000, *arg):
     """Creates desired waveform
@@ -220,8 +226,12 @@ def function_generator(waveform, freq=400, duration=None, amp=1,
         Sampling frequency in Hz.
     
     Returns
+    ----------        
+    Nothing.
+    
+    Yields
     -------
-    wave : array 
+    wave : numpy array 
         Evaluated function of given waveform with a lenght of designated amount of periods
     """
 
@@ -265,10 +275,14 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
         Time to wait between each frequency in seconds. If array-like, length 
         should be equal to ammount of frequency values to sweep. 
         Default: 0 seconds.
-        
+    
     Returns
+    ----------        
+    Nothing.
+    
+    Yields
     ----------
-    wave : array
+    wave : numpy array
     evaluated waveform of given parameters with a different frecuency each time
     the generator is called
     
@@ -329,24 +343,21 @@ class Wave:
         self.waveform = given_waveform(waveform)
         
     def evaluate(self, time):
-    """Takes in an array-like object to evaluate the funcion in.
-    
-    Parameters
-    ----------
-    time : array
-        time vector in which to evaluate the funcion
-    
-    self : 
+        """Takes in an array-like object to evaluate the funcion in.
         
-    Returns
-    -------
-    
-    Evaluated waveform 
-    """
-          
+        Parameters
+        ----------
+        time : array
+            time vector in which to evaluate the funcion
         
+        self : 
+            
+        Returns
+        -------
+        
+        Evaluated waveform 
+        """          
+            
         wave = self.waveform(time, self.frequency) * self.amplitude
         return wave
     
-#    def generate(self, time, chunk_size):
-        
