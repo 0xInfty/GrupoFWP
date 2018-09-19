@@ -5,6 +5,7 @@ Borrador_Vale_2.py
 *.pdf
 *.jpg
 *.png
+Measurements/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
