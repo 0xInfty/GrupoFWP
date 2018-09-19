@@ -154,7 +154,7 @@ class PyAudioWave:
         elif duration < signal.shape[1] / self.sampling_rate:
             self.debugprint('Mode engaged: Short')
             total_length = duration * self.sampling_rate
-            yield from self.yield_a_bit(signal[:total_length])
+            yield from self.yield_a_bit(signal[:,:total_length])
             yield self.encode(signal[:,total_length:]) #yield las bit
             
         else: 

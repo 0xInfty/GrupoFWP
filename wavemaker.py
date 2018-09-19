@@ -350,7 +350,6 @@ class Wave:
         time : array
             time vector in which to evaluate the funcion
         
-        self : 
             
         Returns
         -------
