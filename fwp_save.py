@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-Save Module
+"""The 'fwp_save' module saves data, dealing with overwriting.
 
-This module contains some functions that save data into files.
+It could be divided into 2 sections:
+    (1) making new directories and free files to avoid overwriting 
+    ('new_dir', 'free_file')
+    (2) saving data into files with the option of not overwriting 
+    ('saveplot', 'savetext', 'savewav')
 
-new_dir: Makes and returns a new related directory to avoid overwriting.
-new_filename: Returns a related free file name to avoid overwriting.
-saveplot: Saves a matplotlib.pyplot plot on an image file (i.e: 'png').
-savetext: Saves some np.array like data on a '.txt' file.
-savewav: Saves a PyAudio encoded audio on a '.wav' file.
+new_dir: function
+    Makes and returns a new related directory to avoid overwriting.
+free_file: function
+    Returns a name for a new file to avoid overwriting.
+saveplot: function
+    Saves a matplotlib.pyplot plot on an image file (i.e: 'png').
+savetext: function
+    Saves some np.array like data on a '.txt' file.
+savewav: function
+    Saves a PyAudio encoded audio on a '.wav' file.
 
 @author: Vall
 @date: 09-17-2018
@@ -22,39 +30,37 @@ import wave
 
 #%%
 
-def new_dir(my_dir, into_dir, newformat='{}_{}'):
+def new_dir(my_dir, newformat='{}_{}'):
     
     """Makes and returns a new directory to avoid overwriting.
     
-    Takes a directory name 'dirname' and checks whether it already 
-    exists on 'intodir' directory. If it doesn't, it returns 'dirname'. 
-    If it does, it returns a related unoccupied directory name.
+    Takes a directory name 'my_dir' and checks whether it already 
+    exists. If it doesn't, it returns 'dirname'. If it does, it 
+    returns a related unoccupied directory name. In both cases, 
+    the returned directory is initialized.
     
     Parameters
     ----------
     my_dir: str
-        Desired directory.
-    into_dir: str
-        Directory's directory.
+        Desired directory (should also contain full path).
     
     Returns
     -------
     new_dir: str
-        New directory.
+        New directory (contains full path)
     
     Yields
     ------
     new_dir: directory
     
     """
-        
-    home = os.getcwd()
-    
-    os.chdir(into_dir)
     
     sepformat = newformat.split('{}')
+    base = os.path.split(my_dir)[0]
+    
     new_dir = my_dir
     while os.path.isdir(new_dir):
+        new_dir = os.path.basename(new_dir)
         new_dir = new_dir.split(sepformat[-2])[-1]
         try:
             new_dir = new_dir.split(sepformat[-1])[0]
@@ -64,97 +70,81 @@ def new_dir(my_dir, into_dir, newformat='{}_{}'):
             new_dir = newformat.format(my_dir, str(int(new_dir)+1))
         except ValueError:
             new_dir = newformat.format(my_dir, 2)
+        new_dir = os.path.join(base, new_dir)
     os.makedirs(new_dir)
-    
-    os.chdir(new_dir)
-    
-    new_dir = os.getcwd()
-    
-    os.chdir(home)
-    
+        
     return new_dir
 
 #%%
 
-def new_filename(filename, filetype, savedir, newformat='{}_{}'):
+def free_file(my_file, newformat='{}_{}'):
     
-    """Makes a name for a new file to avoid overwriting.
+    """Returns a name for a new file to avoid overwriting.
         
-    Takes a file name 'filename' and its file format 'filetype' as if 
-    you were thinking to make a new file 'filename.filetype' in 
-    'savedir' directory. It returns a related unnocupied file name.
+    Takes a file name 'my_file'. It returns a related unnocupied 
+    file name 'free_file'. If necessary, it makes a new 
+    directory to agree with 'my_file' path.
         
     Parameters
     ----------
-    filename: str
-        Tentative file name.
-    filetype: str
-        Desired file format.
-    savedir: str
-        Desired file directory.
+    my_file: str
+        Tentative file name (must contain full path and extension).
     newformat='{}_{}': str
         Format string that indicates how to make new names.
     
     Returns
     -------
     new_fname: str
-        Unoccupied file name.
+        Unoccupied file name (also contains full path and extension).
         
     """
     
-    home = os.getcwd()
+    base = os.path.split(my_file)[0]
+    extension = os.path.splitext(my_file)[-1]
     
-    if not os.path.isdir(savedir):
-        new_filename = filename
+    if not os.path.isdir(base):
+        os.makedirs(base)
+        free_file = my_file
     
     else:
-        os.chdir(savedir)
         sepformat = newformat.split('{}')
-        new_filename = filename
-        while os.path.isfile(new_filename+'.'+filetype):
-            new_filename = new_filename.split(sepformat[-2])[-1]
+        free_file = my_file
+        while os.path.isfile(free_file):
+            free_file = os.path.splitext(free_file)[0]
+            free_file = free_file.split(sepformat[-2])[-1]
             try:
-                new_filename = new_filename.split(sepformat[-1])[0]
+                free_file = free_file.split(sepformat[-1])[0]
             except ValueError:
-                new_filename = new_filename
+                free_file = free_file
             try:
-                new_filename = newformat.format(
-                        filename, 
-                        str(int(new_filename)+1),
+                free_file = newformat.format(
+                        os.path.splitext(my_file)[1],
+                        str(int(free_file)+1),
                         )
             except ValueError:
-                new_filename = newformat.format(filename, 2)
+                free_file = newformat.format(free_file, 2)
+            free_file = os.path.join(base, free_file+extension)
     
-    os.chdir(home)
-    
-    return new_filename
+    return free_file
 
 #%%
 
-def saveplot(filename,
-             plotformat='pdf',
-             savedir=os.getcwd(),
-             overwrite=False):
+def saveplot(file, overwrite=False):
     
     """Saves a plot on an image file.
     
-    This function saves the current matplotlib.pyplot plot on an image 
-    file. Its format is given by 'plotformat'. And it is saved on 
-    'savedir' directory. If overwrite=False, it checks whether 
-    'filename.plotformat' exists or not; if it already exists, it saves 
-    the plot as 'filename (2).plotformat'. If overwrite=True, it saves 
-    the plot on 'filename.plotformat' even if it already exists.
+    This function saves the current matplotlib.pyplot plot on a file. 
+    If 'overwrite=False', it checks whether 'file' exists or not; if it 
+    already exists, it defines a new file in order to not allow 
+    overwritting. If overwrite=True, it saves the plot on 'file' even if 
+    it already exists.
     
     Variables
     ---------
-    filename: string
-        The name you wish the file to have.
-    plotformat='pdf': string
-        The file's format.
-    savedir=os.getcwd(): string
-        The directory where the file is saved.
+    file: string
+        The name you wish (must include full path and extension)
     overwrite=False: bool
-        Parameter that allows to overwrite files.
+        Indicates whether to overwrite or not.
     
     Returns
     -------
@@ -166,48 +156,37 @@ def saveplot(filename,
     
     """
     
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
+    if not os.path.isdir(os.path.split(file)[0]):
+        os.makedirs(os.path.split(file)[0])
     
     if not overwrite:
-        filename = new_filename(filename, plotformat, savedir)
+        file = free_file(file)
 
-    plt.savefig((filename + '.' + plotformat), bbox_inches='tight')
+    plt.savefig(file, bbox_inches='tight')
     
-    os.chdir(home)
-    
-    print('Archivo {}.{} guardado'.format(filename, plotformat))
+    print('Archivo guardado en {}'.format(file))
     
 
 #%%
 
-def savetext(datanumpylike,
-             filename,
-             savedir=os.getcwd(),
-             overwrite=False):
+def savetext(datanumpylike, file, overwrite=False):
     
-    """Takes some array-like data and saves it on a .txt file.
+    """Takes some array-like data and saves it on a '.txt' file.
     
-    This function takes some data and saves it on a .txt file on 
-    savedir directory. If overwrite=False, it checks whether 
-    'filename.txt' exists or not; if it already exists, it saves the 
-    data as 'filename (2).txt'. If overwrite=True, it saves the data 
-    on 'filename.txt' even if it already exists.
+    This function takes some data and saves it on a '.txt' file.
+    If 'overwrite=False', it checks whether 'file' exists or not; if it 
+    already exists, it defines a new file in order to not allow 
+    overwritting. If overwrite=True, it saves the plot on 'file' even if 
+    it already exists.
     
     Variables
     ---------
     datanumpylike: array, list
         The data to be saved.
-    filename: string
-        The name you wish the .txt file to have.
-    savedir=os.getcwd: string
-        The directory you wish to save the .txt file at.
+    file: string
+        The name you wish (must include full path and extension)
     overwrite=False: bool
-        A parameter which allows or not to overwrite a file.
+        Indicates whether to overwrite or not.
     
     Return
     ------
@@ -215,78 +194,96 @@ def savetext(datanumpylike,
     
     Yield
     -----
-    .txt file
+    '.txt' file
     
     """
     
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
+    base = os.path.split(file)[0]
+    if not os.path.isdir(base):
+        os.makedirs(base)
+
+    file = os.path.join(
+            base,
+            (os.path.splitext(os.path.basename(file))[0] + '.txt'),
+            )
     
     if not overwrite:
-        filename = new_filename(filename, 'txt', savedir)
-
-    np.savetxt((filename+'.txt'), np.array(datanumpylike), 
+        file = free_file(file)
+        
+    np.savetxt(file, np.array(datanumpylike), 
                delimiter='\t', newline='\n')
-
-    os.chdir(home)
     
-    print('Archivo {}.txt guardado'.format(filename))
+    print('Archivo guardado en {}'.format(file))
     
     return
 
 #%%
 
 def savewav(datapyaudio,
-            filename,
-            datanchannels=1,
-            dataformat=pyaudio.paFloat32,
-            samplerate=44100,
-            savedir=os.getcwd(),
+            file,
+            data_nchannels=1,
+            data_format=pyaudio.paFloat32,
+            data_samplerate=44100,
             overwrite=False):
     
-    """Takes a PyAudio byte stream and saves it on a .wav file.
+    """Takes a PyAudio byte stream and saves it on a '.wav' file.
     
-    Takes a PyAudio byte stream and saves it on a .wav file at savedir 
-    directory. It specifies some parameters: number of audio channels, 
-    format of the audio data, sampling rate of the data. If 
-    overwrite=False, it checks whether 'filename.wav' exists or not; if 
-    it already exists, then it saves it as 'filename (2).wav'. If 
-    overwrite=True, it saves it as 'filename.wav' even if it already 
-    exists.
+    Takes a PyAudio byte stream and saves it on a '.wav' file. It 
+    specifies some parameters: 'datanchannels' (number of audio 
+    channels), 'dataformat' (format of the audio data), and 'samplerate' 
+    (sampling rate of the data). If 'overwrite=False', it checks whether 
+    'file' exists or not; if it already exists, it defines a new file in 
+    order to not allow overwritting. If overwrite=True, it saves the 
+    plot on 'file' even if it already exists.
+    
+    Variables
+    ---------
+    datapyaudio: str
+        PyAudio byte stream.
+    file: str
+        Desired file (must include full path and extension)
+    data_nchannels=1: int
+        Data's number of audio channels.
+    data_format
+        Data's PyAudio format.
+    overwrite=False: bool
+        Indicates wheter to overwrite or not.
+    
+    Returns
+    -------
+    nothing
+    
+    Yields
+    ------
+    '.wav' file
     
     """
     
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
+    base = os.path.split(file)[0]
+    if not os.path.isdir(base):
+        os.makedirs(base)
+
+    file = os.path.join(
+            base,
+            (os.path.splitext(os.path.basename(file))[0] + '.wav'),
+            )
     
     if not overwrite:
-        filename = new_filename(filename, 'wav', savedir)
+        file = free_file(file)
     
     datalist = []
     datalist.append(datapyaudio)
     
-    os.chdir(savedir)
-    
     p = pyaudio.PyAudio()
-    wf = wave.open((filename + '.wav'), 'wb')
+    wf = wave.open(file, 'wb')
     
-    wf.setnchannels(datanchannels)
-    wf.setsampwidth(p.get_sample_size(dataformat))
-    wf.setframerate(samplerate)
+    wf.setnchannels(data_nchannels)
+    wf.setsampwidth(p.get_sample_size(data_format))
+    wf.setframerate(data_samplerate)
     wf.writeframes(b''.join(datalist))
     
     wf.close()
-
-    os.chdir(home)
     
-    print('Archivo {}.wav guardado'.format(filename))
+    print('Archivo guardado en {}'.format(file))
     
     return
