@@ -234,14 +234,21 @@ def play_callback_gen(signalplaygen,
     p = pyaudio.PyAudio()
     
     if repeat:
+        #retains behaviour of other play_callback_gen function
         signalplay = next(signalplaygen)
         def callback(in_data, frame_count, time_info, status):
              return (signalplay, pyaudio.paContinue)
             
     else: #Still needs checks to see if generator run out
         def callback(in_data, frame_count, time_info, status):
-            signalplay = next(signalplaygen) 
-            return (signalplay, pyaudio.paContinue)
+            try:
+                signalplay = next(signalplaygen) 
+                return (signalplay, pyaudio.paContinue)
+                #If generator run out
+                
+            except StopIteration:
+                return (None, pyaudio.paComplete)
+                
             
     streamplay = p.open(format=formatplay,
                         channels=nchannelsplay,
@@ -467,7 +474,7 @@ def play_callback_rec_gen(signalplay_gen, #1st column left
     
     after_recording.act(signalrec, nchannelsrec, samplerate)
     
-    return signalrec
+    return decode(signalrec, channels=nchannelsrec)
 
 #%%
 
