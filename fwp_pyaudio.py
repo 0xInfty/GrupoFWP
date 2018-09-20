@@ -123,52 +123,6 @@ def play(nchannelsplay=1,
 
     
 #%%
-#
-#def play_callback(signalplay,
-#                  nchannelsplay=1, 
-#                  formatplay=pyaudio.paFloat32,
-#                  samplerate=44100, 
-#                  repeat=True):
-#    
-#    """Takes a signal and returns a stream that plays it on callback.
-#    
-#    This function takes a signal and returns a PyAudio stream that plays 
-#    it in non-blocking mode.
-#    
-#    Variables
-#    ---------
-#    signalplay: array
-#        Signal to be played.
-#    nchannelsplay: int
-#        Number of channels it should be played at.
-#    formatplay: PyAudio format.
-#        Signal's format.
-#    samplerate=44100: int, float
-#        Sampling rate at which the signal should be played.
-#    
-#    Returns
-#    -------
-#    streamplay: PyAudio stream object
-#        Object to be called to play the signal.
-#    
-#    """
-#   
-#    p = pyaudio.PyAudio()
-#    
-#    def callback(in_data, frame_count, time_info, status):
-#         return (signalplay, pyaudio.paContinue)
-#            
-#
-#            
-#    streamplay = p.open(format=formatplay,
-#                        channels=nchannelsplay,
-#                        rate=samplerate,
-#                        output=True,
-#                        stream_callback=callback)
-#                        
-#    return streamplay
-
-#%%
 
 def play_callback(signalplaygen,
                   nchannelsplay=1, 
@@ -183,14 +137,18 @@ def play_callback(signalplaygen,
     
     Variables
     ---------
-    signalplay: array
+    signalplay : array
         Signal to be played.
-    nchannelsplay: int
+    nchannelsplay : int
         Number of channels it should be played at.
-    formatplay: PyAudio format.
+    formatplay : PyAudio format.
         Signal's format.
-    samplerate=44100: int, float
+    samplerate=44100 : int, float
         Sampling rate at which the signal should be played.
+    repeat=False : bool
+        Decides wether the callback funtion should repeat the first
+        it yields or keep yielding new arrays, if for some reason you
+        should want that behaviour.
     
     Returns
     -------
@@ -308,7 +266,7 @@ class AfterRecording:
 
 #%%
 
-def play_callback_rec(signalplay, #1st column left
+def play_rec(signalplay, #1st column left
                       recording_duration=None,
                       nchannelsplay=1,
                       nchannelsrec=1,
@@ -382,7 +340,7 @@ def play_callback_rec(signalplay, #1st column left
 #%%
 
 def just_play(signalplay, #1st column left
-              nchannelsplay=1,
+              nchannels=1,
               samplerate=44100):
     
     """Plays a signal.
@@ -392,8 +350,8 @@ def just_play(signalplay, #1st column left
     
     Variables
     ---------
-    signalplay: PyAudio stream
-        The signal to be played.
+    signalplay: PyAudio stream generator
+        A generator that yields the signal to be played.
     nchannelsplay: int
         Played signal's number of channels.
     samplerate: int, float
@@ -405,12 +363,13 @@ def just_play(signalplay, #1st column left
     
     """
         
-    streamplay = play(nchannelsplay=nchannelsplay,
+    streamplay = play(nchannelsplay=nchannels,
                       formatplay=pyaudio.paFloat32,
                       samplerate=samplerate)
     
     print("* Playing")
-    streamplay.write(signalplay)
+    for data in signalplay:
+        streamplay.write(data)
     
     streamplay.stop_stream()
     print("* Done playing")

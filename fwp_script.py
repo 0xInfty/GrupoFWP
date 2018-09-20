@@ -14,17 +14,15 @@ import os, rms
 import pyaudiowave as paw
 import wavemaker as wmaker
 
-
-
 #%% Read an write in two channels using generators to avoid signal cutoff
 
 #Some configurations
-after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
+after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
                                      saveplot = False, savetext = False)                                     
-duration = 1
+duration = 5
 nchannelsrec = 2
 nchannelsplay = 2
-signal_freq = 500
+signal_freq = 2000
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
@@ -33,15 +31,31 @@ cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.write_generator((seno1,cuadrada))
+signal_generator = signalmaker.write_generator((seno1,seno2))
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
-thesignal = fwp.play_callback_rec(signal_generator, 
-                                  recording_duration=duration,
-                                  nchannelsplay=nchannelsplay,
-                                  nchannelsrec=nchannelsrec,
-                                  after_recording=after_record_do,
-                                  repeat=True)
+thesignal = fwp.play_rec(signal_generator, 
+                          recording_duration=duration,
+                          nchannelsplay=nchannelsplay,
+                          nchannelsrec=nchannelsrec,
+                          after_recording=after_record_do,
+                          repeat=False)
+
+#%% Example of just_play
+
+duration = 10
+nchannelsplay = 2
+signal_freq = 400
+
+#A square and a sine wave
+seno1 = wmaker.Wave('sine', frequency=signal_freq)
+seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
+
+#Create signal to play
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
+signal_generator = signalmaker.write_generator((seno1,seno2), duration=duration)
+
+fwp.just_play(signal_generator, nchannels=nchannelsplay)
 
 #%% Frequency sweep using generators
 
@@ -80,12 +94,12 @@ for freq, dur in zip(frequencies, durations):
     after_record_do.filename = makefile(freq)
     
     # Play, record and process
-    thesignal = fwp.play_callback_rec(
-            signal_to_play, 
-            recording_duration=dur,
-            nchannelsplay=nchannelsplay,
-            nchannelsrec=nchannelsrec,
-            after_recording=after_record_do)
+    thesignal = fwp.play_rec(
+                        signal_to_play, 
+                        recording_duration=dur,
+                        nchannelsplay=nchannelsplay,
+                        nchannelsrec=nchannelsrec,
+                        after_recording=after_record_do)
     
     signalrms.append(rms.rms(thesignal))
 
@@ -108,7 +122,7 @@ sav.savetext(
 
 amp_start = 1
 amp_stop = 0
-amp_step = 0.1
+amp_step = 0.05
 
 freq = 2000
 n_per = 50
@@ -138,13 +152,13 @@ osci.config_measure('pk2', 2)
 
 for amp in amplitude:
     
-    signal_to_play = signalmaker.write_signal(amp*seno, 
-                                              periods_per_chunk=10000, 
-                                              display_warnings=False)
+    seno.amplitude = amp #update signals ampitude
+    signal_to_play = signalmaker.write_generator(seno, #play for 1000 periods
+                                              duration=1000 / seno.frequency)
     after_record_do.filename = makefile(amp)
     
     fwp.just_play(signal_to_play, 
-                  nchannelsplay=nchannelsplay,
+                  nchannels=nchannelsplay,
                   after_recording=after_record_do)
     
     result_left = osci.measure('pk2', 1, reconfig=False)
@@ -185,9 +199,9 @@ name = 'Cal_Rec_{:.0f}_Hz'.format(freq)
 after_record_do = fwp.AfterRecording(savetext = True)
 
 gen = ins.Gem(port=port)
-seno = wmaker.Wave('sine', frequency=signal_freq)
-signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
-                              samplingrate=samplerate)
+#seno = wmaker.Wave('sine', frequency=signal_freq)
+#signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
+#                              samplingrate=samplerate)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), name))
 filename = os.path.join(savedir, name)
@@ -269,11 +283,11 @@ savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
 after_record_do.filename = filename
 
-signal_rec = fwp.play_callback_rec_gen(signal_to_play, 
-                                   duration,
-                                   nchannelsplay=nchannelsplay,
-                                   nchannelsrec=nchannelsrec,
-                                   after_recording=after_record_do)
+signal_rec = fwp.play_rec(signal_to_play, 
+                           duration,
+                           nchannelsplay=nchannelsplay,
+                           nchannelsrec=nchannelsrec,
+                           after_recording=after_record_do)
 chL = signal_rec[:,0]
 chR = signal_rec[:,1]
 
