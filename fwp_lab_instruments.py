@@ -81,11 +81,11 @@ class Osci:
         osci.write('DAT:WID 1') # Binary transmission mode
         
         # Trigger configuration
-        osci.write('TRIG:MAI:MOD NORM') # Waits for the trigger
+        osci.write('TRIG:MAI:MOD AUTO') # Option: NORM (waits for trigger)
         osci.write('TRIG:MAI:TYP EDGE')
         osci.write('TRIG:MAI:LEV 5')
         osci.write('TRIG:MAI:EDGE:SLO RIS')
-        osci.write('TRIG:MAI:EDGE:SOU EXT')
+        osci.write('TRIG:MAI:EDGE:SOU CH1') # Option: EXT
         osci.write('HOR:MAI:POS 0') # Makes the complete measure at once
         
         self.port = port
@@ -118,8 +118,8 @@ class Osci:
         if reconfig:
             self.config_measure(measure_type, measure_ch)
         
-        result = self.osci.query('MEASU:MEAS1:VAL?')
-        units = self.osci.query('MEASU:MEAS1:UNI?')
+        result = float(self.osci.query('MEASU:IMM:VAL?'))
+        units = self.osci.query('MEASU:IMM:UNI?')
         
         if print_result:
             print("{} {}".format(result, units))
@@ -154,6 +154,7 @@ class Osci:
                'freq': 'FREQ',
                'per': 'PER',
                'rms': 'RMS',
+               'pk2': 'PK2',
                'amp': 'PK2', # absolute difference between max and min
                'ph': 'PHA',
                'crms': 'CRM', # RMS on the first complete period
@@ -169,19 +170,19 @@ class Osci:
         
         if 'c' in measure_type.lower():
             if 'rms' in measure_type.lower():
-                measure_type = dic['crms']
+                measure_opt = dic['crms']
             else:
-                measure_type = dic['cmean']
+                measure_opt = dic['cmean']
         else:
             for key, value in dic.items():
                 if key in measure_type.lower():
-                    measure_type = value
-            if measure_type not in dic.values():
-                measure_type = 'FREQ'
+                    measure_opt = value
+            if measure_opt not in dic.values():
+                measure_opt = 'FREQ'
                 print("Measure type unrecognized ('FREQ' as default).")
             
-        self.osci.write('MEASU:MEAS1:SOU CH{:.0f}'.format(measure_ch))
-        self.osci.write('MEASU:MEAS1:TYP {}'.format(measure_type))
+        self.osci.write('MEASU:IMM:SOU CH{:.0f}'.format(measure_ch))
+        self.osci.write('MEASU:IMM:TYP {}'.format(measure_opt))
         
         return
 
@@ -192,7 +193,8 @@ class Gen:
     """Allows communication with Tektronix Function Generators.
     
     It allows communication with multiple models, based on the official 
-    programming manual ()
+    programming manual 
+    (https://www.tek.com/signal-generator/afg3000-manual/afg3000-series-2)
     
         AFG3011;
         AFG3021B;
@@ -272,9 +274,14 @@ class Gen:
         """
         
         if output and reconfig:
-            self.config_output(output_waveform, output_ch)
+            self.config_output(output_waveform=output_waveform, 
+                               output_frequency=output_frequency,
+                               output_amplitude=output_amplitude,
+                               output_offset=output_offset,
+                               output_phase=output_phase, 
+                               output_ch=output_ch)
         
-        self.gen.write('OUTP{}:STAT {:.0f}'.format(output))
+        self.gen.write('OUTP{}:STAT {}'.format(output_ch, output))
         # if output=True, turns on
         # if output=False, turns off
         
@@ -332,10 +339,10 @@ class Gen:
         if 'c' in output_waveform.lower():
             output_form = dic['sinc']
         else:
-            for key, value in dic:
+            for key, value in dic.items():
                 if key in output_waveform.lower():
                     output_form = value
-            if output_waveform not in dic.values():
+            if output_form not in dic.values():
                 output_form = 'SIN'
                 print("Unrecognized waveform ('SIN' as default).")
             
@@ -358,19 +365,19 @@ class Gen:
                              output_waveform.lower())
             try:
                 aux = aux[0]
-                self.gen.write('SOUR{}:PULS:DCYC {}'.format(
+                self.gen.write('SOUR{}:PULS:DCYC {:.1f}'.format(
                     output_ch,
                     aux)) # percentual
             except IndexError:
                 print('Default square duty cycle')
         
-        self.gen.write('SOUR{}:VOLT:LEV:IMM:OFF {}'.format(
+        self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
                 output_ch,
                 output_offset)) # in V
         
-        self.gen.write('SOUR{}:VOLT:LEV:IMM:AMP {}'.format(
+        self.gen.write('SOUR{}:VOLT:LEV:IMM:AMPL {}'.format(
                 output_ch,
-                output_offset)) # in Vpp
+                output_amplitude)) # in Vpp
         
         self.gen.write('SOUR{}:FREQ {}'.format(
                 output_ch,
