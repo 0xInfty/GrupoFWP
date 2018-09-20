@@ -5,6 +5,7 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
+import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
@@ -75,14 +76,16 @@ for freq, dur in zip(frequencies, durations):
     
     # Set up stuff for this frequency
     seno.frequency = freq
+    signal_to_play = signalmaker.write_generator(seno)
     after_record_do.filename = makefile(freq)
     
     # Play, record and process
-    thesignal = fwp.play_callback_rec_gen(signal_to_play, 
-                                      recording_duration=dur,
-                                      nchannelsplay=nchannelsplay,
-                                      nchannelsrec=nchannelsrec,
-                                      after_recording=after_record_do)
+    thesignal = fwp.play_callback_rec(
+            signal_to_play, 
+            recording_duration=dur,
+            nchannelsplay=nchannelsplay,
+            nchannelsrec=nchannelsrec,
+            after_recording=after_record_do)
     
     signalrms.append(rms.rms(thesignal))
 
