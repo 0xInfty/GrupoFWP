@@ -140,7 +140,7 @@ seno = wmaker.Wave('sine', frequency=signal_freq)
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
-savedir = sav.new_dir(os.path.join(os.getcwd(), name))
+savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
 makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 
@@ -203,7 +203,7 @@ gen = ins.Gem(port=port)
 #signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
 #                              samplingrate=samplerate)
 
-savedir = sav.new_dir(os.path.join(os.getcwd(), name))
+savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
 makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 
