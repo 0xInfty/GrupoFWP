@@ -1,16 +1,49 @@
 # -*- coding: utf-8 -*-
 """
-Módulo PyAudio
+The 'fwp_pyaudio' module is to play and record using PyAudio.
+
+This module could be divided into several pieces:
+    (1) encoding and decoding ('decode', 'encode').
+    (2) making streams ('play', 'play_callback', 'play_callback_gen', 
+    'rec').
+    (3) playing and recording ('play_callback_rec', 
+    'play_callback_rec_gen', 'just_play', 'just_rec', 'signal_plot').
+    (4) plotting and saving ('signal_plot', 'AfterRecording').
+
+decode: function
+    Coverts a PyAudio byte stream into a Numpy array.
+encode: function
+    Converts a Numpy array into a byte stream for PyAudio.
+play: function
+    Returns a stream that plays on blocking mode.
+play_callback: function
+    Takes a signal and returns a stream that plays it on callback.
+play_callback_gen: function
+    Takes a generator and returns a stream that plays it on callback.
+rec: function
+	Returns a PyAudio stream that records a signal.
+AfterRecording: class
+	Has paramaters to decide what actions to take after recording.
+play_callback_rec: function
+	Plays a signal and records another one at the same time.
+play_callback_rec_gen: function
+	Plays a signal and records another one at the same time.
+just_play: function
+	Plays a signal.
+just_rec: function
+	Records a signal.
+signal_plot: function
+	Takes an audio signal and plots it as a function of time.
+
 @date: 05/09/2018
-@author: Vall
+@author: Vall + Marcos
 """
 
+import fwp_save as sav
 import pyaudio
-import os
-import numpy as np
 import matplotlib.pyplot as plt
-import wave
-import wavemaker as wmaker
+import numpy as np
+import os
 
 #%%
 
@@ -39,145 +72,17 @@ def decode(in_data, channels):
         The converted data.
         
     """
-    # TODO: handle data type as parameter, convert between pyaudio/numpy types
+    
     result = np.fromstring(in_data, dtype=np.float32)
 
     chunk_length = len(result) / channels
     assert chunk_length == int(chunk_length)
 
     if channels>1:
-        result = np.reshape(result, (chunk_length, channels))
+        result = np.reshape(result, (int(chunk_length), channels))
         
     return result
 
-#%%
-
-def encode(signal):
-    import numpy as np
-
-    """Converts a Numpy array into a byte stream for PyAudio.
-
-    Signal can be a 1D Numpy array if it has 1 channel. And it should be
-    a 2D Numpy array with shape (chunk_size, channels) if it has more 
-    than 1 channel.
-    
-    Variables
-    ---------
-    signal: Numpy array
-        The data to be converted
-    
-    Returns
-    -------
-    out_data: PyAudio byte stream
-        The converted data.
-    
-    """
-    
-    try:
-        len(signal[:,0])
-    except:
-        signal = np.transpose(signal)
-    
-    interleaved = signal.flatten()
-
-    # TODO: handle data type as parameter, convert between pyaudio/numpy types
-    out_data = interleaved.astype(np.float32).tostring()
-    return out_data
-
-#%%
-
-def make_buffer(waveform, frequency, amplitude=1,
-                framesperbuffer=1024, samplerate=44100, m=1,
-                fullbuffer=True):
-    
-    """Makes a sort of audio buffer with a given waveform and frequency.
-    
-    This function returns one or several periods of a wave which 
-    waveform is given by the 'waveform' string. The returned signal
-    has a frequency given by 'frequency' and is intended to fill a 
-    buffer whith 'framesperbuffer' frames, which should be read at a 
-    'samplerate' sampling rate.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
-    'triangular', 'square'}
-        Signal's waveform.
-    frequency: int, float
-        Signal's frequency.
-    amplitude: int, float {between 0 and 1}
-        Signal's amplitude.
-    framesperbuffer: int
-        Audio buffer's number of frames.
-    samplerate: int, float
-        Audio sampling rate.
-    
-    Returns
-    -------
-    buffer: array
-        Audio signal designed to fill an audio buffer.
-    
-    """
-    
-    duration = m/frequency
-    
-    buffer = wmaker.function_creator(waveform, freq=frequency,
-                                    duration=duration,
-                                    amp=amplitude,
-                                    samplig_freq=samplerate)
-
-    if fullbuffer:
-        while len(buffer) < framesperbuffer:
-            m = m + 1
-            buffer = wmaker.function_creator(waveform, freq=frequency,
-                                            duration=m*duration,
-                                            amp=amplitude,
-                                            samplig_freq=samplerate)
-        
-    if len(buffer) / framesperbuffer == \
-          int(len(buffer) / framesperbuffer):
-              print("Entra bien en un buffer")
-    
-    return buffer
-
-#%%
-
-def make_signal(waveform, frequency, signalplayduration, 
-               amplitude=1, samplerate=44100):
-    
-    """Makes a signal with given waveform, duration and frequency.
-    
-    This function makes an audio signal whith given waveform, duration, 
-    frequency and amplitude, designed to be played at a given sampling 
-    rate.
-    
-    Variables
-    ---------
-    waveform: string {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 
-    'triangular', 'square'}
-        Signal's waveform.
-    frequency: int, float
-        Signal's frequency.
-    signalplayduration: int, float.
-        Signal's duration in seconds.
-    amplitude=1: int, float {from 0 to 1}
-        Signal's amplitude.
-    samplerate=44100: int, float
-        Signal's sampling rate.
-    
-    Returns
-    -------
-    signal: array
-        Output signal.    
-    
-    """
-    
-    signal = wmaker.function_creator(waveform, freq=frequency, 
-                                   duration=signalplayduration,
-                                   amp=amplitude, 
-                                   samplig_freq=samplerate)
-    
-    return signal
 
 #%%
 
@@ -185,9 +90,9 @@ def play(nchannelsplay=1,
          formatplay=pyaudio.paFloat32,
          samplerate=44100):
     
-    """Returns a stream that plays it without callback.
+    """Returns a stream that plays on blocking mode.
     
-    This function returns a PyAudio stream that plays it in blocking mode.
+    This function returns a PyAudio stream that plays in blocking mode.
     
     Variables
     ---------
@@ -216,28 +121,34 @@ def play(nchannelsplay=1,
     
     return streamplay
 
+    
 #%%
 
-def play_callback(signalplay,
+def play_callback(signalplaygen,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
-                  samplerate=44100):
+                  samplerate=44100, 
+                  repeat=False):
     
-    """Takes a signal and returns a stream that plays it on callback.
+    """Takes a generator and returns a stream that plays it on callback.
     
     This function takes a signal and returns a PyAudio stream that plays 
     it in non-blocking mode.
     
     Variables
     ---------
-    signalplay: array
+    signalplay : array
         Signal to be played.
-    nchannelsplay: int
+    nchannelsplay : int
         Number of channels it should be played at.
-    formatplay: PyAudio format.
+    formatplay : PyAudio format.
         Signal's format.
-    samplerate=44100: int, float
+    samplerate=44100 : int, float
         Sampling rate at which the signal should be played.
+    repeat=False : bool
+        Decides wether the callback funtion should repeat the first
+        it yields or keep yielding new arrays, if for some reason you
+        should want that behaviour.
     
     Returns
     -------
@@ -248,9 +159,23 @@ def play_callback(signalplay,
    
     p = pyaudio.PyAudio()
     
-    def callback(in_data, frame_count, time_info, status):
-        return (signalplay, pyaudio.paContinue)
-    
+    if repeat:
+        #retains behaviour of other play_callback_gen function
+        signalplay = next(signalplaygen)
+        def callback(in_data, frame_count, time_info, status):
+             return (signalplay, pyaudio.paContinue)
+            
+    else: #Still needs checks to see if generator run out
+        def callback(in_data, frame_count, time_info, status):
+            try:
+                signalplay = next(signalplaygen) 
+                return (signalplay, pyaudio.paContinue)
+                #If generator run out
+                
+            except StopIteration:
+                return (None, pyaudio.paComplete)
+                
+            
     streamplay = p.open(format=formatplay,
                         channels=nchannelsplay,
                         rate=samplerate,
@@ -297,11 +222,57 @@ def rec(nchannelsrec=1,
 
 #%%
 
-def play_callback_rec(signalplay, #1st column left
-                      signalsduration,
+class AfterRecording:
+    
+    '''Has paramaters to decide what actions to take after recording.'''
+    
+    def __init__(self, savewav=False, showplot=True, 
+                 saveplot=False, savetext=False, 
+                 filename=os.path.join(os.getcwd(),'Output')):
+        
+        self.savewav=savewav
+        self.showplot=showplot
+        self.saveplot=saveplot
+        self.savetext=savetext
+        self.filename=filename
+
+    def act(self, signalrec, nchannelsrec, samplerate, filename=None):
+        
+        if filename is None:
+            filename = self.filename
+        
+        if filename is None and any((self.saveplot, 
+                                     self.savetext, 
+                                     self.savewav)):
+            print('filename required.')
+            return
+        
+        if self.savewav:
+            sav.savewav(signalrec, (filename+'.wav'),
+                        data_nchannels=nchannelsrec,
+                        data_samplerate=samplerate)
+        
+        signalrec = decode(signalrec, nchannelsrec)
+        
+        if self.showplot:
+            signal_plot(signalrec)
+            
+            if self.saveplot:
+                sav.saveplot((filename+'.pdf'))
+        
+        if self.savetext:
+            sav.savetext(signalrec, (filename+'.txt'))
+
+
+#%%
+
+def play_rec(signalplay, #1st column left
+                      recording_duration=None,
                       nchannelsplay=1,
                       nchannelsrec=1,
-                      samplerate=44100):
+                      samplerate=44100,
+                      after_recording=None,
+                      repeat=False):
     
     """Plays a signal and records another one at the same time.
     
@@ -330,11 +301,18 @@ def play_callback_rec(signalplay, #1st column left
         Recorded signal.
     
     """
+    if recording_duration is None:
+        if not signalplay.duration is None:
+            recording_duration = signalplay.duration
+        else:
+            raise TypeError('Duration not defined. Either generator or recording duration must be specified.')
+                
         
     streamplay = play_callback(signalplay,
                                nchannelsplay=nchannelsplay,
                                formatplay=pyaudio.paFloat32,
-                               samplerate=samplerate)
+                               samplerate=samplerate,
+                               repeat=repeat)
     
     streamrec = rec(nchannelsrec=nchannelsrec,
                     formatrec=pyaudio.paFloat32,
@@ -343,7 +321,7 @@ def play_callback_rec(signalplay, #1st column left
     streamplay.start_stream()
     print("* Recording")
     streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * signalsduration))
+    signalrec = streamrec.read(int(samplerate * recording_duration))
     print("* Done recording")
 
     streamrec.stop_stream()
@@ -352,12 +330,17 @@ def play_callback_rec(signalplay, #1st column left
     streamrec.close()
     streamplay.close()
     
-    return signalrec
+    if after_recording is None:
+        after_recording = AfterRecording()
+    
+    after_recording.act(signalrec, nchannelsrec, samplerate)
+    
+    return decode(signalrec, channels=nchannelsrec)
 
 #%%
 
 def just_play(signalplay, #1st column left
-              nchannelsplay=1,
+              nchannels=1,
               samplerate=44100):
     
     """Plays a signal.
@@ -367,8 +350,8 @@ def just_play(signalplay, #1st column left
     
     Variables
     ---------
-    signalplay: PyAudio stream
-        The signal to be played.
+    signalplay: PyAudio stream generator
+        A generator that yields the signal to be played.
     nchannelsplay: int
         Played signal's number of channels.
     samplerate: int, float
@@ -380,12 +363,13 @@ def just_play(signalplay, #1st column left
     
     """
         
-    streamplay = play(nchannelsplay=nchannelsplay,
+    streamplay = play(nchannelsplay=nchannels,
                       formatplay=pyaudio.paFloat32,
                       samplerate=samplerate)
     
     print("* Playing")
-    streamplay.write(signalplay)
+    for data in signalplay:
+        streamplay.write(data)
     
     streamplay.stop_stream()
     print("* Done playing")
@@ -393,9 +377,10 @@ def just_play(signalplay, #1st column left
 
 #%%
 
-def just_rec(duration, #1st column left
+def just_rec(recording_duration, #1st column left
              nchannelsrec=1,
-             samplerate=44100):
+             samplerate=44100,
+             after_recording=None):
     
     """Records a signal.
     
@@ -417,18 +402,23 @@ def just_rec(duration, #1st column left
         Recorded signal.
     
     """
-    
+
     streamrec = rec(nchannelsrec=nchannelsrec,
                     formatrec=pyaudio.paFloat32,
                     samplerate=samplerate)
     
     print("* Recording")
     streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * duration))
+    signalrec = streamrec.read(int(samplerate * recording_duration))
     print("* Done recording")
 
     streamrec.stop_stream()
     streamrec.close()
+    
+    if after_recording is None:
+        after_recording = AfterRecording()
+    
+    after_recording.act(signalrec, nchannelsrec, samplerate)
     
     return signalrec
 
@@ -472,6 +462,7 @@ def signal_plot(signal, samplerate=44100,
     
     plt.figure()
     plt.plot(time, signal)
+    plt.grid()
     plt.xlabel('Tiempo (s)')
     if plotunits is not None:
         plt.ylabel('Señal ({})'.format(plotunits))
@@ -482,168 +473,3 @@ def signal_plot(signal, samplerate=44100,
             plt.legend(plotlegend)
         else:
             plt.legend(['Izquierda','Derecha'])
-
-#%%
-
-def saveplot(filename,
-             plotformat='pdf',
-             savedir=os.getcwd(),
-             overwrite=False):
-    
-    """Saves a plot on an image file.
-    
-    This function saves the current matplotlib.pyplot plot on an image 
-    file. Its format is given by 'plotformat'. And it is saved on 
-    'savedir' directory. If overwrite=False, it checks whether 
-    'filename.plotformat' exists or not; if it already exists, it saves 
-    the plot as 'filename (2).plotformat'. If overwrite=True, it saves 
-    the plot on 'filename.plotformat' even if it already exists.
-    
-    Variables
-    ---------
-    filename: string
-        The name you wish the file to have.
-    plotformat='pdf': string
-        The file's format.
-    savedir=os.getcwd(): string
-        The directory where the file is saved.
-    overwrite=False: bool
-        Parameter that allows to overwrite files.
-    
-    Returns
-    -------
-    nothing
-    
-    Yields
-    ------
-    an image file
-    
-    """
-    
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
-    
-    if not overwrite:
-        while os.path.isfile(filename+'.'+plotformat):
-            filename = filename + ' (2)'
-
-    plt.savefig((filename + '.' + plotformat), bbox_inches='tight')
-    
-    os.chdir(home)
-    
-    print('Archivo {}.{} guardado'.format(filename, plotformat))
-    
-
-#%%
-
-def savetext(datanumpylike,
-             filename,
-             savedir=os.getcwd(),
-             overwrite=False):
-    
-    """Takes some array-like data and saves it on a .txt file.
-    
-    This function takes some data and saves it on a .txt file on 
-    savedir directory. If overwrite=False, it checks whether 
-    'filename.txt' exists or not; if it already exists, it saves the 
-    data as 'filename (2).txt'. If overwrite=True, it saves the data 
-    on 'filename.txt' even if it already exists.
-    
-    Variables
-    ---------
-    datanumpylike: array, list
-        The data to be saved.
-    filename: string
-        The name you wish the .txt file to have.
-    savedir=os.getcwd: string
-        The directory you wish to save the .txt file at.
-    overwrite=False: bool
-        A parameter which allows or not to overwrite a file.
-    
-    Return
-    ------
-    nothing
-    
-    Yield
-    -----
-    .txt file
-    
-    """
-    
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
-    
-    if not overwrite:
-        while os.path.isfile(filename+'.txt'):
-            filename = filename + ' (2)'
-
-    np.savetxt((filename+'.txt'), np.array(datanumpylike), 
-               delimiter='\t', newline='\n')
-
-    os.chdir(home)
-    
-    print('Archivo {}.txt guardado'.format(filename))
-    
-    return
-
-#%%
-
-def savewav(datapyaudio,
-            filename,
-            datanchannels=1,
-            dataformat=pyaudio.paFloat32,
-            samplerate=44100,
-            savedir=os.getcwd(),
-            overwrite=False):
-    
-    """Takes a PyAudio byte stream and saves it on a .wav file.
-    
-    Takes a PyAudio byte stream and saves it on a .wav file at savedir 
-    directory. It specifies some parameters: number of audio channels, 
-    format of the audio data, sampling rate of the data. If 
-    overwrite=False, it checks whether 'filename.wav' exists or not; if 
-    it already exists, then it saves it as 'filename (2).wav'. If 
-    overwrite=True, it saves it as 'filename.wav' even if it already 
-    exists.
-    
-    """
-    
-    home = os.getcwd()
-    
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir)
-    
-    os.chdir(savedir)
-    
-    if not overwrite:
-        while os.path.isfile(filename+'.wav'):
-            filename = filename + ' (2)'
-    
-    datalist = []
-    datalist.append(datapyaudio)
-    
-    os.chdir(savedir)
-    
-    p = pyaudio.PyAudio()
-    wf = wave.open((filename + '.wav'), 'wb')
-    
-    wf.setnchannels(datanchannels)
-    wf.setsampwidth(p.get_sample_size(dataformat))
-    wf.setframerate(samplerate)
-    wf.writeframes(b''.join(datalist))
-    
-    wf.close()
-
-    os.chdir(home)
-    
-    print('Archivo {}.wav guardado'.format(filename))
-    
-    return
