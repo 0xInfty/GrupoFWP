@@ -5,17 +5,17 @@ Created on Wed Sep 12 01:09:34 2018
 @author: Marcos
 """
 
-import wavemaker
-import pyaudiowave as paw
 import matplotlib.pyplot as plt
 import numpy as np
+import pyaudiowave as paw
+import wavemaker as wmaker
 
 #%% Create some waves and plot them.
 
 #Create three wave objects: two different sines and a tirangular wave
-seno1 = wavemaker.Wave('sine', frequency=4)
-seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
-triang = wavemaker.Wave('triangular',frequency=3)
+seno1 = wmaker.Wave('sine', frequency=4)
+seno2 = wmaker.Wave('sine', frequency=3, amplitude=1.3)
+triang = wmaker.Wave('triangular',frequency=3)
 
 #Plot them all together
 time = np.arange(0,1,.01)
@@ -50,7 +50,6 @@ plt.figure()
 time, sound_1ch_plot = InputMaker.plot_signal(triang,11)
 plt.plot(time, sound_1ch_plot)
     
-
 #%% Using the generathos methods
 
 InputMaker.nchannels = 1
