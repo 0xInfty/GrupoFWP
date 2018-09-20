@@ -1,47 +1,167 @@
 # -*- coding: utf-8 -*-
-"""
-Crea funciones
+""" This module works as a function generator
+
+It includes:
+Defined functions for several waveforms incorporating a switcher to make choosing easier.
+A frequency sweep function
+A class for evaluating the multiple waveforms
 """
 import numpy as np
 from scipy.signal import sawtooth, square
     
 def create_sine(time, freq):
-    """ Creates sine wave """
+    """ Creates sine wave 
+    
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+    
+    Returns
+    -------
+    
+    Evaluated sine wave of given frequency
+    """
+    
     wave =np.sin(2 * np.pi * time * freq)
     return wave        
     
 def create_ramps(time, freq, type_of_ramp=1):
     """ Creates ascending and descending sawtooth wave,
-    or a tringle wave, depending on the value of type_of_ramp.
+    or a tringle wave, depending on the value of type_of_ramp,
+    using the function 'sawtooth' from scypy signal module.
     Used by create_sawtooth_up, create_sawtooth_down and 
-    create_triangular."""
-
+    create_triangular.
+    
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+    
+    type_of_ramp : {0, 1, 2}
+        0 returns a sawtooth waveform with positive slope
+        1 returns a sawtooth waveform with negative slope
+        0 returns a triangle waveform
+    
+    Returns
+    -------
+    
+    Evaluated sawtooth or triangle wave of given frequency
+    """
+    
     wave = sawtooth(2 * np.pi * time * freq, type_of_ramp)
     return wave
     
 def create_sawtooth_up(time, freq):
-    """ Creates a sawtooth wave with ascending ramps"""
+    """ Creates sawtooth waveform with positive slope
+   
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+
+    Returns
+    -------
+    
+    Evaluated sawtooth waveform with positive slope  and given frequency
+    """
+    
     wave = create_ramps(time ,freq, 1)
     return wave        
 
 def create_sawtooth_down(time, freq):
-    """ Creates a sawtooth wave with descending ramps"""
+    """ Creates sawtooth waveform with negative slope
+   
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+
+    Returns
+    -------
+    
+    Evaluated sawtooth waveform with negative slope and given frequency
+    """
+
     wave = create_ramps(time, freq, 0)
     return wave        
 
 def create_triangular(time, freq):
-    """ Creates a triangular wave with symmetric ramps"""
+    """ Creates a triangular wave with symmetric ramps
+   
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+
+    Returns
+    -------
+    
+    Evaluated triangular waveform with given frequency
+    """
+    
+
     wave = create_ramps(time, freq, .5)
     return wave        
      
 def create_square(time, freq):
+    """ Creates a square wave. Uses square function from
+    scypy signal module
+
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+
+    Returns
+    -------
+    
+    Evaluated square waveform with given frequency
+    """
+    
     wave = square(2 * np.pi * time * freq)
     return wave
     
 def create_custom(time, freq, custom_func):
+    """ Allows used defined wavefom. Not yet implemented.
+    """
+    
     raise Exception('Not yet implemented.')
       
 def given_waveform(input_waveform):
+    """ Switcher to easily choose waveform.
+    
+    If the given waveform is not in the list, it raises a TypeError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    input_waveform : string
+        name of desired function to generate
+   
+    Returns
+    -------
+    Chosen waveform function
+    """
+    
     switcher = {
         'sine': create_sine,
         'sawtoothup': create_sawtooth_up,
@@ -52,23 +172,34 @@ def given_waveform(input_waveform):
         'square': create_square,
         'custom': create_custom,
     }
-    func = switcher.get(input_waveform,lambda: 'Invalid waveform.')
+    func = switcher.get(input_waveform, wrong_input)
     return func
        
+def wrong_input():
+    raise TypeError('''Given waveform is invalid. Choose from following list:
+        sine, triangular, ramp, sawtooth, sawtoothup, sawtoothdown, square, custom''')
 
 def function_creator(waveform, freq=400, duration=1, amp=1, samplig_freq=17000, *arg):
-    """
-    waveform: str
+    """Creates desired waveform
+    
+    Parameters
+    ----------
+    waveform : str
         String from list declaring type of function to use.
-    freq: float
+    freq : float optional
         frequency of signal in Hz. Default: 400HZ
-    duration: float
+    duration : float optional
         Sample length in seconds. Default: 1 second
-    amp: float
+    amp : float optional
         Amplitude a s a fraction of maximum aplitude. Default: 1
-    sampling_freq: int
+    sampling_freq : int optional
         Sampling frequency in Hz.
+        
+    Returns
+    -------
+    Array with evaluated waveform from given type and designated parameters
     """
+    
     time = np.arange(samplig_freq * duration)/samplig_freq
     func = given_waveform(waveform)
     wave = func(time, freq) * amp
@@ -76,20 +207,32 @@ def function_creator(waveform, freq=400, duration=1, amp=1, samplig_freq=17000, 
     
 def function_generator(waveform, freq=400, duration=None, amp=1,
                        periods_per_chunk=1, samplig_freq=17000, *arg):
-    """
-    waveform: str
+    """Creates desired waveform with a generator
+    
+    Parameters
+    ----------
+    waveform : str
         String from list declaring type of function to use.
-    freq: float
+    freq : float optional
         frequency of signal in Hz. Default: 400Hz.
-    duration: float
+    duration : float optional
         Sample length in seconds. If duration is None, it will yield
         samples indefinitely. Default: None.
-    amp: float
+    amp : float optional
         Amplitude a s a fraction of maximum aplitude. Default: 1.
-    periods_per_chunk: int
+    periods_per_chunk : int optional
         Amount of wave periods to include in each yield. Default: 1.
-    sampling_freq: int
+    sampling_freq : int optional
         Sampling frequency in Hz.
+    
+    Returns
+    ----------        
+    Nothing.
+    
+    Yields
+    -------
+    wave : numpy array 
+        Evaluated function of given waveform with a lenght of designated amount of periods
     """
 
     period = 1/freq
@@ -108,27 +251,43 @@ def function_generator(waveform, freq=400, duration=None, amp=1,
 def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1, 
                    waveform='sine', duration_per_freq=1, 
                    silence_between_freq=0, sampling_freq=17000):
-    """
-    freqs_to_sweep: tuple or array-like
+    """ Generator that yields selected waveform with a 
+    different frecuency each time it is called
+    
+    Parameters
+    ----------
+    freqs_to_sweep : tuple or array-like
         If tuple: expects (start, stop, step) tuple and generates an array 
         using np.arrange. If array, size should be (n_freqs, ) and contain
         the frequency values to sweep in Hz. Default: sweeps from 100Hz to
         1000Hz every 10Hz.
-    amp: float or array-like
+    amp : float or array-like
         Amplitud of generated wave.  If array-like, length should be equal
         to ammount of frequency values to sweep. Default: 1.
-    waveform: str
+    waveform : str
         Type of waveform to use. Can be 'sine', 'sawtoothup', 'sawtoothdown',
         'ramp', 'triangular', 'square' or 'custom'. Default: sine.
-    duration_per_freq: float or array-like
+    duration_per_freq : float or array-like
         Duration of each frequency stretch in seconds. If array-like, length 
         should be equal to ammount of frequency values to sweep. 
         Default: 1 second.
-    silence_between_freq: float or array-like
+    silence_between_freq : float or array-like
         Time to wait between each frequency in seconds. If array-like, length 
         should be equal to ammount of frequency values to sweep. 
         Default: 0 seconds.
+    
+    Returns
+    ----------        
+    Nothing.
+    
+    Yields
+    ----------
+    wave : numpy array
+    evaluated waveform of given parameters with a different frecuency each time
+    the generator is called
+    
     """
+    
 #    Crete frequency array, if necessary
     if isinstance(freqs_to_sweep,tuple):
         if not len(freqs_to_sweep)==3:
@@ -160,9 +319,23 @@ def frequency_sweep(freqs_to_sweep=np.arange(100,1000,10), amplitude=1,
 
 class Wave:
     '''Generates an object with a two methods: evaluate(time) and generate (not implemented).
-    Has three atributes: waveform, frequency and amplitude. Waveform can be
-    'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 'triangular', 'square' or 
-    'custom'. Default: sine.'''
+  
+    Attributes
+    ----------
+    waveform : str {'sine', 'sawtoothup', 'sawtoothdown', 'ramp', 'triangular', 'square', 'custom'} optional
+        waveform type.  Default = 'sine'
+    frequency : float
+        wave frequency
+    amplitude : float
+        wave amplitud
+        
+    Methods
+    ----------
+    evaluate(time)
+        returns evaluated function type
+    generate()
+        not yet implemented
+    '''
     
     def __init__(self, waveform='sine', frequency=400, amplitude=1):
         self.frequency = frequency
@@ -170,9 +343,20 @@ class Wave:
         self.waveform = given_waveform(waveform)
         
     def evaluate(self, time):
-        '''Takes in an array-like object to evaluate the funcion in.'''
+        """Takes in an array-like object to evaluate the funcion in.
+        
+        Parameters
+        ----------
+        time : array
+            time vector in which to evaluate the funcion
+        
+            
+        Returns
+        -------
+        
+        Evaluated waveform 
+        """          
+            
         wave = self.waveform(time, self.frequency) * self.amplitude
         return wave
     
-#    def generate(self, time, chunk_size):
-        
