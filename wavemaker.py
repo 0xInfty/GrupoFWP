@@ -160,10 +160,32 @@ def create_square(time, freq, dutycycle = .5, *args):
     wave = square(2 * np.pi * time * freq, dutycycle)
     return wave
     
-def create_custom(time, freq, custom_func, *args):
-    """ Allows used defined wavefom. Not yet implemented.
+def create_custom(time, freq, *args):
+    """ Creates a wave from given custom function. 
+    
+    Useful to get compatibility between the custom function provided and other
+    modules like PyAudioWave.
+
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : int or float
+        expected frequency of sine wave
+        
+    args : (*params, custom_func)
+        *params should contain the parameters that will be passed to the custom
+        function provided
+        
+    Returns
+    -------
+    
+    Evaluated square waveform with given frequency
     """
-    wave = custom_func(time, freq, *args)
+    #last argument is the function, the rest are parameters
+    *params, custom_func = args
+    wave = custom_func(time, freq, *params)
     return wave
       
 def given_waveform(input_waveform):
@@ -235,14 +257,15 @@ class Wave:
         ----------
         time : array
             time vector in which to evaluate the funcion
-        
+        args : tuple (optional)
+            extra arguments to be passed to evaluated function
             
         Returns
         -------
         
         Evaluated waveform 
         """          
-            
-        wave = self.waveform(time, self.frequency, *args) * self.amplitude
+
+        wave = self.waveform(time, self.frequency, *args, self.customfunc) * self.amplitude
         return wave
     
