@@ -342,7 +342,7 @@ class Wave:
         self.amplitude = amplitude
         self.waveform = given_waveform(waveform)
         
-    def evaluate(self, time):
+    def evaluate(self, time, *args):
         """Takes in an array-like object to evaluate the funcion in.
         
         Parameters
@@ -357,6 +357,6 @@ class Wave:
         Evaluated waveform 
         """          
             
-        wave = self.waveform(time, self.frequency) * self.amplitude
+        wave = self.waveform(time, self.frequency, *args) * self.amplitude
         return wave
     
