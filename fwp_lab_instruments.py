@@ -26,7 +26,7 @@ def resources():
     """Returns a list of tuples of connected 'INSTR' resources."""
     
     rm = visa.ResourceManager()
-    resources = rm.list_resources
+    resources = rm.list_resources()
     print(resources)
     
     return resources
@@ -74,7 +74,7 @@ class Osci:
         
         rm = visa.ResourceManager()
         osci = rm.open_resource(port, read_termination="\n")
-        print(osci.write('*IDN?'))
+        print(osci.query('*IDN?'))
         
         # General Configuration
         osci.write('DAT:ENC RPB')
@@ -118,8 +118,8 @@ class Osci:
         if reconfig:
             self.config_measure(measure_type, measure_ch)
         
-        result = float(self.osci.write('MEAS:MEAS1:VAL?'))
-        units = self.osci.write('MEAS:MEAS1:UNI?')
+        result = self.osci.query('MEASU:MEAS1:VAL?')
+        units = self.osci.query('MEASU:MEAS1:UNI?')
         
         if print_result:
             print("{} {}".format(result, units))
@@ -173,7 +173,7 @@ class Osci:
             else:
                 measure_type = dic['cmean']
         else:
-            for key, value in dic:
+            for key, value in dic.items():
                 if key in measure_type.lower():
                     measure_type = value
             if measure_type not in dic.values():
@@ -218,7 +218,7 @@ class Gen:
         
         rm = visa.ResourceManager()
         gen = rm.open_resource(port, read_termination="\n")
-        print(gen.write('*IDN?'))
+        print(gen.query('*IDN?'))
         
         self.port = port
         self.gen = gen
