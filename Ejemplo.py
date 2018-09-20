@@ -5,16 +5,17 @@ Created on Wed Sep 12 01:09:34 2018
 @author: Marcos
 """
 
-import wavemaker
 import matplotlib.pyplot as plt
 import numpy as np
+import pyaudiowave as paw
+import wavemaker as wmaker
 
 #%% Create some waves and plot them.
 
 #Create three wave objects: two different sines and a tirangular wave
-seno1 = wavemaker.Wave('sine', frequency=4)
-seno2 = wavemaker.Wave('sine', frequency=3, amplitude=1.3)
-triang = wavemaker.Wave('triangular',frequency=3)
+seno1 = wmaker.Wave('sine', frequency=4)
+seno2 = wmaker.Wave('sine', frequency=3, amplitude=1.3)
+triang = wmaker.Wave('triangular',frequency=3)
 
 #Plot them all together
 time = np.arange(0,1,.01)
@@ -31,7 +32,7 @@ samplerate = 44100
 buffersize = 1024
     
 # An input maker with given parameters and one channel
-InputMaker = wavemaker.PyAudioWave(samplerate, buffersize, nchannels=1)
+InputMaker = paw.PyAudioWave(samplerate, buffersize, nchannels=1)
 sound_1ch = InputMaker.write_signal(triang,8) #8 full periods of the wave
 
 #To create a two channel input instead of creating a nwe obect, we can change
@@ -49,5 +50,15 @@ plt.figure()
 time, sound_1ch_plot = InputMaker.plot_signal(triang,11)
 plt.plot(time, sound_1ch_plot)
     
+#%% Using the generathos methods
 
-    
+InputMaker.nchannels = 1
+sound_gen = InputMaker.write_generator(seno1)
+
+k = 0
+for s in sound_gen:
+    t = np.linspace(k,k+1,len(s))
+    plt.plot(t,s)
+    k +=1
+    if k>20:
+        break
