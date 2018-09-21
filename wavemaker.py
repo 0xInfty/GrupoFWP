@@ -292,7 +292,7 @@ class Wave:
         self.frequency = frequency
         self.amplitude = amplitude
         self.waveform = given_waveform(waveform)
-        self.extraargs = args
+        self.extra_args = args
         
     def evaluate(self, time, *args):
         """Takes in an array-like object to evaluate the funcion in.
@@ -314,5 +314,47 @@ class Wave:
             #for sums 
             wave = self.waveform(time, self.frequency, self.amplitude)
         else:
-            wave = self.waveform(time, self.frequency, *args, self.extraargs) * self.amplitude
+            wave = self.waveform(time, self.frequency, *args, self.extra_args) * self.amplitude
         return wave
+
+#%%
+
+def fourier_switcher(input_waveform):
+    
+    switcher = {
+            'square': square_series,
+            'triangular': triangular_series,
+            'sawtooth': sawtooth_series,
+            'custom': custom_series}
+    func = switcher.get(input_waveform, wrong_input)
+    return func
+
+def square_series(order):
+    amps = [1/n for n in range(1, 2*order+1, 2)]
+    return amps
+        
+def sawtooth_series(order):
+    amps = [1/n for n in range(1,order+1)]
+    return amps
+    
+def triangular_series(order):
+    amps = [(-1)**((n-1)*.5)/n**2 for n in range(1, 2*order+1, 2)]
+    return amps
+    
+def custom_series(order):
+    raise Exception('not yet implemented')
+
+class Fourier:
+    
+    def __init__(self, waveform, frequency=400, order=5, *args):
+        
+        func = fourier_switcher(waveform)
+        amps = func(order)    
+        freqs = np.arange(frequency, (order+1) * frequency, frequency)
+
+        self.wave = Wave('sum', frequency = freqs, amplitude = amps)
+        self.extra_args = args
+        
+    def evaluate(self, time):
+        
+        return self.wave.evaluate(time)
