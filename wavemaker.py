@@ -45,7 +45,7 @@ def create_ramps(time, freq, type_of_ramp=1):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of created wave
     
     type_of_ramp : {0, 1, 2}
         0 returns a sawtooth waveform with positive slope
@@ -70,7 +70,7 @@ def create_sawtooth_up(time, freq, *args):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of sawtooth wave
 
     args : dummy 
         used to give compatibility with other functions
@@ -93,7 +93,7 @@ def create_sawtooth_down(time, freq, *args):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of sawtooth wave
         
     args : dummy 
         used to give compatibility with other functions
@@ -116,7 +116,7 @@ def create_triangular(time, freq, *args):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of triangular wave
         
     args : dummy 
         used to give compatibility with other functions
@@ -141,7 +141,7 @@ def create_square(time, freq, dutycycle = .5, *args):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of square wave
         
     dutycycle=.5 : scalar or numpy array
         Duty cycle. Default is 0.5 (50% duty cycle). If 
@@ -172,7 +172,7 @@ def create_custom(time, freq, *args):
         time vector in which to evaluate the funcion
     
     freq : int or float
-        expected frequency of sine wave
+        expected frequency of custom wave
         
     args : (*params, custom_func)
         *params should contain the parameters that will be passed to the custom
@@ -186,6 +186,49 @@ def create_custom(time, freq, *args):
     #last argument is the function, the rest are parameters
     *params, custom_func = args
     wave = custom_func(time, freq, *params)
+    return wave
+
+def create_sum(time, freq, amp, *args):
+    """ Creates an arbitraty sum of sine waves.
+
+    It uses the frequencies in freq and either uniform
+    amplitude if amp is None, or the given amplitudes if
+    amp is array-like. Output comes out normalized.
+    
+    Parameters
+    ----------
+    time : array
+        time vector in which to evaluate the funcion
+    
+    freq : array-like
+        expected frequency of sine wave
+       
+    amp : None or array-like 
+        if None, amplitude of all summed waves is equal. If
+        array-like, it should be same length as freq.
+        
+    args : dummy 
+        used to give compatibility with other functions
+
+    Returns
+    -------
+    
+    Evaluated square waveform with given frequency
+    """
+    
+    if len(amp)==0:
+        #If am wasn't given, it is an empty tuple
+        amp = np.ones(len(freq))
+    
+    if len(freq) != len(amp):
+        raise ValueError('Amplitud and frequency arrays should e the same leght!')
+    
+    wave = np.zeros(time.shape)
+    for f, a in zip(freq, amp):
+        wave += create_sine(time, f) * a
+    #Normalize it:
+    wave /= sum(amp) 
+
     return wave
       
 def given_waveform(input_waveform):
@@ -213,6 +256,7 @@ def given_waveform(input_waveform):
         'triangular': create_triangular,
         'square': create_square,
         'custom': create_custom,
+        'sum': create_sum
     }
     func = switcher.get(input_waveform, wrong_input)
     return func
@@ -244,11 +288,11 @@ class Wave:
 
     '''
     
-    def __init__(self, waveform='sine', frequency=400, amplitude=1, custom=None):
+    def __init__(self, waveform='sine', frequency=400, amplitude=1, *args):
         self.frequency = frequency
         self.amplitude = amplitude
         self.waveform = given_waveform(waveform)
-        self.customfunc = custom
+        self.extraargs = args
         
     def evaluate(self, time, *args):
         """Takes in an array-like object to evaluate the funcion in.
@@ -266,6 +310,9 @@ class Wave:
         Evaluated waveform 
         """          
 
-        wave = self.waveform(time, self.frequency, *args, self.customfunc) * self.amplitude
+        if isinstance(self.amplitude, (list, tuple, np.ndarray)):
+            #for sums 
+            wave = self.waveform(time, self.frequency, self.amplitude)
+        else:
+            wave = self.waveform(time, self.frequency, *args, self.extraargs) * self.amplitude
         return wave
-    
