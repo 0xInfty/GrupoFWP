@@ -41,9 +41,6 @@ class PyAudioWave:
     
     Methods (public)
     -------
-    write_signal :
-        Creates a signal the pyaudio stream can write (play). If signal is 
-        two-channel, output is formated accordingly.
         
     write_generator :
         Creates a generator to yield chunks of length buffer_size of the 
@@ -224,40 +221,8 @@ class PyAudioWave:
             yield self.encode(signal[:,self.buffer_size * i:self.buffer_size * (i+1)])
     
 #% The actual useful methods
-            
-    def write_signal(self, wave, periods_per_chunk=1, display_warnings=False):
-        """Creates a signal the pyaudio stream can write (play). If signal is 
-        two-channel, output is formated accordingly.
-        
-        Parameters
-        ----------
-        wave : wave object
-            Object created by wavemaker class with desired function
-            
-        periods_per_chunk : int or float optional
-            Amount of periods to be sent to audio output. Default: 1.
-            
-        display_warning : bool optional
-            If True displays warnings regarding number of channels and
-            wave incompatibilities. Default= False.
-            
-            
-        Returns
-        ----------
-        str
-            Byte stream signal formatted as is needed by pyaudio to play 
-        
-        """
     
-        #Adequate wave tuple to channels, create time, create signal and encode
-        wave = self.resolve_nchannels(wave, display_warnings)
-        time = self.create_time(wave[0], periods_per_chunk)  
-        signal = self.eval_wave(wave, time)
-        
-        return self.encode(signal)
-        
-    
-    def write_generator(self, wave, duration=None, buffers_per_array=100 , display_warnings=False):
+    def write_generator(self, wave, duration=None, buffers_per_array=100, display_warnings=False):
         """Creates a generator to yield chunks of length buffer_size of the 
         generated wave for a total time equal to duration. If duration is
         None, it will generate samples forever.
@@ -304,6 +269,7 @@ class PyAudioWave:
 #        yield signal
         
         yield_signal = signal
+        
         #Handle different duration values:
         
         if duration is None:

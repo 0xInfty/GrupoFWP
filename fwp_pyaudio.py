@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-The 'fwp_pyaudio' module is to play and record using PyAudio.
+The 'fwp_pyaudio' module is for playing and recording
+signals using PyAudio.
 
-This module could be divided into several pieces:
+This script requires that `pyaudio` be installed within the Python
+environment you are running this script in.
+
+This module could be divided into different sections:
     (1) encoding and decoding ('decode', 'encode').
     (2) making streams ('play', 'play_callback', 'play_callback_gen', 
     'rec').
@@ -10,31 +14,37 @@ This module could be divided into several pieces:
     'play_callback_rec_gen', 'just_play', 'just_rec', 'signal_plot').
     (4) plotting and saving ('signal_plot', 'AfterRecording').
 
-decode: function
-    Coverts a PyAudio byte stream into a Numpy array.
-encode: function
-    Converts a Numpy array into a byte stream for PyAudio.
-play: function
-    Returns a stream that plays on blocking mode.
-play_callback: function
-    Takes a signal and returns a stream that plays it on callback.
-play_callback_gen: function
-    Takes a generator and returns a stream that plays it on callback.
-rec: function
-	Returns a PyAudio stream that records a signal.
-AfterRecording: class
-	Has paramaters to decide what actions to take after recording.
-play_callback_rec: function
-	Plays a signal and records another one at the same time.
-play_callback_rec_gen: function
-	Plays a signal and records another one at the same time.
-just_play: function
-	Plays a signal.
-just_rec: function
-	Records a signal.
-signal_plot: function
+It contains the following functions:
+
+decode : 
+    Coverts a PyAudio byte stream into a Numpy array.  
+encode :
+    Converts a Numpy array into a byte stream for PyAudio.    
+play :
+    Returns a stream that plays on blocking mode.   
+play_callback : 
+    Takes a signal and returns a stream that plays it on callback.   
+play_callback_gen : 
+    Takes a generator and returns a stream that plays it on callback.    
+rec : 
+	Returns a PyAudio stream that records a signal.	
+play_callback_rec :  
+	Plays a signal and records another one at the same time.	
+play_callback_rec_gen : 
+	Plays a signal and records another one at the same time.	
+just_play : 
+	Plays a signal.	
+just_rec :
+	Records a signal.	
+signal_plot : 
 	Takes an audio signal and plots it as a function of time.
 
+
+It also includes the following class:
+
+AfterRecording :
+	Has paramaters to decide what actions to take after recording.
+	
 @date: 05/09/2018
 @author: Vall + Marcos
 """
@@ -49,7 +59,7 @@ import os
 
 def decode(in_data, channels):
     
-    """Coverts a PyAudio byte stream into a Numpy array.
+    """Converts a PyAudio byte stream into a Numpy array.
     
     This function converts a byte stream into a Numpy array. If 
     channels=1, it makes a 1D Numpy array. Otherwise, it returns a 2D 
@@ -59,16 +69,16 @@ def decode(in_data, channels):
     of [L0, L1, L2, ...] and right channel of [R0, R1, R2, ...], the 
     output is ordered as [L0, R0, L1, R1, ...].
     
-    Variables
+    Parameters
     ---------
-    in_data: PyAudio byte array
-        The data to be converted
-    channels: int
+    in_data : PyAudio byte array
+        The data to be converted	
+    channels : int
         The number of channels the audio has.
     
     Returns
     -------
-    result: Numpy array
+    numpy array
         The converted data.
         
     """
@@ -83,38 +93,6 @@ def decode(in_data, channels):
         
     return result
 
-#%%
-
-def encode(signal):
-
-    """Converts a Numpy array into a byte stream for PyAudio.
-
-    Signal can be a 1D Numpy array if it has 1 channel. And it should be
-    a 2D Numpy array with shape (chunk_size, channels) if it has more 
-    than 1 channel.
-    
-    Variables
-    ---------
-    signal: Numpy array
-        The data to be converted
-    
-    Returns
-    -------
-    out_data: PyAudio byte stream
-        The converted data.
-    
-    """
-    
-    #If array was Nx1, reshape it to N/2x2
-    try:
-        len(signal[:,0])
-    except IndexError:
-        signal = np.reshape(signal, (-1,2))
-    
-    interleaved = signal.flatten()
-
-    out_data = interleaved.astype(np.float32).tostring()
-    return out_data
 
 #%%
 
@@ -126,22 +104,19 @@ def play(nchannelsplay=1,
     
     This function returns a PyAudio stream that plays in blocking mode.
     
-    Variables
+    Parameters
     ---------
-    signalplay: array
-        Signal to be played.
-    nchannelsplay: int
-        Number of channels it should be played at.
-    formatplay: PyAudio format.
-        Signal's format.
-    samplerate=44100: int, float
-        Sampling rate at which the signal should be played.
+    nchannelsplay : int optional
+        Number of channels it should be played at. Default: 1.	
+    formatplay : PyAudio format. 
+        Signal's format. Default: paFloat32	
+    samplerate : int, float optional
+        Sampling rate at which the signal should be played. Default: 44100
     
     Returns
     -------
-    streamplay: PyAudio stream object
+    PyAudio stream object
         Object to be called to play the signal.
-    
     """
    
     p = pyaudio.PyAudio()
@@ -156,53 +131,7 @@ def play(nchannelsplay=1,
     
 #%%
 
-def play_callback(signalplay,
-                  nchannelsplay=1, 
-                  formatplay=pyaudio.paFloat32,
-                  samplerate=44100, 
-                  repeat=True):
-    
-    """Takes a signal and returns a stream that plays it on callback.
-    
-    This function takes a signal and returns a PyAudio stream that plays 
-    it in non-blocking mode.
-    
-    Variables
-    ---------
-    signalplay: array
-        Signal to be played.
-    nchannelsplay: int
-        Number of channels it should be played at.
-    formatplay: PyAudio format.
-        Signal's format.
-    samplerate=44100: int, float
-        Sampling rate at which the signal should be played.
-    
-    Returns
-    -------
-    streamplay: PyAudio stream object
-        Object to be called to play the signal.
-    
-    """
-   
-    p = pyaudio.PyAudio()
-    
-    def callback(in_data, frame_count, time_info, status):
-         return (signalplay, pyaudio.paContinue)
-            
-
-            
-    streamplay = p.open(format=formatplay,
-                        channels=nchannelsplay,
-                        rate=samplerate,
-                        output=True,
-                        stream_callback=callback)
-                        
-    return streamplay
-
-#%%
-
-def play_callback_gen(signalplaygen,
+def play_callback(signalplaygen,
                   nchannelsplay=1, 
                   formatplay=pyaudio.paFloat32,
                   samplerate=44100, 
@@ -213,20 +142,24 @@ def play_callback_gen(signalplaygen,
     This function takes a signal and returns a PyAudio stream that plays 
     it in non-blocking mode.
     
-    Variables
+    Parameters
     ---------
-    signalplay: array
-        Signal to be played.
-    nchannelsplay: int
-        Number of channels it should be played at.
-    formatplay: PyAudio format.
-        Signal's format.
-    samplerate=44100: int, float
-        Sampling rate at which the signal should be played.
+    signalplay : array
+        Signal to be played.	
+    nchannelsplay : int optional
+        Number of channels signal should be played at. Default: 1.	
+    formatplay : PyAudio format optional
+        Signal's format. Default=paFloat32.	
+    samplerate : int, float optional
+        Sampling rate at which the signal should be played. Default: 44100.	
+    repeat=False : bool optional
+        Decides wether the callback funtion should repeat the first
+        it yields or keep yielding new arrays, if for some reason you
+        should want that behaviour. Default: False.
     
     Returns
     -------
-    streamplay: PyAudio stream object
+    PyAudio stream object
         Object to be called to play the signal.
     
     """
@@ -269,18 +202,20 @@ def rec(nchannelsrec=1,
     Creates a PyAudio stream that will allow to record a signal on a 
     certain format at a certain sampling rate.
     
-    Variables
+    Parameters
     ---------
-    nchannels=1: int
+    nchannels : int optional
         Number of channels the signal should be recorded at.
-    formatrec=pyaudio.paFloat32: PyAudio format
-        Format the signal should be recorded with.
-    samplerate=44100: int, float
-        Sampling rate at which the signal should be recorded.
+	Default: 1.	
+    formatrec : PyAudio format optional
+        Format the signal should be recorded with. Default=paFloat32.	
+    samplerate: int, float optional
+        Sampling rate at which the signal should be recorded. 
+	Default: 44100.
     
     Returns
     -------
-    streamrec: PyAudio stream object
+    PyAudio stream object
         Object to be called to record a signal.
     
     """
@@ -298,7 +233,30 @@ def rec(nchannelsrec=1,
 
 class AfterRecording:
     
-    '''Has paramaters to decide what actions to take after recording.'''
+    """Has paramaters to decide what actions to take after recording.
+    
+    Attributes
+    ----------
+    savewav : bool
+    If True, the script will save a .wav with recorded signal.    
+    showplot : bool
+    If True, the script will produce a plot with output + recorded data.	
+    saveplot : bool
+    If True, the script will save a plot in pdf format of
+    the output and recorded data.
+    savetext : bool
+    If True, the script will save a .txt with recorded signal .
+    filename : str
+    Name with which to save output files produced by the script.
+    
+    
+    Methods
+    ----------
+    act
+	it produces output files according to user preferences
+	determined by boolean values of parameters
+    
+    """
     
     def __init__(self, savewav=False, showplot=True, 
                  saveplot=False, savetext=False, 
@@ -310,8 +268,25 @@ class AfterRecording:
         self.savetext=savetext
         self.filename=filename
 
+	
     def act(self, signalrec, nchannelsrec, samplerate, filename=None):
         
+	 """It deals with after recording actions according to
+	 boolean values defined by user.
+        
+        Parameters
+        ----------
+        signalrec : array
+            time vector in which to evaluate the funcion    
+        nchannelsrec : int optional
+		Number of channels it should be played at.
+        samplerate : int, float
+        	Sampling rate at which the signal should be recorded. 
+		filename : str
+    		Name with which to save output files produced by the script.
+		
+        """ 
+		
         if filename is None:
             filename = self.filename
         
@@ -337,14 +312,16 @@ class AfterRecording:
         if self.savetext:
             sav.savetext(signalrec, (filename+'.txt'))
 
+
 #%%
 
-def play_callback_rec(signalplay, #1st column left
+def play_rec(signalplay, #1st column left
                       recording_duration=None,
                       nchannelsplay=1,
                       nchannelsrec=1,
                       samplerate=44100,
-                      after_recording=None):
+                      after_recording=None,
+                      repeat=False):
     
     """Plays a signal and records another one at the same time.
     
@@ -354,104 +331,45 @@ def play_callback_rec(signalplay, #1st column left
     records using the same sampling rate and the same pyaudio.paFloat32 
     format.
     
-    Variables
+    Parameters
     ---------
-    stramplay: PyAudio stream
-        The signal to be played.
-    signalrecduration: int, float.
-        Signals' duration in seconds.
-    nchannelsplay: int
-        Played signal's number of channels.
-    nchannelsrec: int
-        Recorded signal's number of channels.
-    samplerate: int, float
-        Signals' sampling rate.
+ 	signalplay: PyAudio stream generator
+        A generator that yields the signal to be played.
+    recording_duration : int, float optional
+        Signals' duration in seconds. Default: none.
+    nchannelsplay : int optional
+        Played signal's number of channels. Default: 1.
+    nchannelsrec : int optional
+        Recorded signal's number of channels. Default: 1.
+    samplerate : int, float optional
+        Signals' sampling rate. Default 44100
+	after_recording : class object
+		paramaters to decide what actions to take after recording
+	repeat : bool optional
+		Decides wether the callback funtion should repeat the first
+        array it yields or keep yielding new arrays, if for some
+        reason you should want that behaviour. Default: False.
+		
     
     Returns
     -------
-    signalrec: PyAudio byte stream
+    PyAudio byte stream
         Recorded signal.
     
     """
-    
+	
     if recording_duration is None:
-        recording_duration = len(signalplay)/samplerate
-        
-    streamplay = play_callback(signalplay,
-                               nchannelsplay=nchannelsplay,
-                               formatplay=pyaudio.paFloat32,
-                               samplerate=samplerate)
-    
-    streamrec = rec(nchannelsrec=nchannelsrec,
-                    formatrec=pyaudio.paFloat32,
-                    samplerate=samplerate)
-    
-    streamplay.start_stream()
-    print("* Recording")
-    streamrec.start_stream()
-    signalrec = streamrec.read(int(samplerate * recording_duration))
-    print("* Done recording")
-
-    streamrec.stop_stream()
-    streamplay.stop_stream()
-    
-    streamrec.close()
-    streamplay.close()
-    
-    if after_recording is None:
-        after_recording = AfterRecording()
-    
-    after_recording.act(signalrec, nchannelsrec, samplerate)
-    
-    return signalrec
-
-#%%
-
-def play_callback_rec_gen(signalplay_gen, #1st column left
-                      recording_duration=None,
-                      nchannelsplay=1,
-                      nchannelsrec=1,
-                      samplerate=44100,
-                      after_recording=None):
-    
-    """Plays a signal and records another one at the same time.
-    
-    This function plays an audio signal with a certain number of 
-    channels. At the same time, it records another signal with a given 
-    number of channels. It runs for a given time. And it plays and 
-    records using the same sampling rate and the same pyaudio.paFloat32 
-    format.
-    
-    Variables
-    ---------
-    stramplay: PyAudio stream
-        The signal to be played.
-    signalrecduration: int, float.
-        Signals' duration in seconds.
-    nchannelsplay: int
-        Played signal's number of channels.
-    nchannelsrec: int
-        Recorded signal's number of channels.
-    samplerate: int, float
-        Signals' sampling rate.
-    
-    Returns
-    -------
-    signalrec: PyAudio byte stream
-        Recorded signal.
-    
-    """
-    if recording_duration is None:
-        if not signalplay_gen.duration is None:
-            recording_duration = signalplay_gen.duration
+        if not signalplay.duration is None:
+            recording_duration = signalplay.duration
         else:
             raise TypeError('Duration not defined. Either generator or recording duration must be specified.')
                 
         
-    streamplay = play_callback_gen(signalplay_gen,
+    streamplay = play_callback(signalplay,
                                nchannelsplay=nchannelsplay,
                                formatplay=pyaudio.paFloat32,
-                               samplerate=samplerate)
+                               samplerate=samplerate,
+                               repeat=repeat)
     
     streamrec = rec(nchannelsrec=nchannelsrec,
                     formatrec=pyaudio.paFloat32,
@@ -479,7 +397,7 @@ def play_callback_rec_gen(signalplay_gen, #1st column left
 #%%
 
 def just_play(signalplay, #1st column left
-              nchannelsplay=1,
+              nchannels=1,
               samplerate=44100):
     
     """Plays a signal.
@@ -487,27 +405,23 @@ def just_play(signalplay, #1st column left
     This function plays an audio signal with a certain number of 
     channels and a certain sampling rate, with pyaudio.paFloat32 format.
     
-    Variables
+    Parameters
     ---------
-    signalplay: PyAudio stream
-        The signal to be played.
-    nchannelsplay: int
-        Played signal's number of channels.
-    samplerate: int, float
-        Signals' sampling rate.
-    
-    Returns
-    -------
-    nothing
-    
+    signalplay : PyAudio stream generator
+        A generator that yields the signal to be played.
+    nchannelsplay : int optional
+        Played signal's number of channels. Default: 1.
+    samplerate : int, float optional
+        Signals' sampling rate. Default: 44100    
     """
         
-    streamplay = play(nchannelsplay=nchannelsplay,
+    streamplay = play(nchannelsplay=nchannels,
                       formatplay=pyaudio.paFloat32,
                       samplerate=samplerate)
     
     print("* Playing")
-    streamplay.write(signalplay)
+    for data in signalplay:
+        streamplay.write(data)
     
     streamplay.stop_stream()
     print("* Done playing")
@@ -525,18 +439,20 @@ def just_rec(recording_duration, #1st column left
     This function records an audio signal with a certain number of 
     channels and a certain sampling rate, with pyaudio.paFloat32 format.
     
-    Variables
+    Parameters
     ---------
-    duration: int, float
+    recording_duration : int, float
         Duration of the recording, in seconds.
-    nchannelsrec: int
-        Recorded signal's number of channels.
-    samplerate: int, float
-        Signals' sampling rate.
-    
+    nchannelsrec : int optional
+        Recorded signal's number of channels. Default: 1.
+    samplerate : int, float optional
+        Signals' sampling rate. Default 44100
+    after_recording : class object
+		paramaters to decide what actions to take after recording
+		
     Returns
     -------
-    signalrec: PyAudio byte stream
+    PyAudio byte stream
         Recorded signal.
     
     """
@@ -572,20 +488,17 @@ def signal_plot(signal, samplerate=44100,
     signals' channels' names can also be specified if there's more than 
     one.
     
-    Variables
+    Parameters
     ---------
-    signal: array, list
+    signal : array, list
         Signal to be plotted (could have more than 1 column).
-    samplerate=44100: int, float
-        Signal's sampling rate.
-    plotunits=None: None or string
-        Signal's units as they would appear in Y-axis.
-    plotlegend=None: None or list of strings.
-        Signals' channels' names if there's more than one channel.
-    
-    Returns
-    -------
-    nothing        
+    samplerate : int, float optional
+        Signal's sampling rate. Default: 44100.
+    plotunits : None or string optional
+        Signal's units as they would appear in Y-axis. Default: none.
+    plotlegend : None or list of strings optional
+        Signals' channels' names if there's more than one channel. 
+		Default: none.
     
     """
     
