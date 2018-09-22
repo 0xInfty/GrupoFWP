@@ -1,12 +1,11 @@
 # Personalized
 *.wav
-Borrador_Vale.py
-Borrador_Vale_2.py
 *.pdf
 *.jpg
 *.png
 *.zip
 Measurements/
+Borradores/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
