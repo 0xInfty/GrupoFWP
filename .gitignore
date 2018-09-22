@@ -1,10 +1,9 @@
 # Personalized
 *.wav
-Borrador_Vale.py
-Borrador_Vale_2.py
 *.pdf
 *.jpg
 *.png
+*.zip
 Measurements/
 Borradores/
 
@@ -29,7 +28,6 @@ lib64/
 parts/
 sdist/
 var/
-FreqSweep/
 wheels/
 *.egg-info/
 .installed.cfg
