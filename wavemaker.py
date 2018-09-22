@@ -317,7 +317,7 @@ class Wave:
             wave = self.waveform(time, self.frequency, *args, self.extra_args) * self.amplitude
         return wave
 
-#%%
+#%% Fourier series classfor wave generator
 
 def fourier_switcher(input_waveform):
     
@@ -329,32 +329,54 @@ def fourier_switcher(input_waveform):
     func = switcher.get(input_waveform, wrong_input)
     return func
 
-def square_series(order):
+def square_series(order, freq, *args):
     amps = [1/n for n in range(1, 2*order+1, 2)]
-    return amps
+    freqs = np.arange(1, 2*order+1, 2) * freq
+    return amps, freqs
         
-def sawtooth_series(order):
-    amps = [1/n for n in range(1,order+1)]
-    return amps
+def sawtooth_series(order, freq, *args):
+    amps = [1/n for n in range(1, order+1)]
+    freqs = np.arange(1, order+1) * freq
+    return amps, freqs
     
-def triangular_series(order):
+def triangular_series(order, freq, *args):
     amps = [(-1)**((n-1)*.5)/n**2 for n in range(1, 2*order+1, 2)]
-    return amps
+    freqs = np.arange(1, 2*order+1, 2) * freq
+    return amps, freqs
     
-def custom_series(order):
-    raise Exception('not yet implemented')
-
+def custom_series(order, freq, amp, *args):
+    order = len(amp[0])
+    amps = amp
+    freqs = np.arange(1, order+1) * freq
+    return amps, freqs
+    
 class Fourier:
     
-    def __init__(self, waveform, frequency=400, order=5, *args):
+    def __init__(self, waveform, frequency, order=5, *args):
         
         func = fourier_switcher(waveform)
-        amps = func(order)    
-        freqs = np.arange(frequency, (order+1) * frequency, frequency)
+        self.amplitudes, self.frequencies = func(order, frequency, *args)
 
-        self.wave = Wave('sum', frequency = freqs, amplitude = amps)
+        self.wave = Wave('sum', self.frequencies, self.amplitudes)
         self.extra_args = args
+        
+        self.custom = waveform=='custom'
+        
         
     def evaluate(self, time):
         
-        return self.wave.evaluate(time)
+        if self.custom:
+            #missing support for custom phases
+            
+            #cosine series:
+            self.wave.amplitude = self.amplitudes[0]
+            wave = self.wave.evaluate(time + np.pi *.5) * .5
+            
+            #sine series:
+            self.wave.amplitude = self.amplitudes[1]
+            wave += self.wave.evaluate(time) * .5
+            
+            return wave
+            
+        else:
+            return self.wave.evaluate(time)
