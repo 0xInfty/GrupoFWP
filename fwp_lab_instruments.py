@@ -123,7 +123,7 @@ class Osci:
         osci.write('DAT:WID 1') # Binary transmission mode
         
         # Trigger configuration
-        osci.write('TRIG:MAI:MOD AUTO') # Option: NORM (waits for trigger)
+        osci.write('TRIG:MAI:MOD AUTO') # Option: NORM (waits for trig)
         osci.write('TRIG:MAI:TYP EDGE')
         osci.write('TRIG:MAI:LEV 5')
         osci.write('TRIG:MAI:EDGE:SLO RIS')
@@ -272,8 +272,8 @@ class Gen:
     """Allows communication with Tektronix Function Generators.
     
     It allows communication with multiple models, based on the official 
-    programming manual 
-    (https://www.tek.com/signal-generator/afg3000-manual/afg3000-series-2)
+    programming manual (https://www.tek.com/signal-generator/afg3000-
+    manual/afg3000-series-2)
     
         AFG3011;
         AFG3021B;
@@ -348,7 +348,7 @@ class Gen:
         
         self.port = port
         self.gen = gen
-        self.congif_output = self.get_config_output
+        self.config_output = self.get_config_output
     
     def output(self, status, channel=1, **output_config):
         
@@ -367,7 +367,7 @@ class Gen:
         amplitude: int, float, optional
             Output's amplitude in Vpp (if none, current configuration).
         offset: int, float, optional
-            Output's offset in V (if none, applies current configuration).
+            Output's offset in V (if none, current configuration).
         phase: int, flot, optional
             Output's phase expressed in radians and multiples of pi 
             (if none, applies current configuration).
@@ -422,7 +422,7 @@ class Gen:
         
         if status:
             print('Output CH{} ON'.format(channel))
-            self.congif_output[channel]['Status'] = True
+            self.config_output[channel]['Status'] = True
         else:
             print('Output CH{} OFF'.format(channel))
             self.config_output[channel]['Status'] = False
@@ -467,25 +467,30 @@ class Gen:
             if configuration[channel]['Waveform'] == 'RAMP':
                 aux = self.gen.query('SOUR{}:FUNC:RAMP:SYMM?'.format(
                         channel)) # NOT SURE I SHOULD USE IF
-                configuration['RAMP Symmetry'] = sav.find_1st_number(aux)
+                configuration['RAMP Symmetry'] = sav.find_1st_number(
+                        aux)
             else:
                 configuration[channel]['RAMP Symmetry': 50.0]
             
             # Special configuration for SQU
             if configuration[channel]['SQU Duty Cycle'] == 'SQU':
-                aux = self.gen.query('SOUR{}:PULS:DCYC?'.format(channel))
-                configuration['SQU Duty Cycle'] = sav.find_1st_number(aux)
+                aux = self.gen.query('SOUR{}:PULS:DCYC?'.format(
+                        channel))
+                configuration['SQU Duty Cycle'] = sav.find_1st_number(
+                        aux)
             else:
                 configuration[channel]['SQU Duty Cycle': 50.0]
             
             # Frequency configuration
             aux = self.gen.query('SOUR{}:FREQ?'.format(channel))
-            configuration[channel]['Frequency'] = sav.find_1st_number(aux)
+            configuration[channel]['Frequency'] = sav.find_1st_number(
+                    aux)
             
             # Amplitud configuration
             aux = self.gen.query('SOUR{}:VOLT:LEV:IMM:AMPL?'.format(
                     channel))
-            configuration[channel]['Amplitude'] = sav.find_1st_number(aux)
+            configuration[channel]['Amplitude'] = sav.find_1st_number(
+                    aux)
             
             # Offset configuration
             aux = self.gen.query('SOUR{}:VOLT:LEV:IMM:OFFS?'.format(
@@ -540,7 +545,7 @@ class Gen:
             print("Unrecognized output channel ('CH1' as default).")
             channel = 1
 
-        # This is the algorithm to reconize the waveform        
+        # This is the algorithm to recognize the waveform        
         if 'c' in waveform.lower():
             aux = dic['sinc']
         else:
@@ -551,7 +556,7 @@ class Gen:
                 aux = 'SIN'
                 print("Unrecognized waveform ('SIN' as default).")
         
-        if self.congif_output[channel]['Waveform'] != aux:
+        if self.config_output[channel]['Waveform'] != aux:
             self.gen.write('SOUR{}:FUNC:SHAP {}'.format(channel, aux))
         
         if self.config_output[channel]['Frequency'] != frequency:
@@ -562,12 +567,12 @@ class Gen:
                 channel,
                 amplitude))
         
-        if self.congif_output[channel]['Offset'] != offset:
+        if self.config_output[channel]['Offset'] != offset:
             self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
                 channel,
                 amplitude))
         
-        if self.congif_output[channel]['Waveform'] == 'SQU':
+        if self.config_output[channel]['Waveform'] == 'SQU':
             try:
                 aux = sav.find_1st_number(waveform)
             except TypeError:
@@ -578,7 +583,7 @@ class Gen:
                         channel,
                         aux))
         
-        if self.congif_output[channel]['Waveform'] == 'RAMP':
+        if self.config_output[channel]['Waveform'] == 'RAMP':
             try:
                 aux = sav.find_1st_number(waveform)
             except TypeError:
