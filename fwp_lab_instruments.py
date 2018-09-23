@@ -350,7 +350,8 @@ class Gen:
         self.gen = gen
         self.config_output = self.get_config_output
     
-    def output(self, status, channel=1, **output_config):
+    def output(self, status, channel=1, 
+               print_changes=False, **output_config):
         
         """Turns on/off an output channel. Also configures it if needed.
                 
@@ -360,6 +361,8 @@ class Gen:
             Says whether to turn on (True) or off (False).
         channel: int {1, 2}, optional
             Number of output channel to be turn on or off.
+        print_changes=True: bool, optional
+            Says whether to print changes when output is reconfigured.
         waveform: str, optional
             Output's waveform (if none, applies current configuration).
         frequency: int, float, optional
@@ -410,12 +413,13 @@ class Gen:
                 output_config[key] = None
 
         
-        self.re_config_output(waveform=output_config['waveform'],
+        self.re_config_output(channel=channel,
+                              waveform=output_config['waveform'],
                               frequency=output_config['frequency'],
                               amplitude=output_config['amplitude'],
-                              channel=channel,
                               offset=output_config['offset'],
-                              phase=output_config['phase'])
+                              phase=output_config['phase'],
+                              print_changes=print_changes)
         
         self.gen.write('OUTP{}:STAT {}'.format(channel, status))
         # If output=True, turns on. Otherwise, turns off.
@@ -443,7 +447,7 @@ class Gen:
                       'Status': True,
                       'Waveform': 'SIN',
                       'RAMP Symmetry': 50.0,
-                      'SQU Duty Cycle': 50.0,
+                      'PULS Duty Cycle': 50.0,
                       'Frequency': 1000.0,
                       'Amplitude': 1.0,
                       'Offset': 0.0,
@@ -467,26 +471,25 @@ class Gen:
             if configuration[channel]['Waveform'] == 'RAMP':
                 aux = self.gen.query('SOUR{}:FUNC:RAMP:SYMM?'.format(
                         channel)) # NOT SURE I SHOULD USE IF
-                configuration['RAMP Symmetry'] = sav.find_1st_number(
-                        aux)
+                configuration['RAMP Symmetry'] = sav.find_1st_number(aux)
             else:
                 configuration[channel]['RAMP Symmetry': 50.0]
             
             # Special configuration for SQU
-            if configuration[channel]['SQU Duty Cycle'] == 'SQU':
+            if configuration[channel]['Waveform'] == 'PULS':
                 aux = self.gen.query('SOUR{}:PULS:DCYC?'.format(
                         channel))
-                configuration['SQU Duty Cycle'] = sav.find_1st_number(
-                        aux)
+                configuration.update({'PULS Duty Cycle':
+                             sav.find_1st_number(aux)})
             else:
-                configuration[channel]['SQU Duty Cycle': 50.0]
+                configuration[channel]['PULS Duty Cycle': 50.0]
             
             # Frequency configuration
             aux = self.gen.query('SOUR{}:FREQ?'.format(channel))
             configuration[channel]['Frequency'] = sav.find_1st_number(
                     aux)
             
-            # Amplitud configuration
+            # Amplitude configuration
             aux = self.gen.query('SOUR{}:VOLT:LEV:IMM:AMPL?'.format(
                     channel))
             configuration[channel]['Amplitude'] = sav.find_1st_number(
@@ -504,7 +507,8 @@ class Gen:
         return configuration
     
     def re_config_output(self, channel=1, waveform='sin', frequency=1e3, 
-                         amplitude=1, offset=0, phase=0):
+                         amplitude=1, offset=0, phase=0, 
+                         print_changes=False):
 
         """Reconfigures an output channel, if needed.
                 
@@ -522,6 +526,8 @@ class Gen:
             Output's offset in V.
         phase=0: int, flot, optional
             Output's phase in multiples of pi.
+        print_changes=False: bool, optional.
+            Says whether to print changes or not if output reconfigured.
         
         Returns
         -------
@@ -536,6 +542,7 @@ class Gen:
         # These are some keys that help recognize the waveform
         dic = {'sin': 'SIN',
                'squ': 'SQU',
+               'pul': 'PULS',
                'ram': 'RAMP', # ramp and triangle
                'lor': 'LOR', # lorentzian
                'sinc': 'SINC', # sinx/x
@@ -545,45 +552,50 @@ class Gen:
             print("Unrecognized output channel ('CH1' as default).")
             channel = 1
 
-        # This is the algorithm to recognize the waveform        
-        if 'c' in waveform.lower():
-            aux = dic['sinc']
+        # This is the algorithm to recognize the waveform
+        aux = 0
+        waveform = waveform.lower()
+        if 'sq' in waveform:
+            try:
+                aux = sav.find_1st_number(waveform)
+                if aux != 50:
+                    aux = 'PULS'
+                else:
+                    aux = 'SQU'
+            except TypeError:
+                aux = 'SQU'
+        elif 'c' in waveform:
+            aux = 'SINC'
         else:
             for key, value in dic.items():
-                if key in waveform.lower():
+                if key in waveform:
                     aux = value
             if aux not in dic.values():
                 aux = 'SIN'
-                print("Unrecognized waveform ('SIN' as default).")
+                print("Unrecognized Waveform ('SIN' as default).")
         
         if self.config_output[channel]['Waveform'] != aux:
             self.gen.write('SOUR{}:FUNC:SHAP {}'.format(channel, aux))
-        
-        if self.config_output[channel]['Frequency'] != frequency:
-            self.gen.write('SOUR{}:FREQ {}'.format(channel, frequency))
-        
-        if self.config_output[channel]['Amplitude'] != amplitude:
-            self.gen.write('SOUR{}:VOLT:LEV:IMM:AMPL {}'.format(
-                channel,
-                amplitude))
-        
-        if self.config_output[channel]['Offset'] != offset:
-            self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
-                channel,
-                amplitude))
-        
-        if self.config_output[channel]['Waveform'] == 'SQU':
+            if print_changes:
+                print("CH{}'s Waveform changed to '{}'".format(
+                        channel, 
+                        aux))
+
+        if 'sq' in waveform or 'pul' in waveform:
             try:
                 aux = sav.find_1st_number(waveform)
             except TypeError:
                 aux = 50.0
-                print("Unasigned SQU Duty Cycle (default '50.0')")
-            if self.config_output[channel]['SQU Duty Cycle'] != aux:
+                print("Unasigned PULS Duty Cycle (default '50.0')")
+            if self.config_output[channel]['PULS Duty Cycle'] != aux:
                 self.gen.write('SOUR{}:PULS:DCYC {:.1f}'.format(
                         channel,
                         aux))
-        
-        if self.config_output[channel]['Waveform'] == 'RAMP':
+                if print_changes:
+                    print("CH{}'s PULS Duty Cycle changed to \
+                          {}%".format(channel, aux))
+
+        elif 'ram' in waveform:
             try:
                 aux = sav.find_1st_number(waveform)
             except TypeError:
@@ -593,3 +605,35 @@ class Gen:
                 self.gen.write('SOUR{}:FUNC:RAMP:SYMM {:.1f}'.format(
                         channel,
                         aux))
+                if print_changes:
+                    print("CH{}'s RAMP Symmetry changed to \
+                          {}%".format(channel, aux))
+        
+        if self.config_output[channel]['Frequency'] != frequency:
+            self.gen.write('SOUR{}:FREQ {}'.format(channel, frequency))
+            if print_changes:
+                print("CH{}'s Frequency changed to {} Hz".format(
+                        channel,
+                        frequency))
+        
+        if self.config_output[channel]['Amplitude'] != amplitude:
+            self.gen.write('SOUR{}:VOLT:LEV:IMM:AMPL {}'.format(
+                channel,
+                amplitude))
+            if print_changes:
+                print("CH{}'s Amplitude changed to {} V".format(
+                        channel,
+                        amplitude))
+        
+        if self.config_output[channel]['Offset'] != offset:
+            self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
+                channel,
+                amplitude))
+            if print_changes:
+                print("CH{}'s Offset changed to {} V".format(
+                        channel,
+                        offset))
+        
+        self.config_output = self.get_config_output()
+        
+        return
