@@ -315,13 +315,11 @@ class AfterRecording:
 
 #%%
 
-def play_rec(signalplay, #1st column left
-                      recording_duration=None,
-                      nchannelsplay=1,
-                      nchannelsrec=1,
-                      samplerate=44100,
-                      after_recording=None,
-                      repeat=False):
+def play_rec(signal_setup, #1st column left
+              recording_duration=None,
+              nchannelsrec=1,
+              after_recording=None,
+              repeat=False):
     
     """Plays a signal and records another one at the same time.
     
@@ -359,16 +357,15 @@ def play_rec(signalplay, #1st column left
     """
 	
     if recording_duration is None:
-        if not signalplay.duration is None:
-            recording_duration = signalplay.duration
+        if signal_setup.duration is None:
+            raise ValueError('Duration not defined. Either generator or recording duration must be specified.')
         else:
-            raise TypeError('Duration not defined. Either generator or recording duration must be specified.')
-                
+            recording_duration = signal_setup.duration
         
-    streamplay = play_callback(signalplay,
-                               nchannelsplay=nchannelsplay,
+    streamplay = play_callback(signal_setup.generator,
+                               nchannelsplay=signal_setup.parent.nchannels,
                                formatplay=pyaudio.paFloat32,
-                               samplerate=samplerate,
+                               samplerate=signal_setup.parent.sampling_rate,
                                repeat=repeat)
     
     streamrec = rec(nchannelsrec=nchannelsrec,
@@ -396,9 +393,7 @@ def play_rec(signalplay, #1st column left
 
 #%%
 
-def just_play(signalplay, #1st column left
-              nchannels=1,
-              samplerate=44100):
+def just_play(signal_setup, exceptions = True):
     
     """Plays a signal.
     
@@ -407,20 +402,21 @@ def just_play(signalplay, #1st column left
     
     Parameters
     ---------
-    signalplay : PyAudio stream generator
-        A generator that yields the signal to be played.
-    nchannelsplay : int optional
-        Played signal's number of channels. Default: 1.
-    samplerate : int, float optional
-        Signals' sampling rate. Default: 44100    
+    signalplay : SignalMaker instance
+        An insance of the class SignalMaker of pyaudiowave module.
+        Contains signal generator and playback parameters. 
     """
         
-    streamplay = play(nchannelsplay=nchannels,
+    streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
                       formatplay=pyaudio.paFloat32,
-                      samplerate=samplerate)
+                      samplerate=signal_setup.patent.sampling_rate)
+    
+    if exceptions:
+        if signal_setup.duration is None:
+            raise ValueError('Duration not given. Would play forever (not good).')
     
     print("* Playing")
-    for data in signalplay:
+    for data in signal_setup.generator:
         streamplay.write(data)
     
     streamplay.stop_stream()
