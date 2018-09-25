@@ -135,6 +135,42 @@ class Osci:
         self.config_measure = self.get_config_measure()
         # This last line saves the current measurement configuration
 
+    def measure(self, mtype, channel=1, print_result=False):
+        
+        """Takes a measure of a certain type on a certain channel.
+        
+        Parameters
+        ----------
+        mtype: str
+            Key that configures the measure type.
+            i.e.: 'Min', 'min', 'minimum', etc.
+        channel=1: int {1, 2}, optional
+            Number of the measure's channel.
+        print_result=False: bool, optional
+            Says whether to print or not the result.
+        
+        Returns
+        -------
+        result: int, float
+            Measured value.
+        
+        See also
+        --------
+        Osci.re_config_measure()
+        Osci.get_config_measure()
+        
+        """
+        
+        self.re_config_measure(mtype, channel)
+        
+        result = float(self.osci.query('MEASU:IMM:VAL?'))
+        units = self.osci.query('MEASU:IMM:UNI?')
+        
+        if print_result:
+            print("{} {}".format(result, units))
+        
+        return result
+
     def get_config_measure(self):
         
         """Returns the current measurements' configuration.
@@ -219,51 +255,15 @@ class Osci:
         # Now, reconfigure if needed
         if self.config_measure('Source') != channel:
             self.osci.write('MEASU:IMM:SOU CH{:.0f}'.format(channel))
-            self.config_measure.update({'Source': channel})
             print("Measure source changed to 'CH{:.0f}'".format(
                     channel))
         if self.config_measure('Type') != aux:
             self.osci.write('MEASU:IMM:TYP {}'.format(aux))
-            self.config_measure.update({'Type': aux})
             print("Measure type changed to '{}'".format(aux))
         
+        self.config_measure = self.get_config_measure()
+        
         return
-        
-    def measure(self, mtype, channel=1, print_result=False):
-        
-        """Takes a measure of a certain type on a certain channel.
-        
-        Parameters
-        ----------
-        mtype: str
-            Key that configures the measure type.
-            i.e.: 'Min', 'min', 'minimum', etc.
-        channel=1: int {1, 2}, optional
-            Number of the measure's channel.
-        print_result=False: bool, optional
-            Says whether to print or not the result.
-        
-        Returns
-        -------
-        result: int, float
-            Measured value.
-        
-        See also
-        --------
-        Osci.re_config_measure()
-        Osci.get_config_measure()
-        
-        """
-        
-        self.re_config_measure(mtype, channel)
-        
-        result = float(self.osci.query('MEASU:IMM:VAL?'))
-        units = self.osci.query('MEASU:IMM:UNI?')
-        
-        if print_result:
-            print("{} {}".format(result, units))
-        
-        return result
 
 #%%
 
