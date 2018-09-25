@@ -147,9 +147,6 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 amp_osci = []
 
-osci.config_measure('pk2', 1)
-osci.config_measure('pk2', 2)
-
 for amp in amplitude:
     
     seno.amplitude = amp #update signals ampitude
@@ -161,8 +158,8 @@ for amp in amplitude:
                   nchannels=nchannelsplay,
                   after_recording=after_record_do)
     
-    result_left = osci.measure('pk2', 1, reconfig=False)
-    result_right = osci.measure('pk2', 2, reconfig=False)
+    result_left = osci.measure('pk2', 1)
+    result_right = osci.measure('pk2', 2)
     
     amp_osci.append([result_left, result_right])
 
@@ -198,10 +195,7 @@ samplerate = 44100
 name = 'Cal_Rec_{:.0f}_Hz'.format(freq)
 after_record_do = fwp.AfterRecording(savetext = True)
 
-gen = ins.Gem(port=port)
-#seno = wmaker.Wave('sine', frequency=signal_freq)
-#signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
-#                              samplingrate=samplerate)
+gen = ins.Gen(port=port)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
@@ -209,27 +203,15 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 
-gen.config_output(output_waveform='sin', 
-                  output_frequency=freq, 
-                  output_ch=1) # Left
-gen.config_output(output_waveform='sin', 
-                  output_frequency=freq, 
-                  output_ch=2) # Right
-
+gen.re_config_output(1, frequency=freq) # 1 output, 2 audio recording CH
+                     
 amp_rec = []
                   
 for amp in amplitude:
     
     after_record_do.filename = makefile(amp)
     
-    gen.output(output_frequency=freq, 
-               output_amplitude=amp,
-               output_ch=1,
-               reconfig=True)
-    gen.output(output_frequency=freq, 
-               output_amplitude=amp,
-               output_ch=2,
-               reconfig=True)
+    gen.output(True, 1, amplitude=amp)
     
     signal_rec = fwp.just_rec(duration,
                               nchannelsrec=nchannelsrec,
