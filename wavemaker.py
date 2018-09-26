@@ -157,7 +157,9 @@ def create_square(time, freq, dutycycle = .5, *args):
     Evaluated square waveform with given frequency
     """
     
-    wave = square(2 * np.pi * time * freq, dutycycle)
+    #dutycycle not implemented due to unresolved bug
+    
+    wave = square(2 * np.pi * time * freq)
     return wave
     
 def create_custom(time, freq, *args):

@@ -5,7 +5,7 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
-import fwp_lab_instruments as ins
+#import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
@@ -17,9 +17,9 @@ import wavemaker as wmaker
 #%% Read an write in two channels using generators to avoid signal cutoff
 
 #Some configurations
-after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
-duration = 5
+duration = 1
 nchannelsrec = 2
 nchannelsplay = 2
 signal_freq = 2000
@@ -31,29 +31,29 @@ cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.write_generator((seno1,seno2))
+signal_generator = signalmaker.write_generator((seno1,cuadrada))
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 
                           recording_duration=duration,
                           nchannelsplay=nchannelsplay,
                           nchannelsrec=nchannelsrec,
-                          after_recording=after_record_do,
-                          repeat=False)
+                          after_recording=after_record_do)
 
 #%% Example of just_play
 
-duration = 10
+duration = 2
 nchannelsplay = 2
-signal_freq = 400
+signal_freq = 300
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
+suma = wmaker.Wave ('sum', (100, 150, 200)) #not working in pyaudiowave
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.write_generator((seno1,seno2), duration=duration)
+signal_generator = signalmaker.write_generator((seno1 ,seno2), duration=duration)
 
 fwp.just_play(signal_generator, nchannels=nchannelsplay)
 
