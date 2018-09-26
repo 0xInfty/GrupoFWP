@@ -272,7 +272,7 @@ signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
 seno = wmaker.Wave('ramp', frequency=freq)
-signal_to_play = signalmaker.write_generator(seno)
+signal_to_play = signalmaker.generator_setup(seno)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
@@ -280,7 +280,6 @@ after_record_do.filename = filename
 
 signal_rec = fwp.play_rec(signal_to_play, 
                            duration,
-                           nchannelsplay=nchannelsplay,
                            nchannelsrec=nchannelsrec,
                            after_recording=after_record_do)
 chL = signal_rec[:,0]
