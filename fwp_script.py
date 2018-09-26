@@ -5,7 +5,7 @@ Created on Wed Sep 12 12:48:15 2018
 @author: Marcos
 """
 
-import fwp_lab_instruments as ins
+#import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ import wavemaker as wmaker
 #%% Read an write in two channels using generators to avoid signal cutoff
 
 #Some configurations
-after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
 duration = 5
 nchannelsrec = 2
@@ -31,7 +31,7 @@ cuadrada = wmaker.Wave('square',frequency=signal_freq)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup((seno1,seno2))
+signal_generator = signalmaker.generator_setup((seno1,cuadrada))
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 

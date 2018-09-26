@@ -205,13 +205,11 @@ def rec(nchannelsrec=1,
     Parameters
     ---------
     nchannels : int optional
-        Number of channels the signal should be recorded at.
-	Default: 1.	
+        Number of channels the signal should be recorded at. Default: 1.	
     formatrec : PyAudio format optional
         Format the signal should be recorded with. Default=paFloat32.	
     samplerate: int, float optional
-        Sampling rate at which the signal should be recorded. 
-	Default: 44100.
+        Sampling rate at which the signal should be recorded. Default: 44100.
     
     Returns
     -------
@@ -232,29 +230,28 @@ def rec(nchannelsrec=1,
 #%%
 
 class AfterRecording:
-    
     """Has paramaters to decide what actions to take after recording.
     
     Attributes
     ----------
     savewav : bool
-    If True, the script will save a .wav with recorded signal.    
+        If True, the script will save a .wav with recorded signal.    
     showplot : bool
-    If True, the script will produce a plot with output + recorded data.	
+        If True, the script will produce a plot with output + recorded data.	
     saveplot : bool
-    If True, the script will save a plot in pdf format of
-    the output and recorded data.
+        If True, the script will save a plot in pdf format of
+        the output and recorded data.
     savetext : bool
-    If True, the script will save a .txt with recorded signal .
+        If True, the script will save a .txt with recorded signal .
     filename : str
-    Name with which to save output files produced by the script.
+        Name with which to save output files produced by the script.
     
     
     Methods
     ----------
     act
-	it produces output files according to user preferences
-	determined by boolean values of parameters
+   	 it produces output files according to user preferences
+	    determined by boolean values of parameters
     
     """
     
@@ -270,21 +267,22 @@ class AfterRecording:
 
 	
     def act(self, signalrec, nchannelsrec, samplerate, filename=None):
-        
-	 """It deals with after recording actions according to
-	 boolean values defined by user.
-        
+	 
+        """Decides what actions to take afeter recording.
+         
+        It deals with after recording actions according to
+    	  boolean values defined by user.
+            
         Parameters
         ----------
         signalrec : array
             time vector in which to evaluate the funcion    
         nchannelsrec : int optional
-		Number of channels it should be played at.
+    	      Number of channels it should be played at.
         samplerate : int, float
-        	Sampling rate at which the signal should be recorded. 
-		filename : str
-    		Name with which to save output files produced by the script.
-		
+            Sampling rate at which the signal should be recorded. 
+        filename : str
+            Name with which to save output files produced by the script.
         """ 
 		
         if filename is None:
@@ -362,10 +360,11 @@ def play_rec(signal_setup, #1st column left
         else:
             recording_duration = signal_setup.duration
         
+    samplerate = signal_setup.parent.sampling_rate
     streamplay = play_callback(signal_setup.generator,
                                nchannelsplay=signal_setup.parent.nchannels,
                                formatplay=pyaudio.paFloat32,
-                               samplerate=signal_setup.parent.sampling_rate,
+                               samplerate=samplerate,
                                repeat=repeat)
     
     streamrec = rec(nchannelsrec=nchannelsrec,
