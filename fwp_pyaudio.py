@@ -271,8 +271,8 @@ class AfterRecording:
 	
     def act(self, signalrec, nchannelsrec, samplerate, filename=None):
         
-	 """It deals with after recording actions according to
-	 boolean values defined by user.
+        """It deals with after recording actions according to
+        boolean values defined by user.
         
         Parameters
         ----------
@@ -362,7 +362,8 @@ def play_rec(signalplay, #1st column left
         if not signalplay.duration is None:
             recording_duration = signalplay.duration
         else:
-            raise TypeError('Duration not defined. Either generator or recording duration must be specified.')
+            raise TypeError('Duration not defined. Either generator \
+                            or recording duration must be specified.')
                 
         
     streamplay = play_callback(signalplay,
