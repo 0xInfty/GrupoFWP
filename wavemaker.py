@@ -234,7 +234,7 @@ def create_sum(time, freq, amp, *args):
 def given_waveform(input_waveform):
     """ Switcher to easily choose waveform.
     
-    If the given waveform is not in the list, it raises a TypeError and a list
+    If the given waveform is not in the list, it raises a ValueError and a list
     containing the accepted inputs.
     
     Parameters
@@ -258,17 +258,17 @@ def given_waveform(input_waveform):
         'custom': create_custom,
         'sum': create_sum
     }
-    func = switcher.get(input_waveform, wrong_input)
+    func = switcher.get(input_waveform, wrong_input(list(switcher.keys())))
     return func
-       
-def wrong_input(*args):
-    raise TypeError('''Given waveform is invalid. Choose from following list:
-        sine, triangular, ramp, sawtooth, sawtoothup, sawtoothdown, square, custom''')
+
+def wrong_input(input_list):
+    msg = 'Given waveform is invalid. Choose from following list:{}'.format(input_list)
+    raise ValueError(msg)
 
 #%% Clase que genera ondas
 
 class Wave:
-    '''Generates an object with a two methods: evaluate(time).
+    '''Generates an object with a single method: evaluate(time).
   
     Attributes
     ----------
@@ -288,6 +288,11 @@ class Wave:
     '''
     
     def __init__(self, waveform='sine', frequency=400, amplitude=1, *args):
+        ''' See class atributes.
+        
+        If wave is 'custom', the custom function should be passed to *args.
+        '''
+        
         self._frequency = frequency
         self.amplitude = amplitude
         self.waveform = given_waveform(waveform)
@@ -295,10 +300,11 @@ class Wave:
         
     @property
     def frequency(self):
-        '''Returns frequency of wave. 
+        '''Frequency getter: returns frequency of wave. 
         
-        If frequency is an iterable, as it
-        may be in a sum or a custom function, returns first value.'''
+        If frequency is an iterable, as it be in a sum or a 
+        custom function, returns first value. Used to have 
+        backwards compatibility wen sum and custom were added.'''
         
         if isinstance(self._frequency, (list, tuple, np.ndarray)):
             return self._frequency[0]
@@ -307,7 +313,7 @@ class Wave:
         
     @frequency.setter
     def frequency(self, value):
-        '''Sets given frequency.'''
+        '''grequency setter: sets value as self._frequency.'''
         self._frequency = value    
         
     def evaluate(self, time, *args):
@@ -337,39 +343,168 @@ class Wave:
 #%% Fourier series classfor wave generator
 
 def fourier_switcher(input_waveform):
+    """ Switcher to easily choose waveform.
+    
+    If the given waveform is not in the list, it raises a ValueError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    input_waveform : string
+        name of desired function to generate
+   
+    Returns
+    -------
+    Chosen waveform function
+    """
     
     switcher = {
             'square': square_series,
             'triangular': triangular_series,
             'sawtooth': sawtooth_series,
             'custom': custom_series}
-    func = switcher.get(input_waveform, wrong_input)
+    func = switcher.get(input_waveform, wrong_input(list(switcher.keys())))
     return func
 
 def square_series(order, freq, *args):
+    """ Creates parameters for a square series
+    
+    If the given waveform is not in the list, it raises a ValueError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    order : int
+        order up to which to calculate fourier partial sum 
+    frequency : float
+        fundamental frequency of generated fourier wave
+   
+    Returns
+    -------
+    amps, freqs
+        amplitude and frequency vectors used in calculation of partial sum
+    """
+    
     amps = [1/n for n in range(1, 2*order+1, 2)]
     freqs = np.arange(1, 2*order+1, 2) * freq
     return amps, freqs
         
 def sawtooth_series(order, freq, *args):
+    """ Creates parameters for a sawtooth series
+    
+    If the given waveform is not in the list, it raises a ValueError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    order : int
+        order up to which to calculate fourier partial sum 
+    frequency : float
+        fundamental frequency of generated fourier wave
+   
+    Returns
+    -------
+    amps, freqs
+        amplitude and frequency vectors used in calculation of partial sum
+    """
+    
     amps = [1/n for n in range(1, order+1)]
     freqs = np.arange(1, order+1) * freq
     return amps, freqs
     
 def triangular_series(order, freq, *args):
+    """ Creates parameters for a triangluar series
+    
+    If the given waveform is not in the list, it raises a ValueError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    order : int
+        order up to which to calculate fourier partial sum 
+    frequency : float
+        fundamental frequency of generated fourier wave
+   
+    Returns
+    -------
+    amps, freqs
+        amplitude and frequency vectors used in calculation of partial sum
+    """
+    
     amps = [(-1)**((n-1)*.5)/n**2 for n in range(1, 2*order+1, 2)]
     freqs = np.arange(1, 2*order+1, 2) * freq
     return amps, freqs
     
 def custom_series(order, freq, amp, *args):
+    """ Creates parameters for a custom fourier series
+    
+    If the given waveform is not in the list, it raises a ValueError and a list
+    containing the accepted inputs.
+    
+    Parameters
+    ----------
+    order : dummy
+        is redefined inside implementatoin. Kept for compatibility.
+    frequency : float
+        fundamental frequency of generated fourier wave
+    amp: tuple
+        tuple containing amplitude vectors of cosine and sine terms for the
+        custom fourier series
+   
+    Returns
+    -------
+    amps, freqs
+        amplitude tple (passed directly from input) and frequency vector used
+        in calculation of partial sum
+    """
+    
     order = len(amp[0])
     amps = amp
     freqs = np.arange(1, order+1) * freq
     return amps, freqs
     
 class Fourier:
-    
+    '''Generates an object with a single method: evaluate(time).
+  
+    Attributes
+    ----------
+    waveform : str {'sawtooth',  'triangular', 'square', 'custom'} 
+        waveform type.
+    wave : Wave object 
+        Wave instance containgng a sum object that implements the fourier
+        series up to given order.
+    custom : bool
+        desides wether user has requested custom series or not
+        
+    Methods
+    ----------
+    evaluate(time)
+        returns evaluated fourier partial sum
+
+    '''
     def __init__(self, waveform, frequency, order=5, *args):
+        """Initializes class instance. 
+               
+        Parameters
+        ----------
+        waveform : str {'sawtooth',  'triangular', 'square', 'custom'} 
+            waveform type.
+        frequency : float
+            fundamental frequency of the constructed wave
+        order : int (optional)
+            order of the constructed fourier series, i.e. the series will
+            be calculated up to the nth non zero term, with n=order.
+        args : tuple (optional)
+            if waveform is 'custom', a tuple of length 2, each element 
+            containing the amplitudes of the cosine and sine terms, 
+            respectively. Order will be ignored and will be assumed to be
+            equal to len(amplitudes[0]).
+            
+        Returns
+        -------
+        
+        Evaluated fourier partial sum 
+        """          
         
         func = fourier_switcher(waveform)
         self.amplitudes, self.frequencies = func(order, frequency, *args)
@@ -381,6 +516,18 @@ class Fourier:
         
         
     def evaluate(self, time):
+        """Takes in an array-like object to evaluate the funcion in.
+        
+        Parameters
+        ----------
+        time : array
+            time vector in which to evaluate the funcion
+            
+        Returns
+        -------
+        
+        Evaluated waveform 
+        """          
         
         if self.custom:
             #missing support for custom phases
