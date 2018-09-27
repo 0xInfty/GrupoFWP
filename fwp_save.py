@@ -288,34 +288,3 @@ def savewav(datapyaudio,
     print('Archivo guardado en {}'.format(file))
     
     return
-
-#%%
-
-def find_1st_number(string):
-    
-    """Returns the first float or int number of a string
-    
-    Parameters
-    ----------
-    string: str
-        The string where you search.
-    
-    Returns
-    -------
-    number: int, float
-        The number you found.
-    
-    Raises
-    ------
-    TypeError
-        if no number is found.
-
-    """
-    
-    number = re.findall(r"[-+]?\d*\.\d+|\[-+]?d+", string)[0]
-    if '.' in number:
-        return float(number)
-    elif not number:
-        raise TypeError("There's no number in this string")
-    else:
-        return int(number)

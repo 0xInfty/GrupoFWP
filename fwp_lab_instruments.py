@@ -2,6 +2,8 @@
 """
 This module defines classes to manipulate lab instruments via PyVisa.
 
+Some of the most useful functions and methods are:
+
 resources: function
     Returns a list of tuples of connected 'INSTR' resources.
 Osci: class
@@ -16,7 +18,6 @@ Gen.output: method
 @author: Vall
 """
 
-import fwp_save as sav
 import pyvisa as visa
 
 #%%
@@ -41,6 +42,37 @@ def resources():
     print(resources)
     
     return resources
+
+#%%
+
+def find_1st_number(string):
+    
+    """Returns the first float or int number of a string
+    
+    Parameters
+    ----------
+    string: str
+        The string where you search.
+    
+    Returns
+    -------
+    number: int, float
+        The number you found.
+    
+    Raises
+    ------
+    TypeError
+        if no number is found.
+
+    """
+    
+    number = re.findall(r"[-+]?\d*\.\d+|\[-+]?d+", string)[0]
+    if '.' in number:
+        return float(number)
+    elif not number:
+        raise TypeError("There's no number in this string")
+    else:
+        return int(number)
 
 #%%
 
@@ -189,7 +221,7 @@ class Osci:
         configuration = {}
         
         configuration.update({'Source': # channel
-            sav.find_1st_number(self.osci.query('MEASU:IMM:SOU?'))})
+            find_1st_number(self.osci.query('MEASU:IMM:SOU?'))})
         configuration.update({'Type': # type of measurement
             self.osci.query('MEASU:IMM:TYP?')})
     
@@ -471,7 +503,7 @@ class Gen:
             if configuration[channel]['Waveform'] == 'RAMP':
                 aux = self.gen.query('SOUR{}:FUNC:RAMP:SYMM?'.format(
                         channel)) # NOT SURE I SHOULD USE IF
-                configuration['RAMP Symmetry'] = sav.find_1st_number(aux)
+                configuration['RAMP Symmetry'] = find_1st_number(aux)
             else:
                 configuration[channel]['RAMP Symmetry': 50.0]
             
@@ -480,29 +512,29 @@ class Gen:
                 aux = self.gen.query('SOUR{}:PULS:DCYC?'.format(
                         channel))
                 configuration.update({'PULS Duty Cycle':
-                             sav.find_1st_number(aux)})
+                             find_1st_number(aux)})
             else:
                 configuration[channel]['PULS Duty Cycle': 50.0]
             
             # Frequency configuration
             aux = self.gen.query('SOUR{}:FREQ?'.format(channel))
-            configuration[channel]['Frequency'] = sav.find_1st_number(
+            configuration[channel]['Frequency'] = find_1st_number(
                     aux)
             
             # Amplitude configuration
             aux = self.gen.query('SOUR{}:VOLT:LEV:IMM:AMPL?'.format(
                     channel))
-            configuration[channel]['Amplitude'] = sav.find_1st_number(
+            configuration[channel]['Amplitude'] = find_1st_number(
                     aux)
             
             # Offset configuration
             aux = self.gen.query('SOUR{}:VOLT:LEV:IMM:OFFS?'.format(
                     channel))
-            configuration[channel]['Offset'] = sav.find_1st_number(aux)
+            configuration[channel]['Offset'] = find_1st_number(aux)
             
             # Phase configuration
             aux = self.gen.query('SOUR{}:PHAS?'.format(channel))
-            configuration[channel]['Phase'] = sav.find_1st_number(aux)
+            configuration[channel]['Phase'] = find_1st_number(aux)
         
         return configuration
     
@@ -557,7 +589,7 @@ class Gen:
         waveform = waveform.lower()
         if 'sq' in waveform:
             try:
-                aux = sav.find_1st_number(waveform)
+                aux = find_1st_number(waveform)
                 if aux != 50:
                     aux = 'PULS'
                 else:
@@ -583,7 +615,7 @@ class Gen:
 
         if 'sq' in waveform or 'pul' in waveform:
             try:
-                aux = sav.find_1st_number(waveform)
+                aux = find_1st_number(waveform)
             except TypeError:
                 aux = 50.0
                 print("Unasigned PULS Duty Cycle (default '50.0')")
@@ -597,7 +629,7 @@ class Gen:
 
         elif 'ram' in waveform:
             try:
-                aux = sav.find_1st_number(waveform)
+                aux = find_1st_number(waveform)
             except TypeError:
                 aux = 50.0
                 print("Unasigned RAMP Symmetry (default '50.0')")
