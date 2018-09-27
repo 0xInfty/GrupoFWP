@@ -156,9 +156,7 @@ def create_square(time, freq, dutycycle = .5, *args):
     
     Evaluated square waveform with given frequency
     """
-    
-    #dutycycle not implemented due to unresolved bug
-    
+    #dutycycle not implemented due to bug
     wave = square(2 * np.pi * time * freq)
     return wave
     
@@ -267,7 +265,6 @@ def wrong_input(*args):
     raise TypeError('''Given waveform is invalid. Choose from following list:
         sine, triangular, ramp, sawtooth, sawtoothup, sawtoothdown, square, custom''')
 
-        
 #%% Clase que genera ondas
 
 class Wave:
@@ -335,6 +332,7 @@ class Wave:
         else:
             wave = self.waveform(time, self._frequency, *args, self.extra_args) * self.amplitude
         return wave
+
 
 #%% Fourier series classfor wave generator
 
