@@ -205,11 +205,14 @@ def rec(nchannelsrec=1,
     Parameters
     ---------
     nchannels : int optional
-        Number of channels the signal should be recorded at. Default: 1.	
+        Number of channels the signal should be recorded at.
+        Default: 1.	
     formatrec : PyAudio format optional
-        Format the signal should be recorded with. Default=paFloat32.	
+        Format the signal should be recorded with. 
+        Default=paFloat32.	
     samplerate: int, float optional
-        Sampling rate at which the signal should be recorded. Default: 44100.
+        Sampling rate at which the signal should be recorded. 
+        Default: 44100.
     
     Returns
     -------
@@ -270,8 +273,8 @@ class AfterRecording:
 	 
         """Decides what actions to take afeter recording.
          
-        It deals with after recording actions according to
-    	  boolean values defined by user.
+        It deals with after recording actions according to 
+    	 boolean values defined by user.
             
         Parameters
         ----------

@@ -265,9 +265,6 @@ def wrong_input(*args):
     raise TypeError('''Given waveform is invalid. Choose from following list:
         sine, triangular, ramp, sawtooth, sawtoothup, sawtoothdown, square, custom''')
 
-        
-#%% Clase que genera ondas
-
 #%% Clase que genera ondas
 
 class Wave:
