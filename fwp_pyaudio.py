@@ -408,7 +408,7 @@ def just_play(signal_setup, exceptions = True):
         
     streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
                       formatplay=pyaudio.paFloat32,
-                      samplerate=signal_setup.patent.sampling_rate)
+                      samplerate=signal_setup.parent.sampling_rate)
     
     if exceptions:
         if signal_setup.duration is None:

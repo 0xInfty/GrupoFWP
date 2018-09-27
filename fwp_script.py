@@ -41,17 +41,18 @@ thesignal = fwp.play_rec(signal_generator,
 
 #%% Example of just_play
 
-duration = 10
+duration = 3
 nchannelsplay = 2
 signal_freq = 400
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
+suma = wmaker.Wave('sum', frequency = np.array((1, 1.25, 1.5, 2)) * signal_freq)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup((seno1,seno2), duration=duration)
+signal_generator = signalmaker.generator_setup(suma, duration=duration)
 
 fwp.just_play(signal_generator)
 
