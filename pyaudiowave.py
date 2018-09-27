@@ -341,6 +341,20 @@ class PyAudioWave:
             
             return time, signal_list
 
+    def generator_setup(self, wave, duration=None, buffers_per_array=100, display_warnings=False):
+        si = SignalMaker(wave, duration, self)
+        si.generator = self.write_generator( wave, duration, buffers_per_array, display_warnings)
+        return si
+        
+        
+class SignalMaker(PyAudioWave):
+    '''A secondary class with no methods used to pass a signal generator to the player.'''
+    
+    def __init__(self, wave, duration, parent):
+        self.wave = wave
+        self.duration = duration
+        self.parent = parent
+        
 #%% example to try everything out
             
 #import wavemaker

@@ -206,12 +206,13 @@ def rec(nchannelsrec=1,
     ---------
     nchannels : int optional
         Number of channels the signal should be recorded at.
-	Default: 1.	
+        Default: 1.	
     formatrec : PyAudio format optional
-        Format the signal should be recorded with. Default=paFloat32.	
+        Format the signal should be recorded with. 
+        Default=paFloat32.	
     samplerate: int, float optional
         Sampling rate at which the signal should be recorded. 
-	Default: 44100.
+        Default: 44100.
     
     Returns
     -------
@@ -232,29 +233,28 @@ def rec(nchannelsrec=1,
 #%%
 
 class AfterRecording:
-    
     """Has paramaters to decide what actions to take after recording.
     
     Attributes
     ----------
     savewav : bool
-    If True, the script will save a .wav with recorded signal.    
+        If True, the script will save a .wav with recorded signal.    
     showplot : bool
-    If True, the script will produce a plot with output + recorded data.	
+        If True, the script will produce a plot with output + recorded data.	
     saveplot : bool
-    If True, the script will save a plot in pdf format of
-    the output and recorded data.
+        If True, the script will save a plot in pdf format of
+        the output and recorded data.
     savetext : bool
-    If True, the script will save a .txt with recorded signal .
+        If True, the script will save a .txt with recorded signal .
     filename : str
-    Name with which to save output files produced by the script.
+        Name with which to save output files produced by the script.
     
     
     Methods
     ----------
     act
-	it produces output files according to user preferences
-	determined by boolean values of parameters
+   	 it produces output files according to user preferences
+	    determined by boolean values of parameters
     
     """
     
@@ -270,21 +270,22 @@ class AfterRecording:
 
 	
     def act(self, signalrec, nchannelsrec, samplerate, filename=None):
-        
-        """It deals with after recording actions according to
-        boolean values defined by user.
-        
+	 
+        """Decides what actions to take afeter recording.
+         
+        It deals with after recording actions according to 
+    	 boolean values defined by user.
+            
         Parameters
         ----------
         signalrec : array
             time vector in which to evaluate the funcion    
         nchannelsrec : int optional
-		Number of channels it should be played at.
+    	      Number of channels it should be played at.
         samplerate : int, float
-        	Sampling rate at which the signal should be recorded. 
-		filename : str
-    		Name with which to save output files produced by the script.
-		
+            Sampling rate at which the signal should be recorded. 
+        filename : str
+            Name with which to save output files produced by the script.
         """ 
 		
         if filename is None:
@@ -315,13 +316,11 @@ class AfterRecording:
 
 #%%
 
-def play_rec(signalplay, #1st column left
-                      recording_duration=None,
-                      nchannelsplay=1,
-                      nchannelsrec=1,
-                      samplerate=44100,
-                      after_recording=None,
-                      repeat=False):
+def play_rec(signal_setup, #1st column left
+              recording_duration=None,
+              nchannelsrec=1,
+              after_recording=None,
+              repeat=False):
     
     """Plays a signal and records another one at the same time.
     
@@ -359,15 +358,14 @@ def play_rec(signalplay, #1st column left
     """
 	
     if recording_duration is None:
-        if not signalplay.duration is None:
-            recording_duration = signalplay.duration
+        if signal_setup.duration is None:
+            raise ValueError('Duration not defined. Either generator or recording duration must be specified.')
         else:
-            raise TypeError('Duration not defined. Either generator \
-                            or recording duration must be specified.')
-                
+            recording_duration = signal_setup.duration
         
-    streamplay = play_callback(signalplay,
-                               nchannelsplay=nchannelsplay,
+    samplerate = signal_setup.parent.sampling_rate
+    streamplay = play_callback(signal_setup.generator,
+                               nchannelsplay=signal_setup.parent.nchannels,
                                formatplay=pyaudio.paFloat32,
                                samplerate=samplerate,
                                repeat=repeat)
@@ -397,9 +395,7 @@ def play_rec(signalplay, #1st column left
 
 #%%
 
-def just_play(signalplay, #1st column left
-              nchannels=1,
-              samplerate=44100):
+def just_play(signal_setup, exceptions = True):
     
     """Plays a signal.
     
@@ -408,20 +404,21 @@ def just_play(signalplay, #1st column left
     
     Parameters
     ---------
-    signalplay : PyAudio stream generator
-        A generator that yields the signal to be played.
-    nchannelsplay : int optional
-        Played signal's number of channels. Default: 1.
-    samplerate : int, float optional
-        Signals' sampling rate. Default: 44100    
+    signalplay : SignalMaker instance
+        An insance of the class SignalMaker of pyaudiowave module.
+        Contains signal generator and playback parameters. 
     """
         
-    streamplay = play(nchannelsplay=nchannels,
+    streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
                       formatplay=pyaudio.paFloat32,
-                      samplerate=samplerate)
+                      samplerate=signal_setup.parent.sampling_rate)
+    
+    if exceptions:
+        if signal_setup.duration is None:
+            raise ValueError('Duration not given. Would play forever (not good).')
     
     print("* Playing")
-    for data in signalplay:
+    for data in signal_setup.generator:
         streamplay.write(data)
     
     streamplay.stop_stream()
