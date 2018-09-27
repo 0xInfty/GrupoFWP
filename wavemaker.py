@@ -291,10 +291,27 @@ class Wave:
     '''
     
     def __init__(self, waveform='sine', frequency=400, amplitude=1, *args):
-        self.frequency = frequency
+        self._frequency = frequency
         self.amplitude = amplitude
         self.waveform = given_waveform(waveform)
         self.extra_args = args
+        
+    @property
+    def frequency(self):
+        '''Returns frequency of wave. 
+        
+        If frequency is an iterable, as it
+        may be in a sum or a custom function, returns first value.'''
+        
+        if isinstance(self._frequency, (list, tuple, np.ndarray)):
+            return self._frequency[0]
+        else:
+            return self._frequency
+        
+    @frequency.setter
+    def frequency(self, value):
+        '''Sets given frequency.'''
+        self._frequency = value    
         
     def evaluate(self, time, *args):
         """Takes in an array-like object to evaluate the funcion in.
@@ -314,9 +331,9 @@ class Wave:
 
         if isinstance(self.amplitude, (list, tuple, np.ndarray)):
             #for sums 
-            wave = self.waveform(time, self.frequency, self.amplitude)
+            wave = self.waveform(time, self._frequency, self.amplitude)
         else:
-            wave = self.waveform(time, self.frequency, *args, self.extra_args) * self.amplitude
+            wave = self.waveform(time, self._frequency, *args, self.extra_args) * self.amplitude
         return wave
 
 #%% Fourier series classfor wave generator
