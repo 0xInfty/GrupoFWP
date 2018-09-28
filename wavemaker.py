@@ -258,12 +258,13 @@ def given_waveform(input_waveform):
         'custom': create_custom,
         'sum': create_sum
     }
-    func = switcher.get(input_waveform, wrong_input(list(switcher.keys())))
+    func = switcher[input_waveform]
+    #switcher.get(input_waveform, wrong_input(list(switcher.keys())))
     return func
 
-def wrong_input(input_list):
-    msg = 'Given waveform is invalid. Choose from following list:{}'.format(input_list)
-    raise ValueError(msg)
+#def wrong_input(input_list):
+#    msg = 'Given waveform is invalid. Choose from following list:{}'.format(input_list)
+#    raise ValueError(msg)
 
 #%% Clase que genera ondas
 
