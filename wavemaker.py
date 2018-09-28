@@ -265,6 +265,7 @@ def given_waveform(input_waveform):
         'custom': create_custom,
         'sum': create_sum
     }
+
     func = switcher.get(input_waveform, wrong_input_build(list(switcher.keys())))
     return func
 
