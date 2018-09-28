@@ -3,9 +3,10 @@
 
 It includes:
 Defined functions for several waveforms incorporating a switcher to make choosing easier.
-A frequency sweep function
 A class for evaluating the multiple waveforms
+A class for calculating fourier partial sums and evaluating it.
 """
+
 import numpy as np
 from scipy.signal import sawtooth, square
     
@@ -223,7 +224,13 @@ def create_sum(time, freq, amp, *args):
     if len(freq) != len(amp):
         raise ValueError('Amplitud and frequency arrays should e the same leght!')
     
-    wave = np.zeros(time.shape)
+    #to be able to handle time vectors and scalars
+    if hasattr(time, '__len__'):
+        time= np.array(time)
+        wave = np.zeros(time.shape)
+    else:
+        wave = 0
+        
     for f, a in zip(freq, amp):
         wave += create_sine(time, f) * a
     #Normalize it:
@@ -258,12 +265,14 @@ def given_waveform(input_waveform):
         'custom': create_custom,
         'sum': create_sum
     }
-    func = switcher.get(input_waveform, wrong_input(list(switcher.keys())))
+    func = switcher.get(input_waveform, wrong_input_build(list(switcher.keys())))
     return func
 
-def wrong_input(input_list):
-    msg = 'Given waveform is invalid. Choose from following list:{}'.format(input_list)
-    raise ValueError(msg)
+def wrong_input_build(input_list):
+    def wrong_input(*args):
+        msg = 'Given waveform is invalid. Choose from following list:{}'.format(input_list)
+        raise ValueError(msg)
+    return wrong_input
 
 #%% Clase que genera ondas
 
@@ -363,7 +372,7 @@ def fourier_switcher(input_waveform):
             'triangular': triangular_series,
             'sawtooth': sawtooth_series,
             'custom': custom_series}
-    func = switcher.get(input_waveform, wrong_input(list(switcher.keys())))
+    func = switcher.get(input_waveform, wrong_input_build(list(switcher.keys())))
     return func
 
 def square_series(order, freq, *args):
@@ -482,15 +491,15 @@ class Fourier:
         returns evaluated fourier partial sum
 
     '''
-    def __init__(self, waveform, frequency, order=5, *args):
+    def __init__(self, waveform='square', frequency=400, order=5, *args):
         """Initializes class instance. 
                
         Parameters
         ----------
-        waveform : str {'sawtooth',  'triangular', 'square', 'custom'} 
-            waveform type.
-        frequency : float
-            fundamental frequency of the constructed wave
+        waveform : str {'sawtooth',  'triangular', 'square', 'custom'} (Optional)
+            waveform type. Default: 'square'
+        frequency : float (Optional)
+            fundamental frequency of the constructed wave in Hz. Default: 400
         order : int (optional)
             order of the constructed fourier series, i.e. the series will
             be calculated up to the nth non zero term, with n=order.
@@ -506,14 +515,47 @@ class Fourier:
         Evaluated fourier partial sum 
         """          
         
-        func = fourier_switcher(waveform)
-        self.amplitudes, self.frequencies = func(order, frequency, *args)
-
-        self.wave = Wave('sum', self.frequencies, self.amplitudes)
+        self.waveform_maker = fourier_switcher(waveform)
+        self._order = order
+        self.setup_props(frequency)
         self.extra_args = args
         
         self.custom = waveform=='custom'
+    
+    
+    def setup_props(self, freq):
+        '''Sets up frequencyes, amplitudes and wave attributes for given freq.'''
         
+        self.amplitudes, self._frequencies =  self.waveform_maker(self.order, freq)
+        self.wave = Wave('sum', self._frequencies, self.amplitudes)
+
+        
+    @property
+    def frequency(self):
+        '''Frequency getter: returns fundamental frequency of wave.'''
+        
+        return self._frequencies[0]
+        
+    @frequency.setter
+    def frequency(self, value):
+        '''Frequency setter: calculates the frequency vector for given
+        fundamental frequency and order. Redefine Wave accordingly.'''
+        
+        self.setup_props(value)
+        
+    @property
+    def order(self):
+        '''Order getter: returns order of the last nonzero term in partial sum.'''
+        
+        return self._order
+        
+    @order.setter
+    def order(self, value):
+        '''Order setter: Calculates new appropiate frequency and amplitude
+        vectors for given order value. Redefine Wave accordingly.'''
+        
+        self._order = value
+        self.setup_props(self.frequency)
         
     def evaluate(self, time):
         """Takes in an array-like object to evaluate the funcion in.

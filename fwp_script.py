@@ -32,7 +32,7 @@ fourier_sq = wmaker.Fourier('square', frequency=signal_freq, order=2)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup((cuadrada, fourier_sq))
+signal_generator = signalmaker.generator_setup(seno1)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 
