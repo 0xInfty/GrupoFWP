@@ -323,7 +323,7 @@ class Wave:
         
     @frequency.setter
     def frequency(self, value):
-        '''grequency setter: sets value as self._frequency.'''
+        '''Frequency setter: sets value as self._frequency.'''
         self._frequency = value    
         
     def evaluate(self, time, *args):
@@ -517,7 +517,7 @@ class Fourier:
         """          
         
         self.waveform_maker = fourier_switcher(waveform)
-        self._order = order
+        self._order = order #doesn't call setup_props becaouse there's no frequency defined yet
         self.setup_props(frequency)
         self.extra_args = args
         
