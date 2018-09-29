@@ -19,7 +19,7 @@ import wavemaker as wmaker
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
-duration = 1
+duration = .5
 nchannelsrec = 2
 nchannelsplay = 2
 signal_freq = 400
@@ -32,7 +32,7 @@ fourier_sq = wmaker.Fourier('square', frequency=signal_freq, order=2)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup(seno1)
+signal_generator = signalmaker.generator_setup((seno1))
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 
@@ -44,16 +44,18 @@ thesignal = fwp.play_rec(signal_generator,
 
 duration = 3
 nchannelsplay = 2
-signal_freq = 400
+signal_freq = 800
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
 suma = wmaker.Wave('sum', frequency = np.array((1, 1.25, 1.5, 2)) * signal_freq)
+cuadrada = wmaker.Wave('square',frequency=signal_freq)
+fourier = wmaker.Fourier('square', frequency=signal_freq, order=15)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup(suma, duration=duration)
+signal_generator = signalmaker.generator_setup(cuadrada, duration=duration)
 
 fwp.just_play(signal_generator)
 
@@ -253,12 +255,12 @@ sav.savetext(np.transpose([amplitude, amp_osci]),
 
 # PARAMETERS
 
-resistance = 5.6e3 # ohms
+resistance = 1e3 # ohms
+r1 = 1e6
+r2 = 5.75e6
 
 amp = 1 # between 0 and 1
-freq = 1000 # hertz
-n_per = 200 #number of periods
-#duration = n_per/freq
+freq = 400 # hertz
 duration = 1 #in seconds
 
 nchannelsplay = 2
@@ -273,7 +275,7 @@ after_record_do = fwp.AfterRecording(showplot = True, savetext = True)
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
-seno = wmaker.Wave('ramp', frequency=freq)
+seno = wmaker.Wave('sine', frequency=freq)
 signal_to_play = signalmaker.generator_setup(seno)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
@@ -287,8 +289,10 @@ signal_rec = fwp.play_rec(signal_to_play,
 chL = signal_rec[:,0]
 chR = signal_rec[:,1]
 
-V = chR - chL
-I = chR/resistance
+V0 = (r1 + r2)/r1 * chR
+
+V = V0 - chL
+I = chL/resistance
 
 if after_record_do.showplot:
     plt.figure()
