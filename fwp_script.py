@@ -3,6 +3,7 @@
 Created on Wed Sep 12 12:48:15 2018
 
 @author: Marcos
+@coauthor: Vall
 """
 
 import fwp_lab_instruments as ins
@@ -19,24 +20,24 @@ import wavemaker as wmaker
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
-duration = 5
+duration = .5
 nchannelsrec = 2
 nchannelsplay = 2
-signal_freq = 2000
+signal_freq = 400
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*2)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
+fourier_sq = wmaker.Fourier('square', frequency=signal_freq, order=2)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup((seno1,cuadrada))
+signal_generator = signalmaker.generator_setup(seno1)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 
                           recording_duration=duration,
-                          nchannelsplay=nchannelsplay,
                           nchannelsrec=nchannelsrec,
                           after_recording=after_record_do)
 
@@ -44,12 +45,15 @@ thesignal = fwp.play_rec(signal_generator,
 
 duration = 3
 nchannelsplay = 2
-signal_freq = 400
+signal_freq = 800
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
-suma = wmaker.Wave('sum', frequency=np.array((1, 1.25, 1.5, 2)) * signal_freq)
+suma = wmaker.Wave('sum', 
+                   frequency=np.array((1, 1.25, 1.5, 2)) * signal_freq)
+cuadrada = wmaker.Wave('square',frequency=signal_freq)
+fourier = wmaker.Fourier('square', frequency=signal_freq, order=15)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
@@ -201,7 +205,7 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 
 gen.re_config_output(1, frequency=freq) # 1 output, 2 audio recording CH
-                     
+
 amp_rec = []
                   
 for amp in amplitude:
@@ -235,12 +239,12 @@ sav.savetext(np.transpose([amplitude, amp_osci]),
 
 # PARAMETERS
 
-resistance = 5.6e3 # ohms
+resistance = 1e3 # ohms
+r1 = 1e6
+r2 = 5.75e6
 
 amp = 1 # between 0 and 1
-freq = 1000 # hertz
-n_per = 200 #number of periods
-#duration = n_per/freq
+freq = 400 # hertz
 duration = 1 #in seconds
 
 nchannelsplay = 2
@@ -255,7 +259,7 @@ after_record_do = fwp.AfterRecording(showplot = True, savetext = True)
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
                               samplingrate=samplerate)
 
-seno = wmaker.Wave('ramp', frequency=freq)
+seno = wmaker.Wave('sine', frequency=freq)
 signal_to_play = signalmaker.generator_setup(seno)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
@@ -266,19 +270,23 @@ signal_rec = fwp.play_rec(signal_to_play,
                            duration,
                            nchannelsrec=nchannelsrec,
                            after_recording=after_record_do)
-chL = signal_rec[:,0]
-chR = signal_rec[:,1]
-
-V = chR - chL
-I = chR/resistance
 
 if after_record_do.showplot:
+    
+    chL = signal_rec[:,0]
+    chR = signal_rec[:,1]
+    
+    V0 = (r1 + r2)/r1 * chR
+    
+    V = V0 + chL
+    I = chL/resistance    
+    
     plt.figure()
     plt.plot(V, I, '.')
     plt.xlabel("Voltaje V")
     plt.ylabel("Corriente I")
     plt.grid()
-#    
+    
 #    sav.saveplot('{}_Plot.pdf'.format(filename))
 #    sav.savetext(np.transpose(np.array([V, I])),
 #                 '{}_Data.txt'.format(filename))

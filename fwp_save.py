@@ -7,15 +7,15 @@ It could be divided into 2 sections:
     (2) saving data into files with the option of not overwriting 
     ('saveplot', 'savetext', 'savewav')
 
-new_dir: function
+new_dir : function
     Makes and returns a new related directory to avoid overwriting.
-free_file: function
+free_file : function
     Returns a name for a new file to avoid overwriting.
-saveplot: function
+saveplot : function
     Saves a matplotlib.pyplot plot on an image file (i.e: 'png').
-savetext: function
+savetext : function
     Saves some np.array like data on a '.txt' file.
-savewav: function
+savewav : function
     Saves a PyAudio encoded audio on a '.wav' file.
 
 @author: Vall
@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pyaudio
-import re
 import wave
 
 #%%
@@ -42,17 +41,17 @@ def new_dir(my_dir, newformat='{}_{}'):
     
     Parameters
     ----------
-    my_dir: str
+    my_dir : str
         Desired directory (should also contain full path).
     
     Returns
     -------
-    new_dir: str
+    new_dir : str
         New directory (contains full path)
     
     Yields
     ------
-    new_dir: directory
+    new_dir : directory
     
     """
     
@@ -88,14 +87,14 @@ def free_file(my_file, newformat='{}_{}'):
         
     Parameters
     ----------
-    my_file: str
+    my_file : str
         Tentative file name (must contain full path and extension).
-    newformat='{}_{}': str
+    newformat='{}_{}' : str
         Format string that indicates how to make new names.
     
     Returns
     -------
-    new_fname: str
+    new_fname : str
         Unoccupied file name (also contains full path and extension).
         
     """
@@ -142,9 +141,9 @@ def saveplot(file, overwrite=False):
     
     Variables
     ---------
-    file: string
+    file : string
         The name you wish (must include full path and extension)
-    overwrite=False: bool
+    overwrite=False : bool
         Indicates whether to overwrite or not.
     
     Returns
@@ -154,6 +153,10 @@ def saveplot(file, overwrite=False):
     Yields
     ------
     an image file
+    
+    See Also
+    --------
+    free_file()
     
     """
     
@@ -182,11 +185,11 @@ def savetext(datanumpylike, file, overwrite=False):
     
     Variables
     ---------
-    datanumpylike: array, list
+    datanumpylike : array, list
         The data to be saved.
-    file: string
+    file : string
         The name you wish (must include full path and extension)
-    overwrite=False: bool
+    overwrite=False : bool
         Indicates whether to overwrite or not.
     
     Return
@@ -196,6 +199,10 @@ def savetext(datanumpylike, file, overwrite=False):
     Yield
     -----
     '.txt' file
+    
+    See Also
+    --------
+    free_file()
     
     """
     
@@ -239,15 +246,15 @@ def savewav(datapyaudio,
     
     Variables
     ---------
-    datapyaudio: str
+    datapyaudio : str
         PyAudio byte stream.
-    file: str
+    file : str
         Desired file (must include full path and extension)
-    data_nchannels=1: int
+    data_nchannels=1 : int
         Data's number of audio channels.
-    data_format
+    data_format : int
         Data's PyAudio format.
-    overwrite=False: bool
+    overwrite=False : bool
         Indicates wheter to overwrite or not.
     
     Returns
@@ -257,6 +264,10 @@ def savewav(datapyaudio,
     Yields
     ------
     '.wav' file
+    
+    See Also
+    --------
+    free_file()
     
     """
     

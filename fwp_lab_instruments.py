@@ -4,20 +4,21 @@ This module defines classes to manipulate lab instruments via PyVisa.
 
 Some of the most useful functions and methods are:
 
-resources: function
+resources : function
     Returns a list of tuples of connected 'INSTR' resources.
-Osci: class
+Osci : class
     Allows communication with a Tektronix Digital Oscilloscope.
-Osci.measure: method
+Osci.measure : method
     Takes a measure of a certain type on a certain channel.
-Gen: class
+Gen : class
     Allows communication with Tektronix Function Generators.
-Gen.output: method
+Gen.output : method
     Turns on/off an output channel. Also configures it if needed.
 
 @author: Vall
 """
 
+import re
 import pyvisa as visa
 
 #%%
@@ -32,7 +33,7 @@ def resources():
     
     Returns
     -------
-    resources: list
+    resources : list
         List of connected resources.
     
     """
@@ -93,23 +94,23 @@ class Osci:
     
     Parameters
     ----------
-    port: str
+    port : str
         Computer's port where the oscilloscope is connected.
         i.e.: 'USB0::0x0699::0x0363::C108013::INSTR'
     
     Attributes
     ----------
-    Osci.port: str
+    Osci.port : str
         Computer's port where the oscilloscope is connected.
         i.e.: 'USB0::0x0699::0x0363::C108013::INSTR'
-    Osci.osci: pyvisa.ResourceManager.open_resource() object
+    Osci.osci : pyvisa.ResourceManager.open_resource() object
         PyVISA object that allows communication.
-    Osci.config_measure: dic
+    Osci.config_measure : dic
         Immediate measurement's current configuration.
     
     Methods
     -------
-    Osci.measure(str, int): function
+    Osci.measure(str, int)
         Makes a measurement of a type 'str' on channel 'int'.
     
     Examples
@@ -136,7 +137,7 @@ class Osci:
         
         Parameters
         ---------
-        port: str
+        port : str
             Computer's port where the oscilloscope is connected.
             i.e.: 'USB0::0x0699::0x0363::C108013::INSTR'
         
@@ -173,20 +174,20 @@ class Osci:
         
         Parameters
         ----------
-        mtype: str
+        mtype : str
             Key that configures the measure type.
             i.e.: 'Min', 'min', 'minimum', etc.
-        channel=1: int {1, 2}, optional
+        channel=1 : int {1, 2}, optional
             Number of the measure's channel.
-        print_result=False: bool, optional
+        print_result=False : bool, optional
             Says whether to print or not the result.
         
         Returns
         -------
-        result: int, float
+        result : int, float
             Measured value.
         
-        See also
+        See Also
         --------
         Osci.re_config_measure()
         Osci.get_config_measure()
@@ -213,7 +214,7 @@ class Osci:
         
         Returns
         -------
-        configuration: dict as {'Source': int, 'Type': str}
+        configuration : dict as {'Source': int, 'Type': str}
             It states the source and type of configured measurement.
             
         """
@@ -233,17 +234,17 @@ class Osci:
         
         Parameters
         ---------
-        mtype: str
+        mtype : str
             Key that configures the measure type.
             i.e.: 'Min', 'min', 'minimum', etc.
-        channel=1: int {1, 2}
+        channel=1 : int {1, 2}
             Number of the measure's channel.
         
         Returns
         -------
         nothing
         
-        See also
+        See Also
         --------
         Osci.get_config_measure()
         
@@ -317,18 +318,18 @@ class Gen:
 
     Parameters
     ----------
-    Gen.port: str
+    port : str
         Computer's port where the oscilloscope is connected.
         i.e.: 'USB0::0x0699::0x0363::C108013::INSTR'
     
     Attributes
     ----------
-    Gen.port: str
+    Gen.port : str
         Computer's port where the oscilloscope is connected.
         i.e.: 'USB0::0x0699::0x0363::C108013::INSTR'
-    Gen.gen: pyvisa.ResourceManager.open_resource() object
+    Gen.gen : pyvisa.ResourceManager.open_resource() object
         PyVISA object that allows communication.
-    Gen.config_output: dic
+    Gen.config_output : dic
         Outputs' current configuration.
     
     Methods
@@ -364,13 +365,17 @@ class Gen:
         
         Parameters
         ----------
-        port: str
+        port : str
             Computer's port where the oscilloscope is connected.
             i.e.: 'USB0::0x0699::0x0346::C036493::INSTR'
         
         Returns
         -------
         nothing
+        
+        See Also
+        --------
+        Gen.get_config_output()
         
         """
         
@@ -389,21 +394,21 @@ class Gen:
                 
         Parameters
         ----------
-        status: bool
+        status : bool
             Says whether to turn on (True) or off (False).
-        channel: int {1, 2}, optional
+        channel : int {1, 2}, optional
             Number of output channel to be turn on or off.
-        print_changes=True: bool, optional
+        print_changes=True : bool, optional
             Says whether to print changes when output is reconfigured.
-        waveform: str, optional
+        waveform : str, optional
             Output's waveform (if none, applies current configuration).
-        frequency: int, float, optional
+        frequency : int, float, optional
             Output's frequency in Hz (if none, current configuration).
-        amplitude: int, float, optional
+        amplitude : int, float, optional
             Output's amplitude in Vpp (if none, current configuration).
-        offset: int, float, optional
+        offset : int, float, optional
             Output's offset in V (if none, current configuration).
-        phase: int, flot, optional
+        phase : int, flot, optional
             Output's phase expressed in radians and multiples of pi 
             (if none, applies current configuration).
         
@@ -426,6 +431,11 @@ class Gen:
         {turns on channel 1 with triangular 1kHz and 1Vpp wave}
         >> gen.output(True, waveform='ram0')
         {turns on channel 1 with positive ramp}
+        
+        See Also
+        --------
+        Gen.get_config_output()
+        Gen.re_config_output()
         
         """
         
@@ -473,7 +483,7 @@ class Gen:
         
         Returns
         -------
-        configuration: dic
+        configuration : dic
             Current outputs' configuration.
             i.e.: {1:{
                       'Status': True,
@@ -546,17 +556,17 @@ class Gen:
                 
         Variables
         ---------
-        channel: int {1, 2}, optional
+        channel : int {1, 2}, optional
             Number of output channel to be turn on or off.
-        waveform='sin': str, optional
+        waveform='sin' : str, optional
             Output's waveform.
-        frequency=1e3: int, float, optional
+        frequency=1e3 : int, float, optional
             Output's frequency in Hz.
-        amplitude=1: int, float, optional
+        amplitude=1 : int, float, optional
             Output's amplitude in Vpp.
-        offset=0: int, float, optional
+        offset=0 : int, float, optional
             Output's offset in V.
-        phase=0: int, flot, optional
+        phase=0 : int, flot, optional
             Output's phase in multiples of pi.
         print_changes=False: bool, optional.
             Says whether to print changes or not if output reconfigured.
@@ -565,9 +575,10 @@ class Gen:
         -------
         nothing
         
-        See also
+        See Also
         --------
         Gen.output()
+        Gen.re_config_output()
         
         """
 
