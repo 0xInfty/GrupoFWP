@@ -1,36 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-The 'fwp_pyaudio' module is for playing and recording
-signals using PyAudio.
+The 'fwp_pyaudio' module is for playing and recording via PyAudio.
 
-This script requires that `pyaudio` be installed within the Python
+This script requires that 'pyaudio' be installed within the Python
 environment you are running this script in.
 
 This module could be divided into different sections:
-    (1) encoding and decoding ('decode', 'encode').
-    (2) making streams ('play', 'play_callback', 'play_callback_gen', 
-    'rec').
-    (3) playing and recording ('play_callback_rec', 
-    'play_callback_rec_gen', 'just_play', 'just_rec', 'signal_plot').
-    (4) plotting and saving ('signal_plot', 'AfterRecording').
+    (1) making streams ('play', 'play_callback', 'rec')
+    (2) playing and recording ('play_rec', 'just_play', 'just_rec').
+    (3) decoding, plotting and saving ('decode', 'signal_plot', 
+    'AfterRecording').
 
 It contains the following functions:
 
 decode : 
     Coverts a PyAudio byte stream into a Numpy array.  
-encode :
-    Converts a Numpy array into a byte stream for PyAudio.    
 play :
     Returns a stream that plays on blocking mode.   
 play_callback : 
-    Takes a signal and returns a stream that plays it on callback.   
-play_callback_gen : 
-    Takes a generator and returns a stream that plays it on callback.    
+    Takes a signal generator and returns a stream that plays it on callback.   
 rec : 
 	Returns a PyAudio stream that records a signal.	
-play_callback_rec :  
-	Plays a signal and records another one at the same time.	
-play_callback_rec_gen : 
+play_rec :  
 	Plays a signal and records another one at the same time.	
 just_play : 
 	Plays a signal.	
@@ -39,14 +30,14 @@ just_rec :
 signal_plot : 
 	Takes an audio signal and plots it as a function of time.
 
-
 It also includes the following class:
 
 AfterRecording :
 	Has paramaters to decide what actions to take after recording.
 	
 @date: 05/09/2018
-@author: Vall + Marcos
+@author: Vall
+@coauthor: Marcos
 """
 
 import fwp_save as sav
@@ -332,20 +323,18 @@ def play_rec(signal_setup, #1st column left
     
     Parameters
     ---------
- 	signalplay: PyAudio stream generator
-        A generator that yields the signal to be played.
+ 	 signal_setup: SignalMaker instance form pyaudiowave module
+        An object that includes generator that yields the signal to be 
+        played and the playback parameters.
     recording_duration : int, float optional
         Signals' duration in seconds. Default: none.
-    nchannelsplay : int optional
-        Played signal's number of channels. Default: 1.
     nchannelsrec : int optional
         Recorded signal's number of channels. Default: 1.
-    samplerate : int, float optional
-        Signals' sampling rate. Default 44100
-	after_recording : class object
-		paramaters to decide what actions to take after recording
-	repeat : bool optional
-		Decides wether the callback funtion should repeat the first
+	 after_recording : AfterRecording class instance
+		  paramaters to decide what actions to take after recording. By 
+        default, it just plots.
+	 repeat : bool optional
+		  Decides wether the callback funtion should repeat the first
         array it yields or keep yielding new arrays, if for some
         reason you should want that behaviour. Default: False.
 		
@@ -404,9 +393,12 @@ def just_play(signal_setup, exceptions = True):
     
     Parameters
     ---------
-    signalplay : SignalMaker instance
-        An insance of the class SignalMaker of pyaudiowave module.
-        Contains signal generator and playback parameters. 
+    signal_setup: SignalMaker instance form pyaudiowave module
+        An object that includes generator that yields the signal to be 
+        played and the playback parameters.
+    exceptions : bool (Optional)
+        Decides if exceptions should be raised or not when duration is not
+        given, to avoid playing forever.
     """
         
     streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
@@ -445,8 +437,9 @@ def just_rec(recording_duration, #1st column left
         Recorded signal's number of channels. Default: 1.
     samplerate : int, float optional
         Signals' sampling rate. Default 44100
-    after_recording : class object
-		paramaters to decide what actions to take after recording
+	 after_recording : AfterRecording class instance
+		  paramaters to decide what actions to take after recording. By 
+        default, it just plots.
 		
     Returns
     -------

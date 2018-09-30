@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-A module containing a single class that takes in Wave objects from the wavemaker
-module and outputs a variety of signals from the given wave(s).
+A module containing a main class (Pyauadiowave) that takes in Wave objects from
+the wavemaker module and outputs a variety of signals from the given wave(s). It
+also contains a helper class (SignalMaker) to pass to fwp_pyaudiowave playback
+functions tu properly setup parameters.
 """
 
 import numpy as np
