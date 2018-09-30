@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-The 'fwp_pyaudio' module is for playing and recording
-signals using PyAudio.
+The 'fwp_pyaudio' module is for playing and recording via PyAudio.
 
-This script requires that `pyaudio` be installed within the Python
+This script requires that 'pyaudio' be installed within the Python
 environment you are running this script in.
 
+This module could be divided into different sections:
+    (1) making streams ('play', 'play_callback', 'rec')
+    (2) playing and recording ('play_rec', 'just_play', 'just_rec').
+    (3) decoding, plotting and saving ('decode', 'signal_plot', 
+    'AfterRecording').
 
 It contains the following functions:
 
@@ -26,14 +30,14 @@ just_rec :
 signal_plot : 
 	Takes an audio signal and plots it as a function of time.
 
-
 It also includes the following class:
 
 AfterRecording :
 	Has paramaters to decide what actions to take after recording.
 	
 @date: 05/09/2018
-@author: Vall + Marcos
+@author: Vall
+@coauthor: Marcos
 """
 
 import fwp_save as sav

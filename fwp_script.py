@@ -3,9 +3,10 @@
 Created on Wed Sep 12 12:48:15 2018
 
 @author: Marcos
+@coauthor: Vall
 """
 
-#import fwp_lab_instruments as ins
+import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
@@ -32,7 +33,7 @@ fourier_sq = wmaker.Fourier('square', frequency=signal_freq, order=2)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup((seno1))
+signal_generator = signalmaker.generator_setup(seno1)
 #NOTE: to write two different signals in two channels use tuples: (wave1,wave2)
 
 thesignal = fwp.play_rec(signal_generator, 
@@ -49,13 +50,14 @@ signal_freq = 800
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
 seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
-suma = wmaker.Wave('sum', frequency = np.array((1, 1.25, 1.5, 2)) * signal_freq)
+suma = wmaker.Wave('sum', 
+                   frequency=np.array((1, 1.25, 1.5, 2)) * signal_freq)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
 fourier = wmaker.Fourier('square', frequency=signal_freq, order=15)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup(cuadrada, duration=duration)
+signal_generator = signalmaker.generator_setup(suma, duration=duration)
 
 fwp.just_play(signal_generator)
 
@@ -148,20 +150,17 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 amp_osci = []
 
-osci.config_measure('pk2', 1)
-osci.config_measure('pk2', 2)
-
 for amp in amplitude:
     
     seno.amplitude = amp #update signals ampitude
     signal_to_play = signalmaker.generator_setup(seno, #play for 1000 periods
-                                              duration=1000 / seno.frequency)
+                                                 duration=1000/seno.frequency)
     after_record_do.filename = makefile(amp)
     
     fwp.just_play(signal_to_play)
     
-    result_left = osci.measure('pk2', 1, reconfig=False)
-    result_right = osci.measure('pk2', 2, reconfig=False)
+    result_left = osci.measure('pk2', 1)
+    result_right = osci.measure('pk2', 2)
     
     amp_osci.append([result_left, result_right])
 
@@ -197,10 +196,7 @@ samplerate = 44100
 name = 'Cal_Rec_{:.0f}_Hz'.format(freq)
 after_record_do = fwp.AfterRecording(savetext = True)
 
-gen = ins.Gem(port=port)
-#seno = wmaker.Wave('sine', frequency=signal_freq)
-#signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
-#                              samplingrate=samplerate)
+gen = ins.Gen(port=port)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
@@ -208,12 +204,7 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 
-gen.config_output(output_waveform='sin', 
-                  output_frequency=freq, 
-                  output_ch=1) # Left
-gen.config_output(output_waveform='sin', 
-                  output_frequency=freq, 
-                  output_ch=2) # Right
+gen.re_config_output(1, frequency=freq) # 1 output, 2 audio recording CH
 
 amp_rec = []
                   
@@ -221,14 +212,7 @@ for amp in amplitude:
     
     after_record_do.filename = makefile(amp)
     
-    gen.output(output_frequency=freq, 
-               output_amplitude=amp,
-               output_ch=1,
-               reconfig=True)
-    gen.output(output_frequency=freq, 
-               output_amplitude=amp,
-               output_ch=2,
-               reconfig=True)
+    gen.output(True, 1, amplitude=amp)
     
     signal_rec = fwp.just_rec(duration,
                               nchannelsrec=nchannelsrec,
@@ -286,21 +270,23 @@ signal_rec = fwp.play_rec(signal_to_play,
                            duration,
                            nchannelsrec=nchannelsrec,
                            after_recording=after_record_do)
-chL = signal_rec[:,0]
-chR = signal_rec[:,1]
-
-V0 = (r1 + r2)/r1 * chR
-
-V = V0 - chL
-I = chL/resistance
 
 if after_record_do.showplot:
+    
+    chL = signal_rec[:,0]
+    chR = signal_rec[:,1]
+    
+    V0 = (r1 + r2)/r1 * chR
+    
+    V = V0 + chL
+    I = chL/resistance    
+    
     plt.figure()
     plt.plot(V, I, '.')
     plt.xlabel("Voltaje V")
     plt.ylabel("Corriente I")
     plt.grid()
-#    
+    
 #    sav.saveplot('{}_Plot.pdf'.format(filename))
 #    sav.savetext(np.transpose(np.array([V, I])),
 #                 '{}_Data.txt'.format(filename))
