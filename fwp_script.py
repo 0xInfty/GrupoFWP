@@ -43,21 +43,23 @@ thesignal = fwp.play_rec(signal_generator,
 
 #%% Example of just_play
 
-duration = 3
+duration = 5
 nchannelsplay = 2
-signal_freq = 800
+signal_freq = 2000
 
 #A square and a sine wave
 seno1 = wmaker.Wave('sine', frequency=signal_freq)
-seno2 = wmaker.Wave('sine',frequency=signal_freq*1.5)
+seno2 = wmaker.Wave('sine', frequency=signal_freq*1.5)
+seno3 = wmaker.Wave('sine', frequency=signal_freq, amplitude=.0)
 suma = wmaker.Wave('sum', 
                    frequency=np.array((1, 1.25, 1.5, 2)) * signal_freq)
 cuadrada = wmaker.Wave('square',frequency=signal_freq)
+cuadrada2 = wmaker.Wave('square',frequency=signal_freq*10)
 fourier = wmaker.Fourier('square', frequency=signal_freq, order=15)
 
 #Create signal to play
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
-signal_generator = signalmaker.generator_setup(suma, duration=duration)
+signal_generator = signalmaker.generator_setup((seno1, seno3), duration=duration)
 
 fwp.just_play(signal_generator)
 
@@ -124,24 +126,19 @@ sav.savetext(
 #%% Calibrate playing
 
 amp_start = 1
-amp_stop = 0
-amp_step = 0.05
+amp_stop = .05
+amp_step = -0.05
 
-freq = 2000
-n_per = 50
-duration = n_per/freq
+freq = 400
 
-port = 'USB0::0x0699::0x0363::C108013::INSTR'
+port = 'USB0::0x0699::0x0363::C102220::INSTR'
 
-nchannelsplay = 2
-samplerate = 44100
 name = 'Cal_Play_{:.0f}_Hz'.format(freq)
 after_record_do = fwp.AfterRecording(savetext = True)
 
 osci = ins.Osci(port=port)
-seno = wmaker.Wave('sine', frequency=signal_freq)
-signalmaker = paw.PyAudioWave(nchannels=nchannelsplay,
-                              samplingrate=samplerate)
+#seno = wmaker.Wave('sine', frequency=freq)
+signalmaker = paw.PyAudioWave(nchannels=2)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
@@ -150,19 +147,19 @@ makefile = lambda amp: '{}_{:.2f}'.format(filename, amp)
 amplitude = np.arange(amp_start, amp_stop, amp_step)
 amp_osci = []
 
+def measure():
+    result_left = osci.measure('pk2', 1, print_result=True)
+    result_right = osci.measure('pk2', 2, print_result=True)
+    return result_left, result_right
+
 for amp in amplitude:
     
-    seno.amplitude = amp #update signals ampitude
-    signal_to_play = signalmaker.generator_setup(seno, #play for 1000 periods
-                                                 duration=1000/seno.frequency)
-    after_record_do.filename = makefile(amp)
+    seno = wmaker.Wave('sine', frequency=freq, amplitude=amp)
+    #seno.amplitude = amp #update signals ampitude
+    signal_to_play = signalmaker.generator_setup((seno,seno), duration=1 ) 
     
-    fwp.just_play(signal_to_play)
-    
-    result_left = osci.measure('pk2', 1)
-    result_right = osci.measure('pk2', 2)
-    
-    amp_osci.append([result_left, result_right])
+    result = fwp.just_play_NB(signal_to_play, measure, wait_time=.3)
+    amp_osci.append(list(result))
 
 amp_osci = np.array(amp_osci)
 
@@ -174,29 +171,31 @@ plt.legend(["Izquierda","Derecha"])
 plt.grid()
 plt.show()
 
+[]
+
+data = np.array([amplitude, amp_osci[:,0], amp_osci[:,1]]).T
 sav.saveplot('{}_Plot.pdf'.format(filename))
-sav.savetext(np.transpose([amplitude, amp_osci]), 
-             '{}_Data.txt'.format(filename))
+sav.savetext(data, '{}_Data.txt'.format(filename))
 
 #%% Calibrate recording
 
-amp_stop = 2 # Vpp
-amp_step = 0.1
-amp_start = amp_step
+amp_stop = 0 # Vpp
+amp_step = -0.05
+amp_start = 4.5
+
+mic_attenuation = 15/(15+22)
 
 freq = 2000
-n_per = 50
-duration = n_per/freq
+duration = 1
 
-port = 'USB0::0x0699::0x0363::C108013::INSTR'
+port = 'USB0::0x0699::0x0346::C036492::INSTR'
 
-nchannelsplay = 2
 nchannelsrec = 2
 samplerate = 44100
 name = 'Cal_Rec_{:.0f}_Hz'.format(freq)
-after_record_do = fwp.AfterRecording(savetext = True)
+after_record_do = fwp.AfterRecording(savetext = True, showplot=False)
 
-gen = ins.Gen(port=port)
+gen = ins.Gen(port=port, nchannels=1)
 
 savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
@@ -217,23 +216,45 @@ for amp in amplitude:
     signal_rec = fwp.just_rec(duration,
                               nchannelsrec=nchannelsrec,
                               after_recording=after_record_do)
-
+    
+    signal_rec = fwp.decode(signal_rec, nchannelsrec)
+    
     amp_rec.append([max(signal_rec[:,0])-min(signal_rec[:,0]), # Left
                     max(signal_rec[:,1])-min(signal_rec[:,1])]) # Right
 
+gen.output(0)    
 amp_rec = np.array(amp_rec)
 
 plt.figure()
-plt.plot(amplitude, amp_rec, 'o')
-plt.xlabel("Amplitud leída (pp)")
-plt.ylabel("Amplitud real (Vpp)")
+plt.plot(amplitude*mic_attenuation, amp_rec, 'o')
+plt.xlabel("Amplitud real (Vpp)")
+plt.ylabel("Factor de amplitud (pp)")
 plt.grid()
 plt.legend(["Izquierda","Derecha"])
 plt.show()
 
+data = np.array([amplitude*mic_attenuation, amp_rec[:,0], amp_rec[:,1]]).T
 sav.saveplot('{}_Plot.pdf'.format(filename))
-sav.savetext(np.transpose([amplitude, amp_osci]), 
-             '{}_Data.txt'.format(filename))
+sav.savetext(data, '{}_Data.txt'.format(filename))
+
+#plt.figure()
+#plt.title("Izquierda")
+#plt.xlabel("Tiempo (s)")
+#plt.ylabel("Señal (V)")
+#for amp in amplitude:
+#    loc_data = np.loadtxt(makefile(amp)+'.txt')
+#    plt.plot(loc_data[:,0])
+#    plt.legend(amplitude)
+#
+#plt.figure()
+#plt.title("Izquierda")
+#plt.xlabel("Tiempo (s)")
+#plt.ylabel("Señal (V)")
+#for amp in amplitude:
+#    loc_data = np.loadtxt(makefile(amp)+'.txt')
+#    plt.plot(loc_data[:,1])
+#    plt.legend(amplitude)
+#    
 
 #%% Get a diode's IV curve
 
