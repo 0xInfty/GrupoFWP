@@ -41,10 +41,9 @@ AfterRecording :
 """
 
 import fwp_save as sav
-import pyaudio
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os, time, pyaudio
 
 #%%
 
@@ -384,7 +383,7 @@ def play_rec(signal_setup, #1st column left
 
 #%%
 
-def just_play(signal_setup, exceptions = True):
+def just_play(signal_setup, exceptions = True, blocking=True):
     
     """Plays a signal.
     
@@ -400,22 +399,56 @@ def just_play(signal_setup, exceptions = True):
         Decides if exceptions should be raised or not when duration is not
         given, to avoid playing forever.
     """
-        
-    streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
+    
+    if blocking:
+        streamplay = play(nchannelsplay=signal_setup.parent.nchannels,
                       formatplay=pyaudio.paFloat32,
                       samplerate=signal_setup.parent.sampling_rate)
+    else:
+        streamplay = play_callback(signal_setup.generator,
+                          nchannelsplay=signal_setup.parent.nchannels, 
+                          formatplay=pyaudio.paFloat32,
+                          samplerate=signal_setup.parent.sampling_rate)
     
     if exceptions:
         if signal_setup.duration is None:
             raise ValueError('Duration not given. Would play forever (not good).')
     
     print("* Playing")
-    for data in signal_setup.generator:
-        streamplay.write(data)
+    if blocking:
+        for data in signal_setup.generator:
+            streamplay.write(data)
+    else:
+        streamplay.start_stream()
     
     streamplay.stop_stream()
     print("* Done playing")
     streamplay.close()
+
+#%%
+    
+def just_play_NB(signal_setup, do_while_playing, wait_time=0 , exceptions = True):
+    
+    
+    streamplay = play_callback(signal_setup.generator,
+                          nchannelsplay=signal_setup.parent.nchannels, 
+                          formatplay=pyaudio.paFloat32,
+                          samplerate=signal_setup.parent.sampling_rate)
+    
+    print("* Playing")
+    streamplay.start_stream()
+    
+    time.sleep(wait_time)
+    
+    result = do_while_playing()
+    
+    time.sleep(signal_setup.duration)
+    
+    streamplay.stop_stream()
+    print("* Done playing")
+    streamplay.close()
+    
+    return result
 
 #%%
 

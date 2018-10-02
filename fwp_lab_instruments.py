@@ -67,7 +67,7 @@ def find_1st_number(string):
 
     """
     
-    number = re.findall(r"[-+]?\d*\.\d+|\[-+]?d+", string)[0]
+    number = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+", string)[0]
     if '.' in number:
         return float(number)
     elif not number:
@@ -156,12 +156,12 @@ class Osci:
         osci.write('DAT:WID 1') # Binary transmission mode
         
         # Trigger configuration
-        osci.write('TRIG:MAI:MOD AUTO') # Option: NORM (waits for trig)
-        osci.write('TRIG:MAI:TYP EDGE')
-        osci.write('TRIG:MAI:LEV 5')
-        osci.write('TRIG:MAI:EDGE:SLO RIS')
-        osci.write('TRIG:MAI:EDGE:SOU CH1') # Option: EXT
-        osci.write('HOR:MAI:POS 0') # Makes the complete measure at once
+#        osci.write('TRIG:MAI:MOD AUTO') # Option: NORM (waits for trig)
+#        osci.write('TRIG:MAI:TYP EDGE')
+#        osci.write('TRIG:MAI:LEV 5')
+#        osci.write('TRIG:MAI:EDGE:SLO RIS')
+#        osci.write('TRIG:MAI:EDGE:SOU CH1') # Option: EXT
+#        osci.write('HOR:MAI:POS 0') # Makes the complete measure at once
         
         self.port = port
         self.osci = osci
@@ -286,11 +286,11 @@ class Osci:
                 print("Unrecognized measure type ('FREQ' as default).")
         
         # Now, reconfigure if needed
-        if self.config_measure('Source') != channel:
+        if self.config_measure['Source'] != channel:
             self.osci.write('MEASU:IMM:SOU CH{:.0f}'.format(channel))
             print("Measure source changed to 'CH{:.0f}'".format(
                     channel))
-        if self.config_measure('Type') != aux:
+        if self.config_measure['Type'] != aux:
             self.osci.write('MEASU:IMM:TYP {}'.format(aux))
             print("Measure type changed to '{}'".format(aux))
         
@@ -353,7 +353,7 @@ class Gen:
 
     """
     
-    def __init__(self, port):
+    def __init__(self, port, nchannels):
 
         """Defines oscilloscope object and opens it as Visa resource.
         
@@ -384,8 +384,9 @@ class Gen:
         print(gen.query('*IDN?'))
         
         self.port = port
+        self.nchannels = nchannels
         self.gen = gen
-        self.config_output = self.get_config_output
+        self.config_output = self.get_config_output()
     
     def output(self, status, channel=1, 
                print_changes=False, **output_config):
@@ -463,7 +464,7 @@ class Gen:
                               phase=output_config['phase'],
                               print_changes=print_changes)
         
-        self.gen.write('OUTP{}:STAT {}'.format(channel, status))
+        self.gen.write('OUTP{}:STAT {}'.format(channel, int(status)))
         # If output=True, turns on. Otherwise, turns off.
         
         if status:
@@ -497,9 +498,9 @@ class Gen:
 
         """
         
-        configuration = {1: dict(), 2: dict()}
+        configuration = {i: dict() for i in range(1, self.nchannels+1)}
         
-        for channel in [1,2]:
+        for channel in range(1, self.nchannels+1):
             
             # On or off?
             configuration[channel].update({'Status': bool(int(
@@ -515,7 +516,7 @@ class Gen:
                         channel)) # NOT SURE I SHOULD USE IF
                 configuration['RAMP Symmetry'] = find_1st_number(aux)
             else:
-                configuration[channel]['RAMP Symmetry': 50.0]
+                configuration[channel]['RAMP Symmetry'] =  50.0
             
             # Special configuration for SQU
             if configuration[channel]['Waveform'] == 'PULS':
@@ -524,7 +525,7 @@ class Gen:
                 configuration.update({'PULS Duty Cycle':
                              find_1st_number(aux)})
             else:
-                configuration[channel]['PULS Duty Cycle': 50.0]
+                configuration[channel]['PULS Duty Cycle'] = 50.0
             
             # Frequency configuration
             aux = self.gen.query('SOUR{}:FREQ?'.format(channel))
@@ -591,31 +592,35 @@ class Gen:
                'sinc': 'SINC', # sinx/x
                'gau': 'GAUS'} # gaussian
         
-        if channel not in [1,2]:
+        if channel not in range(1, self.nchannels+1):
             print("Unrecognized output channel ('CH1' as default).")
             channel = 1
 
         # This is the algorithm to recognize the waveform
-        aux = 0
-        waveform = waveform.lower()
-        if 'sq' in waveform:
-            try:
-                aux = find_1st_number(waveform)
-                if aux != 50:
-                    aux = 'PULS'
-                else:
+        if waveform is not None:
+            aux = 0
+            waveform = waveform.lower()
+            if 'sq' in waveform:
+                try:
+                    aux = find_1st_number(waveform)
+                    if aux != 50:
+                        aux = 'PULS'
+                    else:
+                        aux = 'SQU'
+                except TypeError:
                     aux = 'SQU'
-            except TypeError:
-                aux = 'SQU'
-        elif 'c' in waveform:
-            aux = 'SINC'
+            elif 'c' in waveform:
+                aux = 'SINC'
+            else:
+                for key, value in dic.items():
+                    if key in waveform:
+                        aux = value
+                if aux not in dic.values():
+                    aux = 'SIN'
+                    print("Unrecognized Waveform ('SIN' as default).")    
         else:
-            for key, value in dic.items():
-                if key in waveform:
-                    aux = value
-            if aux not in dic.values():
-                aux = 'SIN'
-                print("Unrecognized Waveform ('SIN' as default).")
+            waveform = self.config_output[channel]['Waveform']
+            aux = waveform
         
         if self.config_output[channel]['Waveform'] != aux:
             self.gen.write('SOUR{}:FUNC:SHAP {}'.format(channel, aux))
@@ -652,31 +657,44 @@ class Gen:
                     print("CH{}'s RAMP Symmetry changed to \
                           {}%".format(channel, aux))
         
-        if self.config_output[channel]['Frequency'] != frequency:
-            self.gen.write('SOUR{}:FREQ {}'.format(channel, frequency))
-            if print_changes:
-                print("CH{}'s Frequency changed to {} Hz".format(
-                        channel,
-                        frequency))
+        if frequency is not None:
+            if self.config_output[channel]['Frequency'] != frequency:
+                self.gen.write('SOUR{}:FREQ {}'.format(channel, frequency))
+                if print_changes:
+                    print("CH{}'s Frequency changed to {} Hz".format(
+                            channel,
+                            frequency))
         
-        if self.config_output[channel]['Amplitude'] != amplitude:
-            self.gen.write('SOUR{}:VOLT:LEV:IMM:AMPL {}'.format(
-                channel,
-                amplitude))
-            if print_changes:
-                print("CH{}'s Amplitude changed to {} V".format(
-                        channel,
-                        amplitude))
+        if amplitude is not None:
+            if self.config_output[channel]['Amplitude'] != amplitude:
+                self.gen.write('SOUR{}:VOLT:LEV:IMM:AMPL {}'.format(
+                    channel,
+                    amplitude))
+                if print_changes:
+                    print("CH{}'s Amplitude changed to {} V".format(
+                            channel,
+                            amplitude))
         
-        if self.config_output[channel]['Offset'] != offset:
-            self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
-                channel,
-                amplitude))
-            if print_changes:
-                print("CH{}'s Offset changed to {} V".format(
-                        channel,
-                        offset))
-        
+        if offset is not None:
+            if self.config_output[channel]['Offset'] != offset:
+                self.gen.write('SOUR{}:VOLT:LEV:IMM:OFFS {}'.format(
+                    channel,
+                    offset))
+                if print_changes:
+                    print("CH{}'s Offset changed to {} V".format(
+                            channel,
+                            offset))
+                    
+        if phase is not None:
+            if self.config_output[channel]['Phase'] != phase:
+                self.gen.write('SOUR{}:PHAS {}'.format(
+                    channel,
+                    phase))
+                if print_changes:
+                    print("CH{}'s Phase changed to {} PI".format(
+                            channel,
+                            phase))
+    
         self.config_output = self.get_config_output()
         
         return
