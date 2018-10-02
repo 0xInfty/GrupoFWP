@@ -440,6 +440,7 @@ def just_play_NB(signal_setup, do_while_playing, wait_time=0, *args, **kwargs):
     wait_time : float (Optional)
         Time to wait before calling do_while_playing in seconds. Default: 0.
     """
+    
     streamplay = play_callback(signal_setup.generator,
                           nchannelsplay=signal_setup.parent.nchannels, 
                           formatplay=pyaudio.paFloat32,
