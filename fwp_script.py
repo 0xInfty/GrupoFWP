@@ -162,6 +162,7 @@ for amp in amplitude:
     amp_osci.append(list(result))
 
 amp_osci = np.array(amp_osci)
+osci.osci.close()
 
 plt.figure()
 plt.plot(amplitude, amp_osci, 'o')
@@ -170,8 +171,6 @@ plt.ylabel("Amplitud real (Vpp)")
 plt.legend(["Izquierda","Derecha"])
 plt.grid()
 plt.show()
-
-[]
 
 data = np.array([amplitude, amp_osci[:,0], amp_osci[:,1]]).T
 sav.saveplot('{}_Plot.pdf'.format(filename))
@@ -222,7 +221,9 @@ for amp in amplitude:
     amp_rec.append([max(signal_rec[:,0])-min(signal_rec[:,0]), # Left
                     max(signal_rec[:,1])-min(signal_rec[:,1])]) # Right
 
-gen.output(0)    
+gen.output(0)
+gen.gen.close()
+
 amp_rec = np.array(amp_rec)
 
 plt.figure()
