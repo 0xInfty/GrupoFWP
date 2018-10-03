@@ -454,7 +454,7 @@ def just_play_NB(signal_setup, do_while_playing, wait_time=0, *args, **kwargs):
     
     time.sleep(wait_time)
     
-    result = do_while_playing(*args, *kwargs)
+    result = do_while_playing(*args, **kwargs)
     
     time.sleep(signal_setup.duration - wait_time)
     
