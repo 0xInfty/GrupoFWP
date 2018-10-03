@@ -512,7 +512,7 @@ def just_rec(recording_duration, #1st column left
     
     after_recording.act(signalrec, nchannelsrec, samplerate)
     
-    return signalrec
+    return decode(signalrec, nchannelsrec)
 
 #%%
 

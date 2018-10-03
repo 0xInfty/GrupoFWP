@@ -15,14 +15,14 @@ import os, rms
 import pyaudiowave as paw
 import wavemaker as wmaker
 
-#%% Read an write in two channels using generators to avoid signal cutoff
+#%% Read and write in two channels using generators to avoid signal cutoff
 
 #Some configurations
 after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
                                      saveplot = False, savetext = False)                                     
 duration = .5
 nchannelsrec = 2
-nchannelsplay = 2
+nchannelsplay = 1
 signal_freq = 400
 
 #A square and a sine wave
@@ -62,6 +62,16 @@ signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
 signal_generator = signalmaker.generator_setup((seno1, seno3), duration=duration)
 
 fwp.just_play(signal_generator)
+
+#%% Just rec example
+
+duration = 1
+nchannelsrec = 2
+
+after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
+                                     saveplot = False, savetext = False) 
+
+fwp.just_rec(duration, nchannelsrec=2, after_recording=after_record_do)
 
 #%% Frequency sweep using generators
 
@@ -216,8 +226,6 @@ for amp in amplitude:
                               nchannelsrec=nchannelsrec,
                               after_recording=after_record_do)
     
-    signal_rec = fwp.decode(signal_rec, nchannelsrec)
-    
     amp_rec.append([max(signal_rec[:,0])-min(signal_rec[:,0]), # Left
                     max(signal_rec[:,1])-min(signal_rec[:,1])]) # Right
 
@@ -312,3 +320,97 @@ if after_record_do.showplot:
 #    sav.saveplot('{}_Plot.pdf'.format(filename))
 #    sav.savetext(np.transpose(np.array([V, I])),
 #                 '{}_Data.txt'.format(filename))
+
+#%% One measure inverting amplifier (A=-1)
+
+#Some configurations                                     
+duration = .5
+nchannelsrec = 2
+nchannelsplay = 1
+signal_freq = 400
+name = 'Inv_Amp_x1'
+
+after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
+                                     saveplot = False, savetext = True)
+
+savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
+filename = os.path.join(savedir, name)
+after_record_do.filename = filename
+
+#A square and a sine wave
+seno = wmaker.Wave('sine', frequency=signal_freq)
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
+signal_generator = signalmaker.generator_setup(seno1)
+
+thesignal = fwp.play_rec(signal_generator, 
+                          recording_duration=duration,
+                          nchannelsrec=nchannelsrec,
+                          after_recording=after_record_do)
+
+#%% Frequency Sweep Inverting Amplifier
+
+ri = 1e3
+rIN = 3.768e3
+rOUT = 1e6
+
+freq_start = 100
+freq_end = 20e3
+freq_step = 100
+
+#Some configurations                                     
+duration = 50/freq_start #play 50 periods of slowest wave
+nchannelsrec = 2
+nchannelsplay = 1
+signal_freq = 400
+print("Amplificación x{}".format((rIN+4.7e3)/39))
+print("Necesito x{}".format((39/(rIN+4.7e3))))
+key = [1,10,100,1e3,10e3,100e3,1e6]
+print(["Clave: {} Ohms ==> x{}".format(ky,10/ky) for ky in key])
+
+frequencies = np.arange(freq_start, freq_end, freq_step)
+
+print("It will take {} sec ({:.2f} hs and {} values)".format(
+        duration*len(frequencies),
+        duration*len(frequencies)/3600,
+        len(frequencies)))
+
+rOUT = float(input("¿R?"))
+name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rOUT)
+if rOUT is 0:
+    raise ValueError
+
+#A square and a sine wave
+seno = wmaker.Wave('sine', frequency=freq_start)
+signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
+signal_generator = signalmaker.generator_setup(seno1)
+
+thesignal = fwp.play_rec(signal_generator, 
+                          recording_duration=duration,
+                          nchannelsrec=nchannelsrec)
+plt.show(0)
+
+if True:#bool(int(input('¿OK?'))):
+    
+    after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
+                                         saveplot = False, savetext = True)
+    
+    savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
+    filename = os.path.join(savedir, name)
+    makefile = lambda amp: '{}_{:.2f}_Hz'.format(filename, freq)
+    
+    thesignal = fwp.play_rec(signal_generator, 
+                              recording_duration=duration,
+                              nchannelsrec=nchannelsrec,
+                              after_recording=after_record_do)
+    
+    for freq in frequencies:
+        
+        seno.frequency = freq
+        signal_to_play = signalmaker.generator_setup(seno)
+        after_record_do.filename = makefile(freq)
+        
+        signal_rec = fwp.play_rec(signal_generator, 
+                                  recording_duration=duration,
+                                  nchannelsrec=nchannelsrec,
+                                  after_recording=after_record_do)
+        
