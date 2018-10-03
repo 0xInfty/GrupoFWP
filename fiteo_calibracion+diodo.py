@@ -14,6 +14,90 @@ import os
 
 
 
+#%% Calibration play
+
+
+direc = os.path.join(os.getcwd(),'Measurements')
+archivo = os.path.join(direc, 'Cal_Play_2000_Hz_Data.txt')
+datos = np.loadtxt(archivo)
+amplitude_factor = datos[:,0]
+vpp_osc_left = datos[:,1]
+vpp__osc_right = datos[:,2]
+
+cut=64
+
+amplitude_factor_lineal = amplitude_factor[cut:len(amplitude_factor)]
+vpp_osc_left_lineal = vpp_osc_left[cut:len(vpp_osc_left)]
+vpp__osc_right_lineal = vpp__osc_right[cut:len(vpp__osc_right )]
+
+amplitude_factor_constant = amplitude_factor[0:cut]
+vpp_osc_left_constant = vpp_osc_left[0:cut]
+vpp_osc_right_constant = vpp__osc_right[0:cut]
+
+plt.figure()
+plt.plot(amplitude_factor_lineal, vpp_osc_left_lineal,'r.')
+plt.plot(amplitude_factor_lineal, vpp__osc_right_lineal,'b.')
+
+
+def playing_calibration(amp, m, b):
+    vreal = amp * m + b
+    return vreal
+
+p0=[0,4]
+poptplayleftlineal, pcovplayleftlineal = curve_fit(playing_calibration, amplitude_factor_lineal, vpp_osc_left_lineal,p0=p0)
+poptplayrightlineal, pcovplayrightlineal = curve_fit(playing_calibration, amplitude_factor_lineal, vpp__osc_right_lineal,p0=p0)
+
+p1=[0,2]
+p2=[0,1.5]
+poptplayleftconstant, pcovplayleftconstant = curve_fit(playing_calibration, amplitude_factor_constant, vpp_osc_left_constant,p0=p1, sigma=vpp_osc_left_constant)
+poptplayrightconstant, pcovplayrightconstant = curve_fit(playing_calibration, amplitude_factor_constant, vpp_osc_right_constant,p0=p2,  sigma=vpp_osc_right_constant)
+
+
+
+plt.figure()
+plt.plot(amplitude_factor,vpp_osc_left,'r.')
+plt.plot(amplitude_factor, vpp__osc_right,'b.')
+plt.plot(amplitude_factor_lineal, playing_calibration(amplitude_factor_lineal, poptplayleftlineal[0], poptplayleftlineal[1]),'r-')
+plt.plot(amplitude_factor_lineal, playing_calibration(amplitude_factor_lineal, poptplayrightlineal[0], poptplayrightlineal[1]),'b-')
+plt.plot(amplitude_factor_constant, playing_calibration(amplitude_factor_constant, poptplayleftconstant[0], poptplayleftconstant[1]),'r-')
+plt.plot(amplitude_factor_constant, playing_calibration(amplitude_factor_constant, poptplayrightconstant[0], poptplayrightconstant[1]),'b-')
+
+
+
+slope_play_left_lineal=poptplayleftlineal[0]
+origin_play_left_lineal=poptplayleftlineal[1]
+slope_play_right_lineal=poptplayrightlineal[0]
+origin_play_right_lineal=poptplayrightlineal[1]
+
+
+slope_play_left_constant=poptplayleftconstant[0]
+origin_play_left_constant=poptplayleftconstant[1]
+slope_play_right_constant=poptplayrightconstant[0]
+origin_play_right_constant=poptplayrightconstant[1]
+
+
+#%% Calibration play curves
+
+
+def left_calibration(amplitudefactor):
+    if amplitudefactor<0.4:
+        vreal = amplitudefactor * slope_play_left_lineal + origin_play_left_lineal
+        return vreal
+    else:
+        vreal = amplitudefactor * slope_play_left_constant + origin_play_left_constant
+        return vreal
+
+def right_calibration(amplitudefactor):
+    if amplitudefactor<0.4:
+        vreal = amplitudefactor * slope_play_right_lineal + origin_play_right_lineal
+        return vreal
+    else:
+        vreal = amplitudefactor * slope_play_right_constant + origin_play_right_constant
+        return vreal
+    
+
+
+
 #%% Calibration record
 
 
@@ -59,7 +143,7 @@ slope_right=poptright[0]
 origin_right=poptright[1]
 
 
-#%% Calibration curves
+#%% Calibration record curves
 
 
 def left_calibration(vleft):
