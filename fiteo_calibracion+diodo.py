@@ -17,7 +17,7 @@ import os
 #%% Calibration play
 
 
-direc = os.path.join(os.getcwd(),'Measurements')
+direc = os.path.join(os.getcwd(),'..','Measurements')
 archivo = os.path.join(direc, 'Cal_Play_2000_Hz_Data.txt')
 datos = np.loadtxt(archivo)
 amplitude_factor = datos[:,0]
@@ -187,15 +187,22 @@ np.savetxt('datos.txt',datossss)
 
 
 direc = os.getcwd()
-archivo = os.path.join(direc, 'datos.txt')
+archivo = os.path.join(direc,'..', 'datos.txt')
 datos= np.loadtxt(archivo)
-V=datos[20:100,0]
-I=datos[20:100,1]
+Vcompleto=datos[:,0]
+Icompleto=datos[:,1]
+V=datos[10:80,0]
+I=datos[10:80,1]
 #plt.plot(V, I,'r.')
-
+IV0=[]
+for i in range(len(I)-1):
+    if V[i]<0 and V[i+1]>0 or V[i]>0 and V[i+1]<0:
+        IV0.append(I[i])
+        
+c=abs(np.mean(IV0))
 b=np.zeros(len(I))
 for i in range(len(I)):
-    b[i]=I[i]*1000000
+    b[i]=(I[i]+c)
 
 
 def diode_function(V, n, Io):
@@ -204,8 +211,9 @@ def diode_function(V, n, Io):
     I_final = Io * (np.exp( (q * V) / (n * kt) ) - 1)
     return np.abs(I_final)
 
-p0 = [20, -3.80741e-05]
-popt, pcov = curve_fit(diode_function, V, I,p0=p0)
+p0 = [2, 0]
+popt, pcov = curve_fit(diode_function, V, b ,p0=p0)
 plt.plot(V, diode_function(V, popt[0],popt[1]),'b-')
-plt.plot(V,I,'r.')
+plt.plot(V,b,'r.')
 #plt.plot(I)
+#plt.plot(V)
