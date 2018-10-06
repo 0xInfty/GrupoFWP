@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os, rms
 import pyaudiowave as paw
+import time
 import wavemaker as wmaker
 
 #%% Read and write in two channels using generators to avoid signal cutoff
@@ -323,7 +324,7 @@ if after_record_do.showplot:
 
 #%% One measure inverting amplifier (A=-1)
 
-#Some configurations                                     
+# Some configurations
 duration = .5
 nchannelsrec = 2
 nchannelsplay = 1
@@ -337,11 +338,12 @@ savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
 filename = os.path.join(savedir, name)
 after_record_do.filename = filename
 
-#A square and a sine wave
+# Generate a sine
 seno = wmaker.Wave('sine', frequency=signal_freq)
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
 signal_generator = signalmaker.generator_setup(seno1)
 
+# Play and record
 thesignal = fwp.play_rec(signal_generator, 
                           recording_duration=duration,
                           nchannelsrec=nchannelsrec,
@@ -349,6 +351,7 @@ thesignal = fwp.play_rec(signal_generator,
 
 #%% Frequency Sweep Inverting Amplifier
 
+# Some configuration
 ri = 1e3
 rIN = 3.768e3
 rOUT = 1e6
@@ -356,52 +359,56 @@ rOUT = 1e6
 freq_start = 100
 freq_end = 20e3
 freq_step = 100
+frequencies = np.arange(freq_start, freq_end, freq_step)
 
-#Some configurations                                     
 duration = 50/freq_start #play 50 periods of slowest wave
 nchannelsrec = 2
 nchannelsplay = 1
 signal_freq = 400
-print("Amplificación x{}".format((rIN+4.7e3)/39))
-print("Necesito x{}".format((39/(rIN+4.7e3))))
-key = [1,10,100,1e3,10e3,100e3,1e6]
-print(["Clave: {} Ohms ==> x{}".format(ky,10/ky) for ky in key])
 
-frequencies = np.arange(freq_start, freq_end, freq_step)
-
-print("It will take {} sec ({:.2f} hs and {} values)".format(
+# First I print how much time it will take
+print("It will take at least {} sec ({:.2f} hs and {} values)".format(
         duration*len(frequencies),
         duration*len(frequencies)/3600,
         len(frequencies)))
 
-rOUT = float(input("¿R?"))
-name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rOUT)
+# Now I check whether I need to change rMIC
+print("Amplificación x{}".format((rIN+4.7e3)/39))
+print("Necesito x{}".format((39/(rIN+4.7e3))))
+rMICkey = [1,10,100,1e3,10e3,100e3,1e6]
+print("Clave:", ["{} Ohms ==> x{}".format(ky,10/ky) for ky in rMICkey])
+
+# I ask for the value of rMIC 
+# This is also a way to stop if I don't like the amplification or time
+rOUT = float(input("rMIC? Write a number if you wish to continue \
+                   or '0' if you wish to stop"))
 if rOUT is 0:
     raise ValueError
+name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rOUT)
 
-#A square and a sine wave
+# Next I make a sine of minimum frequency
 seno = wmaker.Wave('sine', frequency=freq_start)
 signalmaker = paw.PyAudioWave(nchannels=nchannelsplay)
 signal_generator = signalmaker.generator_setup(seno1)
 
+# Now I plot it and wait, to check whether it is OK or not
 thesignal = fwp.play_rec(signal_generator, 
                           recording_duration=duration,
                           nchannelsrec=nchannelsrec)
 plt.show(0)
+time.sleep(duration+3)
 
-if True:#bool(int(input('¿OK?'))):
+# If the graph is a nice one, I start the frequency sweep
+if bool(int(input("OK? Write '1' if 'YES' or '0' if 'NO'"))):
     
-    after_record_do = fwp.AfterRecording(savewav = False, showplot = False,
-                                         saveplot = False, savetext = True)
+    after_record_do = fwp.AfterRecording(showplot = False, 
+                                         savetext = True)
     
-    savedir = sav.new_dir(os.path.join(os.getcwd(), 'Measurements', name))
+    savedir = sav.new_dir(os.path.join(os.getcwd(),
+                                       'Measurements',
+                                       name))
     filename = os.path.join(savedir, name)
     makefile = lambda amp: '{}_{:.2f}_Hz'.format(filename, freq)
-    
-    thesignal = fwp.play_rec(signal_generator, 
-                              recording_duration=duration,
-                              nchannelsrec=nchannelsrec,
-                              after_recording=after_record_do)
     
     for freq in frequencies:
         
