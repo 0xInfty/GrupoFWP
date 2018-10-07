@@ -252,7 +252,7 @@ datos = datos[20000:25000, :]
 
 chR, chL = np.split(datos, 2, axis=1)
 R = 1e3
-r2 = 206e3
+r2 = 5.75e3 #206e3
 r1 = 1e6
 
 # DATA CALIBRATION
@@ -335,7 +335,12 @@ popt, pcov = curve_fit(diode_function, V, b, p0=p0)
 plt.figure()
 plt.plot(V, diode_function(V, popt[0], popt[1]),'b-')
 plt.plot(V, b, 'r.')
-
+plt.xlabel("Voltaje [V]")
+plt.ylabel("Corriente[A]")
+plt.legend(["Ajuste","Datos"])
+plt.grid()
+plt.savefig('diodofeo.pdf')
+plt.show()
 print(r"n = {} y I0 = {}".format(popt[0],popt[1]))
 
 #%% Inverting amplifier
