@@ -37,7 +37,7 @@ def copy(string):
 #%%
 
 def error_value(X, dX, error_digits=2, units='',
-                string_scale=True, one_point_scale=False):
+                string_scale=True, one_point_scale=False, legend=False):
     """Rounds up value and error of a measure. Also makes a latex string.
     
     This function takes a measure and its error as input. Then, it 
@@ -62,6 +62,8 @@ def error_value(X, dX, error_digits=2, units='',
         Whether to apply the classical prefix scale or not.        
     one_point_scale=False : bool, optional.
         Applies prefix with one order less.
+    legend=False : bool, optional.
+        Says whether it is for the legend of a plot or not.
     
     Returns
     -------
@@ -156,14 +158,15 @@ def error_value(X, dX, error_digits=2, units='',
     if not used_string_scale and measure_order != 0:
         latex_str = latex_str + r'$10^{:.0f}$'.format(scale)      
     elif used_string_scale:
-        latex_str = latex_str +' ' + prefix
+        latex_str = latex_str + ' ' + prefix
     if units != '':
         if latex_str[-1] == ' ':
             latex_str = latex_str + units
         else:
             latex_str = latex_str + ' ' + units
     if units != '' or prefix:
-        latex_str = r'\mbox{' + latex_str + '}'
+        if not legend:
+            latex_str = r'\mbox{' + latex_str + '}'
                        
     return latex_str
 
@@ -233,7 +236,9 @@ def plot_style(figure_id=None, **kwargs):
     yaxisformat : format-like str, optional.
         Used to update y axis ticks format; i.e.: '%.2e'
     dimensions: list with length 4, optional.
-        Used to update plot dimensions: [xmin, xmax, ymin, ymax].
+        Used to update plot dimensions: [xmin, xmax, ymin, ymax]. Each 
+        one should be a number expressed as a fraction of current 
+        dimensions.
     
     See Also
     --------
@@ -249,7 +254,7 @@ def plot_style(figure_id=None, **kwargs):
     ax = fig.axes
     
     rcParams.update({'font.size': 14})
-    rcParams.update({'lines.linewidth': 6})
+    rcParams.update({'lines.linewidth': 3})
     rcParams.update({'lines.markersize': 6})
     
     kwargs_list = ['xaxisformat', 'yaxisformat', 'dimensions']
@@ -260,19 +265,24 @@ def plot_style(figure_id=None, **kwargs):
             kwargs[key] = None
     
     if kwargs['xaxisformat'] is not None:
-        ax.xaxis.set_major_formatter(ticker.FormatStrFormatter(
+        for a in ax:
+            a.xaxis.set_major_formatter(ticker.FormatStrFormatter(
                 kwargs['xaxisformat']))
         
     if kwargs['yaxisformat'] is not None:
-        ax.yaxis.set_major_formatter(ticker.FormatStrFormatter(
+        for a in ax:
+            a.yaxis.set_major_formatter(ticker.FormatStrFormatter(
                 kwargs['yaxisformat']))
     
     if kwargs['dimensions'] is not None:
-        box = ax.get_position()
-        ax.set_position([kwargs['dimensions'][0]*box.x0,
-                         kwargs['dimensions'][1]*box.y0,
-                         kwargs['dimensions'][2]*box.width,
-                         kwargs['dimensions'][3]*box.height])
+        for a in ax:
+            box = a.get_position()
+            a.set_position([kwargs['dimensions'][0]*box.x0,
+                            kwargs['dimensions'][1]*box.y0,
+                            kwargs['dimensions'][2]*box.width,
+                            kwargs['dimensions'][3]*box.height])
     
-    plt.grid()
+    for a in ax:
+        a.grid()
+    
     plt.show()
