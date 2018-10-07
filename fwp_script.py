@@ -7,6 +7,7 @@ Created on Wed Sep 12 12:48:15 2018
 """
 
 from fwp_analysis import rms
+import fwp_pyaudio_cal as cal
 import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
@@ -75,7 +76,7 @@ after_record_do = fwp.AfterRecording(savewav = False, showplot = True,
 
 fwp.just_rec(duration, nchannelsrec=2, after_recording=after_record_do)
 
-#%% Frequency sweep using generators
+#%% Frequency sweep to measure transference function
 
 freq_start = 50
 freq_stop = 22000
@@ -93,7 +94,6 @@ signalmaker = paw.PyAudioWave(nchannels=nchannelsplay) # Default srate
 
 # Frequencies and durations
 frequencies = np.arange(freq_start, freq_stop, freq_step)
-#durations = np.array([100/freq for freq in frequencies]) # 100 periods
 duration = 50/frequencies[0] #play 50 periods of slowest wave
 durations = [duration] * len(frequencies)
 
@@ -118,10 +118,13 @@ for freq, dur in zip(frequencies, durations):
                         nchannelsrec=nchannelsrec,
                         after_recording=after_record_do)
     
-    signalrms.append(rms.rms(thesignal))
+    thesignal = thesignal[int(.2*len(thesignal[:,0])):,:]
+    thesignal[:,0] = cal.signal_rec_cal_left(thesignal[:,0])
+    thesignal[:,1] = cal.signal_rec_cal_right(thesignal[:,1])
+    signalrms.append([rms(thesignal[:,0]), rms(thesignal[:,1])])
 
 signalrms = np.array(signalrms)
-signaldec = 10*np.log10(signalrms/max(signalrms))
+signaldec = 10*np.log10(signalrms[:,1]/signalrms[:,0])
 
 plt.figure()
 plt.plot(frequencies, signaldec, 'b-')
@@ -353,9 +356,11 @@ thesignal = fwp.play_rec(signal_generator,
 #%% Frequency Sweep Inverting Amplifier
 
 # Some configuration
-ri = 1e3
+rIN0 = 39
 rIN = 3.768e3
-rOUT = 1e6
+rIN2 = 4.7e3
+rOUT = 10
+rMIC = 10e3
 
 freq_start = 100
 freq_end = 20e3
@@ -377,15 +382,16 @@ print("It will take at least {} sec ({:.2f} hs and {} values)".format(
 print("Amplificación x{}".format((rIN+4.7e3)/39))
 print("Necesito x{}".format((39/(rIN+4.7e3))))
 rMICkey = [1,10,100,1e3,10e3,100e3,1e6]
-print("Clave:", ["{} Ohms ==> x{}".format(ky,10/ky) for ky in rMICkey])
+print("Clave:",
+      ["{} Ohms ==> x{}".format(ky,rOUT/(ky+rOUT)) for ky in rMICkey])
 
 # I ask for the value of rMIC 
 # This is also a way to stop if I don't like the amplification or time
-rOUT = float(input("rMIC? Write a number if you wish to continue \
+rMIC = float(input("rMIC? Write a number if you wish to continue \
                    or '0' if you wish to stop"))
-if rOUT is 0:
+if rMIC is 0:
     raise ValueError
-name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rOUT)
+name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rMIC)
 
 # Next I make a sine of minimum frequency
 seno = wmaker.Wave('sine', frequency=freq_start)
@@ -409,7 +415,7 @@ if bool(int(input("OK? Write '1' if 'YES' or '0' if 'NO'"))):
                                        'Measurements',
                                        name))
     filename = os.path.join(savedir, name)
-    makefile = lambda amp: '{}_{:.2f}_Hz'.format(filename, freq)
+    makefile = lambda freq: '{}_{:.2f}_Hz.txt'.format(filename, freq)
     
     for freq in frequencies:
         
