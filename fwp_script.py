@@ -6,12 +6,13 @@ Created on Wed Sep 12 12:48:15 2018
 @coauthor: Vall
 """
 
+from fwp_analysis import rms
 import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
 import matplotlib.pyplot as plt
 import numpy as np
-import os, rms
+import os
 import pyaudiowave as paw
 import time
 import wavemaker as wmaker

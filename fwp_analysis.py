@@ -9,7 +9,28 @@ import fwp_format as fmt
 import matplotlib.pyplot as plt
 from math import sqrt
 import numpy as np
-       
+
+#%%
+
+def rms(data):
+    """Takes a list or array and returns RMS value.
+    
+    Parameters
+    ---------
+    data : array or list
+        Data to be analized.
+    
+    Returns
+    -------
+    float
+        RMS value of analized data.
+    
+    """
+    
+    import numpy as np
+    
+    return np.sqrt(np.mean((np.array(data))**2))
+
 #%%
 
 def mean(X, dX=None):
