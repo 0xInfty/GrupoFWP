@@ -7,10 +7,13 @@ Created on Sun Sep 30 19:23:44 2018
 @coauthor: Vall
 """
 
-from scipy.optimize import curve_fit
+import fwp_analysis as anly
+import fwp_format as fmt
+import fwp_save as sav
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from scipy.optimize import curve_fit
 
 #%% Playing calibration
 
@@ -40,11 +43,6 @@ vpp__osc_right_lineal = vpp__osc_right[cut:]
 amplitude_factor_constant = amplitude_factor[:cut]
 vpp_osc_left_constant = vpp_osc_left[:cut]
 vpp_osc_right_constant = vpp__osc_right[:cut]
-
-# Now I plot the data to fit
-plt.figure()
-plt.plot(amplitude_factor_lineal, vpp_osc_left_lineal, 'r.')
-plt.plot(amplitude_factor_lineal, vpp__osc_right_lineal, 'b.')
 
 # Next I define the model's function I will use (a linear fit)
 def playing_calibration(amp, m, b):
@@ -102,153 +100,55 @@ poptplayrightconstant, pcovplayrightconstant = curve_fit(
 
 # Now I plot it all at once (data and calibration)
 plt.figure()
-plt.plot(amplitude_factor, vpp_osc_left, 'r.')
-plt.plot(amplitude_factor, vpp__osc_right, 'b.')
+plt.plot(amplitude_factor, vpp_osc_left, 'ro')
+plt.plot(amplitude_factor, vpp__osc_right, 'bo')
 plt.plot(amplitude_factor_lineal,
          playing_calibration(amplitude_factor_lineal,
                              poptplayleftlineal[0],
                              poptplayleftlineal[1]),
-         'r-')
+         'k-')
 plt.plot(amplitude_factor_lineal,
          playing_calibration(amplitude_factor_lineal,
                              poptplayrightlineal[0],
                              poptplayrightlineal[1]),
-         'b-')
+         'k-')
 plt.plot(amplitude_factor_constant,
          playing_calibration(amplitude_factor_constant,
                              poptplayleftconstant[0],
                              poptplayleftconstant[1]),
-         'r-')
+         'k-')
 plt.plot(amplitude_factor_constant,
          playing_calibration(amplitude_factor_constant,
                              poptplayrightconstant[0],
                              poptplayrightconstant[1]),
-         'b-')
+         'k-')
+plt.title("Calibración de reproducción")
+plt.xlabel("Factor de amplitud")
+plt.ylabel("Amplitud real (Vpp)")
+fmt.plot_style(plt.gcf().number, dimensions=[1.15,1.05,1,1])
+sav.saveplot(os.path.join(direc, 'Cal_Play_Plot.pdf'))
 
-# These are the final parameters for the increasing data
-slope_play_left_lineal=poptplayleftlineal[0]
-origin_play_left_lineal=poptplayleftlineal[1]
-slope_play_right_lineal=poptplayrightlineal[0]
-origin_play_right_lineal=poptplayrightlineal[1]
-
-# These are the final parameters for the constant data
-slope_play_left_constant=poptplayleftconstant[0]
-origin_play_left_constant=poptplayleftconstant[1]
-slope_play_right_constant=poptplayrightconstant[0]
-origin_play_right_constant=poptplayrightconstant[1]
-
-
-#%% Playing calibration's functions
-
-def playing_calibration_left(amplitudefactor):
-    """This function returns calibrated played data for left channel.
-    
-    Parameters
-    ----------
-    amplitudefactor: int, float
-        The Wave object's factor of amplitude (no units).
-    
-    Returns
-    -------
-    vreal: int, float
-        The calibrated played peak-to-peak amplitude in Volts.
-    
-    """
-    
-    if amplitudefactor<0.4:
-        vreal = amplitudefactor * slope_play_left_lineal
-        vreal = vreal + origin_play_left_lineal
-    else:
-        vreal = amplitudefactor * slope_play_left_constant
-        vreal = vreal + origin_play_left_constant
-    
-    return vreal
-
-def playing_calibration_right(amplitudefactor):
-    """This function returns calibrated played data for right channel.
-    
-    Parameters
-    ----------
-    amplitudefactor: int, float
-        The Wave object's factor of amplitude (no units).
-    
-    Returns
-    -------
-    vreal: int, float
-        The calibrated played peak-to-peak amplitude in Volts.
-    
-    """
-    
-    if amplitudefactor<0.4:
-        vreal = amplitudefactor * slope_play_right_lineal
-        vreal = vreal + origin_play_right_lineal
-    else:
-        vreal = amplitudefactor * slope_play_right_constant
-        vreal = vreal + origin_play_right_constant
-        
-    return vreal
-
-def inv_playing_calibration_left(vreal):
-    """This function returns the left non-calibrated data amplitude.
-    
-    Parameters
-    ----------
-    vreal: int, float
-        The calibrated played peak-to-peak amplitude in Volts.
-    
-    Returns
-    -------
-    amplitudefactor: int, float
-        The Wave object's factor of amplitude (no units).
-    
-    """
-    
-    if vreal < 0.4 * slope_play_left_lineal + origin_play_left_lineal:
-        slope = 1/slope_play_left_lineal
-        origin = -origin_play_left_lineal / slope_play_left_lineal
-    else:
-        amplitudefactor = False
-        print("¡Ojo! No llega a este voltaje (máx: {:.2f})".format(
-                0.4 * slope_play_left_lineal + origin_play_left_lineal))
-    
-    amplitudefactor = slope * vreal + origin
-    
-    return amplitudefactor
-
-def inv_playing_calibration_right(vreal):
-    """This function returns the right non-calibrated data amplitude.
-    
-    Parameters
-    ----------
-    vreal: int, float
-        The calibrated played peak-to-peak amplitude in Volts.
-    
-    Returns
-    -------
-    amplitudefactor: int, float
-        The Wave object's factor of amplitude (no units).
-    
-    """
-    
-    if vreal < 0.4 * slope_play_right_lineal + origin_play_right_lineal:
-        slope = 1/slope_play_right_lineal
-        origin = - origin_play_right_lineal/slope_play_right_lineal
-        amplitudefactor = slope * vreal + origin
-    else:
-        amplitudefactor = False
-        print("¡Ojo! No llega a este voltaje (máx: {:.2f})".format(
-            0.4 * slope_play_right_lineal + origin_play_right_lineal))
-    
-    return amplitudefactor
+# This are the final parameters, which I save
+cal_play_data = np.array([[poptplayleftlineal[0], # Slope lineal left
+                           poptplayleftlineal[1],  # Origin lineal left
+                           poptplayleftconstant[0], # Slope const left
+                           poptplayleftconstant[1]], # Origin const left
+                          [poptplayrightlineal[0],
+                           poptplayrightlineal[1],
+                           poptplayrightconstant[0],
+                           poptplayrightconstant[1]]])
+         
+sav.savetext(cal_play_data.T,
+             os.path.join(os.getcwd(), 'Cal_Play_Data.txt'),
+             overwrite = True)
 
 #%% Recording calibration
 
 # SOME CONFIGURATION
 
 # Here I load data from file
-direc = os.getcwd()
+direc = os.path.join(os.getcwd(), 'Measurements')
 archivo = os.path.join(direc,
-                       'Measurements',
                        'Cal_Rec_2000_Hz_4',
                        'Cal_Rec_2000_Hz_Data.txt')
 datos = np.loadtxt(archivo)
@@ -309,101 +209,37 @@ poptright, pcovright = curve_fit(
 
 # Then I plot it all toghether (data and calibration)
 plt.figure()
-plt.plot(vpp_gen_func, vpp_left,'r.')
-plt.plot(vpp_gen_func, vpp_right,'b.')
-plt.plot(vpp_gen_func_lineal, recording_calibration(vpp_gen_func_lineal, poptleft[0], poptleft[1]),'r-')
-plt.plot(vpp_gen_func_lineal, recording_calibration(vpp_gen_func_lineal, poptright[0], poptright[1]),'b-')
+plt.subplot(211)
+plt.title("Calibración de grabación")
+plt.ylabel('Amplitud left (pp)')
+plt.plot(vpp_gen_func, vpp_left,'ro')
+plt.plot(vpp_gen_func_lineal, 
+         recording_calibration(vpp_gen_func_lineal, 
+                               poptleft[0], 
+                               poptleft[1]),
+         'k-')
+plt.subplot(212)
+plt.xlabel('Amplitud real (Vpp)')
+plt.ylabel('Amplitud right (pp)')
+plt.plot(vpp_gen_func, vpp_right,'bo')
+plt.plot(vpp_gen_func_lineal,
+         recording_calibration(vpp_gen_func_lineal,
+                               poptright[0],
+                               poptright[1]),
+         'k-')
+fmt.plot_style(plt.gcf().number)
+sav.saveplot(os.path.join(direc, 'Cal_Rec_Plot.pdf'), overwrite=True)
 
-# These are the final parameters for the data
-slope_left=poptleft[0]
-origin_left=poptleft[1]
-slope_right=poptright[0]
-origin_right=poptright[1]
+# These are the final parameters for the data, which I save
+rec_cal_data = np.array([[poptleft[0], poptleft[1]], # Left
+                         [poptright[0], poptright[1]]]).T # Right
+sav.savetext(rec_cal_data,
+             os.path.join(os.getcwd(), 'Cal_Rec_Data.txt'),
+             overwrite = True)
 
-#%% Calibration record curves
-
-def recording_calibration_left(vleft):
-    """Returns the left calibrated recorded signal's amplitude.
-    
-    Parameters
-    ----------
-    vleft: int, float
-        The recorded non-calibrated peak-to-peak amplitude in Volts.
-    
-    Returns
-    -------
-    vreal: int, float
-        The recorded calibrated peak-to-peak amplitude in Volts.
-    
-    """
-    
-    vreal = vleft / slope_left - (origin_left/slope_left)
-    
-    return vreal
-
-def recording_calibration_right(vright):
-    """Returns the right calibrated recorded signal's amplitude.
-    
-    Parameters
-    ----------
-    vleft: int, float
-        The recorded non-calibrated peak-to-peak amplitude in Volts.
-    
-    Returns
-    -------
-    vreal: int, float
-        The recorded calibrated peak-to-peak amplitude in Volts.
-    
-    """
-    
-    vreal = vright /slope_right - origin_right/slope_right
-    
-    return vreal
-
-def signal_recording_calibration_left(noncal_signal):
-    """Returns the left calibrated recorded signal.
-    
-    Parameters
-    ----------
-    noncal_signal: list, np.array
-        The non-calibrated left recorded signal.
-    
-    Returns
-    -------
-    cal_signal: list, np.array
-        The calibrated left recorded signal.
-    
-    """
-    
-    
-    noncal_amplitude = max(noncal_signal) - min(noncal_signal)
-    cal_amplitude = recording_calibration_left(noncal_amplitude)
-    cal_signal = cal_amplitude * noncal_signal / noncal_amplitude
-    
-    return cal_signal
-
-def signal_recording_calibration_right(noncal_signal):
-    """Returns the right calibrated recorded signal.
-    
-    Parameters
-    ----------
-    noncal_signal: list, np.array
-        The non-calibrated right recorded signal.
-    
-    Returns
-    -------
-    cal_signal: list, np.array
-        The calibrated right recorded signal.
-    
-    """
-    
-    noncal_amplitude = max(noncal_signal) - min(noncal_signal)
-    cal_amplitude = recording_calibration_right(noncal_amplitude)
-    cal_signal = cal_amplitude * noncal_signal / noncal_amplitude
-    
-    return cal_signal
-    
 #%% Diode's IV Curve Data Calibration
+
+import fwp_pyaudio_cal as cal
 
 # SOME CONFIGURATION
 
@@ -425,18 +261,19 @@ r1 = 1e6
 #I = recording_calibration_left(chL) / R
 #V = V0 + recording_calibration_left(chL)
 
-V0 = (r1 + r2)*signal_recording_calibration_right(chR)/r1
-I = signal_recording_calibration_left(chL) / R
-V = V0 + signal_recording_calibration_left(chL)
+V0 = (r1 + r2)*cal.signal_rec_cal_right(chR)/r1
+I = cal.signal_rec_cal_left(chL) / R
+V = V0 + cal.signal_rec_cal_left(chL)
 
 plt.figure()
 plt.plot(V, I,'.')
 
 cal_datos = np.column_stack((V,I))
-np.savetxt(os.path.join(os.getcwd(),
+sav.savetext(cal_datos,
+             os.path.join(os.getcwd(),
                      'Measurements',
                      'Datos_IV_Diodo_Cal.txt'),
-           cal_datos)
+             overwrite=True)
 
 #%% Calibration diode
 
@@ -503,4 +340,74 @@ print(r"n = {} y I0 = {}".format(popt[0],popt[1]))
 
 #%% Inverting amplifier
 
+import fwp_pyaudio_cal as cal
 
+direc = os.path.join(os.getcwd(),
+                     'Measurements',
+                     'Inv_Amp_x1')
+file = os.path.join(direc, 'Inv_Amp_x1.txt')
+datos = np.loadtxt(file)
+
+# First I drop the initial silence of the measurement
+datos = datos[int(len(datos)*2/5):]
+
+# Then I calibrate it
+datos[:,0] = (22+15) * cal.signal_rec_cal_left(datos[:,0]) / 15
+datos[:,1] = (22+15) * cal.signal_rec_cal_right(datos[:,1]) / 15
+
+# Now I would like to see the actual amplification
+rsq, m, b = anly.linear_fit(datos[:,0], -datos[:,1],
+                            mb_units=('','V'),
+                            mb_string_scale=(True,True),
+                            text_position=(0.02, 0.7))
+plt.show()
+fmt.plot_style(plt.gcf().number, dimensions=[1.15,1.05,1,1])
+plt.xlabel("Señal de entrada (V)")
+plt.ylabel("Señal de salida (V)")
+sav.saveplot(os.path.join(direc, 'Amplification.pdf'), overwrite=True)
+
+#%% Inverting amplifier Freq_Sweep
+
+import fwp_pyaudio_cal as cal
+
+rIN0 = 39
+rIN = 3.768e3
+rIN2 = 4.7e3
+rOUT = 10
+rMIC = 10e3
+
+ampMIC2 = (15+22)/15
+ampMIC1 = (rMIC+rOUT)/rOUT
+
+samplerate = 44100
+freq_start = 100
+freq_end = 20e3
+freq_step = 100
+frequencies = np.arange(freq_start, freq_end, freq_step)
+          
+name = 'Amp_Freq_{}_{}_Ohms'.format(rIN, rMIC)
+savedir = os.path.join(os.getcwd(),
+                       'Measurements',
+                       name)
+filename = os.path.join(savedir, name)
+makefile = lambda freq: '{}_{:.2f}_Hz.txt'.format(filename, freq)
+
+rms = []
+for freq in frequencies:
+    
+    print(freq, "Hz")
+    
+    data = np.loadtxt(makefile(freq))
+    data[:,0] = cal.signal_rec_cal_left(data[:,0])*ampMIC1
+    data[:,1] = cal.signal_rec_cal_right(data[:,1])*ampMIC2
+    data = data[int(2*len(data[:,0])/5):,:]
+    ndata = len(data)
+    rms.append(anly.rms(data[:,0]), anly.rms[data[:,1]])
+    
+rms = np.array(rms)
+decibels = 10*np.log10(rms[:,1]/rms[:,0])
+alldata = np.array([frequencies, rms[:,0], rms[:,1], decibels]).T
+
+plt.plot(frequencies, decibels, '.')
+sav.saveplot(os.path.join(savedir, 'Amp_Freq_Plot.pdf'))
+sav.savetext(alldata, os.path.join(savedir, 'Amp_Freq_Data.txt'))
