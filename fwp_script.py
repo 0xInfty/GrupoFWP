@@ -272,7 +272,7 @@ sav.savetext(data, '{}_Data.txt'.format(filename))
 
 resistance = 1e3 # ohms
 r1 = 1e6
-r2 = 5.75e6
+r2 = 206e3
 
 amp = 1 # between 0 and 1
 freq = 400 # hertz
