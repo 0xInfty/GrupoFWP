@@ -124,6 +124,12 @@ plt.plot(amplitude_factor_constant,
                              poptplayrightconstant[0],
                              poptplayrightconstant[1]),
          'b-')
+plt.xlabel("Factor de Amplitud enviado a la placa de Audio")
+plt.ylabel("Voltaje adquirido por el Osciloscopio")
+plt.legend(["Canal Izquierdo","Canal derecho"])
+plt.grid()
+plt.savefig('calplay.pdf')
+plt.show()
 
 # These are the final parameters for the increasing data
 slope_play_left_lineal=poptplayleftlineal[0]
@@ -313,6 +319,12 @@ plt.plot(vpp_gen_func, vpp_left,'r.')
 plt.plot(vpp_gen_func, vpp_right,'b.')
 plt.plot(vpp_gen_func_lineal, recording_calibration(vpp_gen_func_lineal, poptleft[0], poptleft[1]),'r-')
 plt.plot(vpp_gen_func_lineal, recording_calibration(vpp_gen_func_lineal, poptright[0], poptright[1]),'b-')
+plt.xlabel("Voltaje enviado por el Generador de Funciones")
+plt.ylabel("Señal adquirida por la Placa de Audio")
+plt.legend(["Canal Izquierdo","Canal derecho"])
+plt.grid()
+plt.savefig('calrec.pdf')
+plt.show()
 
 # These are the final parameters for the data
 slope_left=poptleft[0]
@@ -416,7 +428,7 @@ datos = datos[20000:25000, :]
 
 chR, chL = np.split(datos, 2, axis=1)
 R = 1e3
-r2 = 206e3
+r2 = 5.75e6
 r1 = 1e6
 
 # DATA CALIBRATION
@@ -498,7 +510,12 @@ popt, pcov = curve_fit(diode_function, V, b, p0=p0)
 plt.figure()
 plt.plot(V, diode_function(V, popt[0], popt[1]),'b-')
 plt.plot(V, b, 'r.')
-
+plt.xlabel("Voltaje [V]")
+plt.ylabel("Corriente[A]")
+plt.legend(["Ajuste","Datos"])
+plt.grid()
+plt.savefig('diodofeo.pdf')
+plt.show()
 print(r"n = {} y I0 = {}".format(popt[0],popt[1]))
 
 #%% Inverting amplifier
