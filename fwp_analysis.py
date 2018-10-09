@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct  6 17:09:13 2018
+This module contains tools for data analysis.
+
+Some of its most useful tools are:
+    
+mean : function
+    Returns average or weighted average and standard deviation.
+linear_fit : function
+    Applies linear fit and returns m, b and Rsq. Can also plot it.
+nonlinear_fit : function
+    Applies nonlinear fit and returns parameters and Rsq. Plots it.
 
 @author: Vall
 """

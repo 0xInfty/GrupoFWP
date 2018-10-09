@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct  6 19:16:13 2018
+This module formats plots and values for Latex.
+
+Some of its most useful tools are:
+
+value_error : function
+    Rounds up value and error of a measure. Also makes a latex string.
+plot_style : function
+    Gives a specific style to figure.
 
 @author: Vall
 """
