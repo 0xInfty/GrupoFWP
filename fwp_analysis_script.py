@@ -81,6 +81,25 @@ poptplayrightlineal, pcovplayrightlineal = curve_fit(
         amplitude_factor_lineal,
         vpp__osc_right_lineal,
         p0=p0)
+print("Left lineal")
+print("m = {}".format(fmt.error_value(
+        poptplayleftlineal[0],
+        np.sqrt(pcovplayleftlineal[0,0]),
+        units='Vpp')))
+print("b = {}".format(fmt.error_value(
+        poptplayleftlineal[1],
+        np.sqrt(pcovplayleftlineal[1,1]),
+        string_scale=False)))
+print("Right lineal")
+print("m = {}".format(fmt.error_value(
+        poptplayrightlineal[0],
+        np.sqrt(pcovplayrightlineal[0,0]),
+        units='Vpp')))
+print("b = {}".format(fmt.error_value(
+        poptplayrightlineal[1],
+        np.sqrt(pcovplayrightlineal[1,1]),
+        string_scale=False)))
+
 
 # Next I apply it to the rest of the data (the constant data)
 p1=[0,2]
@@ -97,21 +116,41 @@ poptplayrightconstant, pcovplayrightconstant = curve_fit(
         vpp_osc_right_constant,
         p0=p2,
         sigma=vpp_osc_right_constant - np.mean(vpp_osc_right_constant))
+print("Left constant")
+print("m = {}".format(fmt.error_value(
+        poptplayleftconstant[0],
+        np.sqrt(pcovplayleftconstant[0,0]),
+        units='Vpp')))
+print("b = {}".format(fmt.error_value(
+        poptplayleftconstant[1],
+        np.sqrt(pcovplayleftconstant[1,1]),
+        string_scale=False)))
+print("Right constant")
+print("m = {}".format(fmt.error_value(
+        poptplayrightconstant[0],
+        np.sqrt(pcovplayrightconstant[0,0]),
+        units='Vpp')))
+print("b = {}".format(fmt.error_value(
+        poptplayrightconstant[1],
+        np.sqrt(pcovplayrightconstant[1,1]),
+        string_scale=False)))
 
 # Now I plot it all at once (data and calibration)
 plt.figure()
-plt.plot(amplitude_factor, vpp_osc_left, 'ro')
-plt.plot(amplitude_factor, vpp__osc_right, 'bo')
+plt.plot(amplitude_factor, vpp_osc_left, 'ro', label="Izquierda")
+plt.plot(amplitude_factor, vpp__osc_right, 'bo', label="Derecha")
 plt.plot(amplitude_factor_lineal,
          playing_calibration(amplitude_factor_lineal,
                              poptplayleftlineal[0],
                              poptplayleftlineal[1]),
-         'k-')
+         'k-',
+         label="Fit Izquierda")
 plt.plot(amplitude_factor_lineal,
          playing_calibration(amplitude_factor_lineal,
                              poptplayrightlineal[0],
                              poptplayrightlineal[1]),
-         'k-')
+         'k-',
+         label="Fit derecha")
 plt.plot(amplitude_factor_constant,
          playing_calibration(amplitude_factor_constant,
                              poptplayleftconstant[0],
@@ -125,8 +164,9 @@ plt.plot(amplitude_factor_constant,
 plt.title("Calibración de reproducción")
 plt.xlabel("Factor de amplitud")
 plt.ylabel("Amplitud real (Vpp)")
+plt.legend()
 fmt.plot_style(plt.gcf().number, dimensions=[1.15,1.05,1,1])
-sav.saveplot(os.path.join(direc, 'Cal_Play_Plot.pdf'))
+sav.saveplot(os.path.join(direc, 'Cal_Play_Plot.pdf'), overwrite=True)
 
 # This are the final parameters, which I save
 cal_play_data = np.array([[poptplayleftlineal[0], # Slope lineal left
@@ -160,11 +200,6 @@ vpp_right = datos[:,2]
 vpp_gen_func_lineal = vpp_gen_func[40:90]
 vpp_left_lineal = vpp_left[40:90]
 vpp_right_lineal = vpp_right[40:90]
-
-# Now I plot the data to fit
-plt.figure()
-plt.plot(vpp_gen_func_lineal, vpp_left_lineal,'r.')
-plt.plot(vpp_gen_func_lineal, vpp_right_lineal,'b.')
 
 # Next I define the model's function I will use (a linear fit)
 def recording_calibration(vgen, m, b):
@@ -207,26 +242,53 @@ poptright, pcovright = curve_fit(
         p0=p0,
         sigma=vpp_gen_func_lineal - p0[0]*vpp_right_lineal)
 
+print("Left")
+print("m = {}".format(fmt.error_value(
+        poptleft[0],
+        np.sqrt(pcovleft[0,0]),
+        units='/Vpp', 
+        legend=True)))
+print("b = {}".format(fmt.error_value(
+        poptleft[1],
+        np.sqrt(pcovleft[1,1]),
+        string_scale=False, 
+        legend=True)))
+print("Right")
+print("m = {}".format(fmt.error_value(
+        poptright[0],
+        np.sqrt(pcovright[0,0]),
+        units='/Vpp', 
+        legend=True)))
+print("b = {}".format(fmt.error_value(
+        poptright[1],
+        np.sqrt(pcovright[1,1]),
+        string_scale=False, 
+        legend=True)))
+
 # Then I plot it all toghether (data and calibration)
 plt.figure()
 plt.subplot(211)
 plt.title("Calibración de grabación")
 plt.ylabel('Amplitud left (pp)')
-plt.plot(vpp_gen_func, vpp_left,'ro')
+plt.plot(vpp_gen_func, vpp_left, 'ro', label="Izquierda")
 plt.plot(vpp_gen_func_lineal, 
          recording_calibration(vpp_gen_func_lineal, 
                                poptleft[0], 
                                poptleft[1]),
-         'k-')
+         'k-',
+         label="Fit Izquierda")
+plt.legend(loc='lower right')
 plt.subplot(212)
 plt.xlabel('Amplitud real (Vpp)')
 plt.ylabel('Amplitud right (pp)')
-plt.plot(vpp_gen_func, vpp_right,'bo')
+plt.plot(vpp_gen_func, vpp_right, 'bo', label="Derecha")
 plt.plot(vpp_gen_func_lineal,
          recording_calibration(vpp_gen_func_lineal,
                                poptright[0],
                                poptright[1]),
-         'k-')
+         'k-',
+         label="Fit Derecha")
+plt.legend(loc='lower right')
 fmt.plot_style(plt.gcf().number)
 sav.saveplot(os.path.join(direc, 'Cal_Rec_Plot.pdf'), overwrite=True)
 
@@ -381,6 +443,7 @@ rIN2 = 4.7e3
 rOUT = 10
 rMIC = 10e3
 
+amp = (rIN+rIN2)/rIN0
 ampMIC2 = (15+22)/15
 ampMIC1 = (rMIC+rOUT)/rOUT
 
@@ -413,6 +476,11 @@ rms = np.array(rms)
 decibels = 10*np.log10(rms[:,1]/rms[:,0])
 alldata = np.array([frequencies, rms[:,0], rms[:,1], decibels]).T
 
-plt.plot(frequencies, decibels, '.')
-sav.saveplot(os.path.join(savedir, 'Amp_Freq_Plot.pdf'))
+plt.figure()
+plt.plot(data[:,0], data[:,3],'o-')
+plt.xlabel('Frecuencia (Hz)')
+plt.ylabel('Decibeles (dB)')
+plt.title('Ancho de banda G = {:.2f}'.format(amp))
+fmt.plot_style(plt.gcf().number, dimensions=[1.4,1.05,1,1])
+sav.saveplot(os.path.join(savedir, 'Amp_Freq_Plot.pdf'), overwrite=True)
 sav.savetext(alldata, os.path.join(savedir, 'Amp_Freq_Data.txt'))

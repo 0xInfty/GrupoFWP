@@ -7,7 +7,6 @@ Created on Wed Sep 12 12:48:15 2018
 """
 
 from fwp_analysis import rms
-import fwp_pyaudio_cal as cal
 import fwp_lab_instruments as ins
 import fwp_pyaudio as fwp
 import fwp_save as sav
@@ -118,13 +117,10 @@ for freq, dur in zip(frequencies, durations):
                         nchannelsrec=nchannelsrec,
                         after_recording=after_record_do)
     
-    thesignal = thesignal[int(.2*len(thesignal[:,0])):,:]
-    thesignal[:,0] = cal.signal_rec_cal_left(thesignal[:,0])
-    thesignal[:,1] = cal.signal_rec_cal_right(thesignal[:,1])
-    signalrms.append([rms(thesignal[:,0]), rms(thesignal[:,1])])
+    signalrms.append(rms.rms(thesignal))
 
 signalrms = np.array(signalrms)
-signaldec = 10*np.log10(signalrms[:,1]/signalrms[:,0])
+signaldec = 10*np.log10(signalrms/max(signalrms))
 
 plt.figure()
 plt.plot(frequencies, signaldec, 'b-')
@@ -427,4 +423,3 @@ if bool(int(input("OK? Write '1' if 'YES' or '0' if 'NO'"))):
                                   recording_duration=duration,
                                   nchannelsrec=nchannelsrec,
                                   after_recording=after_record_do)
-        

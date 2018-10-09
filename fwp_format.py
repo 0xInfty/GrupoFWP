@@ -156,7 +156,7 @@ def error_value(X, dX, error_digits=2, units='',
     # Forth, I generate a latex string. Ex.: '(1.34$pm$0.32) kV'
     latex_str = r'({}$\pm${})'.format(measure_value, error_value)
     if not used_string_scale and measure_order != 0:
-        latex_str = latex_str + r'$10^{:.0f}$'.format(scale)      
+        latex_str = latex_str + r'$10^{' +'{:.0f}'.format(scale) + r'}$'
     elif used_string_scale:
         latex_str = latex_str + ' ' + prefix
     if units != '':
